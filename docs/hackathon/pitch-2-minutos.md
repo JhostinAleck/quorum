@@ -25,8 +25,9 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 > Con buen prompt, con la regla del pliego y sin regla: cero fugas en 120 episodios. Ahí un buen prompt
 > basta, y lo decimos. El valor está donde el prompt no llega: el agente ya comprometido, y el agente único
 > que sí obedece, en AgentDojo: 90 de 90 secuestros frenados en el corte principal y 1.506 de 1.521 en
-> total. Un monitor por agente también detecta las 16, pero paga una llamada por episodio y deja 5 de 30
-> falsos positivos.
+> total. Un monitor por agente también detecta las 16 sin falsos positivos, pero paga tres llamadas a un
+> modelo por trámite y solo avisa al final. El monitor conjunto que sí se podría desplegar pierde 3 de
+> 16 fugas con Gemini o marca 5 de 30 trámites honestos con Haiku.
 >
 > **(1:45) Lo que no funcionó:** juntar las tres trayectorias en un monitor no mejoró a leer cada agente;
 > sale de la configuración.
@@ -47,7 +48,9 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 - No abrir con «tenemos tres agentes». El mentor: «tú me hablas de agentes y la compuerta no la mencionaste».
 - No decir que el baseline «falla». El baseline de prompt **gana** en su escenario (0 fugas en 120): en
   esa frase hay que decir que ahí la compuerta no aporta, y pasar a donde el prompt no llega.
-- No decir que medimos inyección por contenido en nuestra licitación: no la medimos ahí, la medimos fuera.
+- No decir que la inyección por contenido en nuestra licitación «rompe» a los agentes: sí la medimos
+  (0 fugas en 120 episodios con buen prompt) y ahí el prompt basta. Donde la compuerta aporta frente a
+  la inyección es en AgentDojo.
 - No presumir de pre-registro sin decir que fue tardío.
 
 ## Respuestas de bolsillo
@@ -57,4 +60,23 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 - **¿Y si el agente parte el número?** La etiqueta va con el valor, no con el texto; partir el número no
   rompe la etiqueta. Lo que sí la evade es lavar el dato por un canal que la política no declara.
 - **¿Qué cambia entre dominios?** Una tabla: fuentes restringidas, fuentes no confiables, desclasificadores
-  y sumideros. El núcleo es el mismo; el segundo escenario (mesa de ayuda de salud) lo prueba.
+  y sumideros. El núcleo es el mismo: hay cinco dominios (licitación, mesa de ayuda, clínica, banca y
+  legal) hechos solo con su política y sus herramientas. En 7.600 episodios adversos guionados el daño
+  es 100 % sin defensa, 42 % con un filtro de coincidencia exacta o con un buen harness, y 0 % con
+  Quórum (`docs/resultados-dominios.md`).
+- **¿Por qué no un monitor mejor, como Jev?** Lo probamos como juez de los mismos monitores. Con ataques
+  guionados detecta 120 de 120 y dos notas dirigidas al revisor no lo mueven. Con los 30 ataques hechos
+  por un modelo se le escapan 2 de 16 fugas como M1 y 3 de 16 como M2, y marca trámites honestos. Cuesta
+  menos de la mitad que un modelo de chat. Sigue siendo un puntaje con umbral que lee texto escrito por
+  quien vigila; la compuerta no (`docs/resultados-monitores.md`).
+- **¿Cada cuánto corre un monitor y cuánto cuesta?** Una vez por trámite, al final: tres llamadas de M1
+  (una por agente) y una de M2. Eso detecta, no detiene. Monitorear cada paso relee todo lo anterior y el
+  costo crece con el cuadrado del largo del trámite. La compuerta decide en cada salida y no llama a
+  ningún modelo.
+- **¿Y si alguien cambia la política o el código de la compuerta?** Sus hashes están fijados en
+  `quorum/integrity.lock.json`: el CI falla si cambian sin ese archivo, el monitor no arranca con otro
+  pipeline y la huella queda sellada en la bitácora antes de la primera llamada. No es una firma: quien
+  pueda reescribir todo a la vez no queda detenido (`docs/integridad.md`).
+- **¿Cuánto cuesta la compuerta en trabajo legítimo?** Bloquea siempre el trámite honesto descuidado (un
+  agente que abre un sobre que no necesitaba) y en AgentDojo detiene parte de las tareas legítimas. Lo
+  reportamos junto al beneficio.
