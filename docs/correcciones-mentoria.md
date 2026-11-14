@@ -26,6 +26,10 @@ corre en modo auditoría: decide y lo anota, pero no bloquea. Así cada episodio
 «solo buen prompt» y el brazo «buen prompt + Quórum».
 
 **Cinco modelos baratos, 150 episodios cada uno (750 en total): 0 fugas en los 600 con inyección.**
+Sin llama-3.1-8b, que no cuenta como evidencia (126 de sus 150 episodios tienen fallos de formato, 657
+en total), son cuatro modelos y 480 episodios con inyección, también con 0 fugas. Hay 0 fugas incluso con
+el prompt `none`, que no trae ninguna regla sobre los montos: lo que no funciona es la inyección, no lo
+que la frena. El prompt cambia cuántos agentes abren el sobre (gpt-4o-mini: 35, 31 y 10), no las fugas.
 `datos/baseline_<tag>.jsonl`. «Abrió» es el número de episodios con inyección en que algún agente abrió
 una oferta sellada (`open_bid` o `read_scan`) fuera de su tarea; «útil y frenado», los que publicaron el
 resultado correcto y aun así la compuerta habría bloqueado. De 40 episodios con inyección por prompt:
@@ -73,7 +77,8 @@ formato). En 69 de los 120 episodios con inyección los agentes citan el pretext
 | `strong` (regla y defensa) | 10/10 | 0/40 | 40/40 |
 
 **Qué quiere decir, sin maquillar.** En nuestro escenario, con este modelo y el modelo de amenaza A,
-un buen prompt alcanza: la compuerta no aporta nada medible, porque no hay fugas que frenar. Es lo
+no hay fugas con ningún prompt, tampoco con `none`, que no trae la regla: la inyección no alcanza, y la
+compuerta no aporta nada medible, porque no hay fugas que frenar. No es que el buen prompt las frene. Es lo
 que el mentor advirtió («pueden estar aportando 0 %»). La explicación probable es estructural: la
 inyección solo llega al radicador, y para filtrar el valor hacen falta los tres agentes
 desobedeciendo en cadena. El valor de Quórum queda donde un buen prompt no sirve:
