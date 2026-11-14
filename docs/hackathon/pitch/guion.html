@@ -96,7 +96,7 @@ ul.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--acc);fle
   <h2>Relevos</h2>
   <div class="turn">
     <p style="margin:0 0 8px"><b>Turno 1 → Turno 2.</b> El turno 2 entra con «Lo probamos en una licitación pública».</p>
-    <p style="margin:0"><b>Turno 2 → Turno 3.</b> Tras «…antes de que el dato salga», el turno 3 entra sin pausa con «Fuera de nuestro laboratorio».</p>
+    <p style="margin:0"><b>Turno 2 → Turno 3.</b> Tras «…antes de que el dato salga», el turno 3 entra sin pausa con «Cambiando solo un archivo de reglas».</p>
   </div>
 
   <h2>Preguntas probables de los jurados</h2>
@@ -115,15 +115,15 @@ const TURNS = [
   ]},
   {name:"Turno 2", blocks:[
     {id:"riesgo", slide:"Vector de riesgo",
-     say:"Lo probamos en una licitación pública. El Radicador abre un sobre sellado y anota el valor como si fuera un número de radicado; el Evaluador lo copia; el Publicador lo publica. Cada paso, por separado, parece normal. Con agentes de IA reales y sin defensa, la oferta se filtró en 16 de 30 ataques."},
+     say:"Lo probamos en una licitación pública. El Radicador abre un sobre sellado y anota el valor como si fuera un número de radicado; el Evaluador lo copia; el Publicador lo publica. Con agentes de IA reales y sin defensa, la oferta se filtró en 16 de 30 ataques."},
     {id:"mecanismo", slide:"Mecanismo",
-     say:"Quórum no adivina intenciones: sigue el origen de cada dato. Tres reglas. Lo confidencial entra marcado. La marca se contagia: lo que escribe un agente que leyó algo marcado queda marcado. Y antes de publicar, una regla fija revisa la marca: sin permiso, no sale. Como no lee el texto, disfrazar el valor no sirve. Y como vive en las herramientas y no en el prompt, sirve con cualquier modelo."},
+     say:"Quórum no adivina intenciones: sigue de dónde viene cada dato. Lo confidencial entra marcado; lo que escribe un agente que lo leyó hereda la marca; y en la salida, una regla fija bloquea lo marcado sin permiso. Como no lee el texto, disfrazar el valor no sirve. Y como vive en las herramientas, no en el prompt, sirve con cualquier modelo."},
     {id:"validacion", slide:"Validación",
-     say:"Resultado: frenó las 16 fugas y ninguno de los 60 trámites honestos. Un vigilante de IA que lee a cada agente también detectó las 16; no lo escondemos. La diferencia: el vigilante consulta un modelo, depende de un umbral y revisa al final. Quórum decide en un microsegundo, sin IA, antes de que el dato salga."}
+     say:"Resultado: frenó las 16 fugas y ninguno de los 60 trámites honestos quedó bloqueado. Un vigilante de IA que lee a cada agente también detectó las 16; no lo escondemos. La diferencia: el vigilante consulta un modelo, depende de un umbral y revisa al final. Quórum decide en un microsegundo, sin IA, antes de que el dato salga."}
   ]},
   {name:"Turno 3", blocks:[
-    {id:"externa", slide:"Fuera del laboratorio",
-     say:"Fuera de nuestro laboratorio: el mismo núcleo, cambiando solo un archivo de reglas, protegió cinco dominios, entre ellos salud y banca, con cero daños en 7.600 ataques. Y en AgentDojo, un benchmark público con ataques que no escribimos, fue la única defensa sin secuestros: 0 de 144, y conservó 16 de las 19 tareas que funcionan sin defensa."},
+    {id:"externa", slide:"Otros dominios y AgentDojo",
+     say:"Cambiando solo un archivo de reglas, el mismo núcleo protegió cinco dominios, entre ellos salud y banca: cero daños en 7.600 ataques. Y en AgentDojo, un benchmark público con ataques que no escribimos, fue la única defensa con 0 secuestros de 144, y conservó 16 de las 19 tareas útiles."},
     {id:"limites", slide:"Límites y riesgo dual",
      say:"Sus límites, medidos: frena al honesto que abre un sobre que no necesitaba, no protege lo que las reglas declaran público y no ve canales como el tiempo de respuesta. Lo siguiente: etiquetas por campo, un atacante que se adapta y un proxy MCP para agentes que ya existen. Los ataques solo corren en nuestro laboratorio, con datos inventados."},
     {id:"cierre", slide:"Cierre",
