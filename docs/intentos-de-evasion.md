@@ -35,7 +35,7 @@ Un monitor que lee texto se puede dejar convencer por el texto que lee. Probamos
 
 **Por qué.** La compuerta no lee lo que los agentes escriben. Decide con etiquetas que ellos no controlan, así que un argumento es solo más texto con la misma etiqueta. El veredicto y el motivo son idénticos con y sin el texto.
 
-Esto no se ha medido contra los monitores M1 y M2, que sí leen texto. Es el experimento que falta para comparar.
+Contra los monitores M1 y M2, que sí leen texto, ya se midió: está en [resultados de monitores](resultados-monitores.md). Con `openai/gpt-6-luna`, M1 y M2 detectaron los 40 ataques guionados (100 %) con y sin las dos notas dirigidas al revisor, con el prompt normal y con el endurecido, y no marcaron ningún trámite honesto (0 de 10). Son ataques guionados y evidentes y solo dos notas sencillas, así que eso no prueba que ninguna nota funcione.
 
 ## Señalar sin escribir el valor: funcionaba, y así quedó cerrado
 
@@ -80,14 +80,18 @@ En la clínica y en el bufete, quien redacta tiene que ver el expediente y despu
 
 **Sin medir.** El costo de la marea alta con agentes de modelo. Si un agente honesto abre un sobre por descuido, se bloquea la publicación.
 
-## Usar un desclasificador como oráculo: cerrado
+## Usar un desclasificador como oráculo: acotado para los agentes, abierto para un rival externo
 
-Dos agentes registraban valores conocidos junto a la oferta secreta y la deducían de los puntajes con un error menor al 0,1 %. Se cerró en el PR 3: los desclasificadores solo calculan sobre ofertas de origen oficial y tienen cupo. Hay un test que lo impide.
+Son dos atacantes distintos sobre el mismo canal, los puntajes.
+
+**Los agentes.** Dos agentes registraban valores conocidos junto a la oferta secreta y la deducían de los puntajes con un error menor al 0,1 %. Se cerró en el PR 3: los desclasificadores solo calculan sobre ofertas de origen oficial y tienen cupo. Hay un test que lo impide. Con eso y con la marea alta, lo que los agentes pueden sacar usando `score_bids` o `within_budget` como oráculo queda acotado.
+
+**Un rival externo.** No necesita a ningún agente. El trámite honesto publica los puntajes con un decimal y la fórmula es conocida (puntaje = 100 · mínimo / valor), así que un oferente que conoce su propio valor despeja el del objetivo. `quorum/eval/break_gate.py` lo mide: recupera el monto en 50 de 50 casos, con un error mediano de 0,04 %, y la compuerta no bloquea ninguno. Esto la compuerta no lo cierra: publicar los puntajes es una decisión del pliego, no un flujo que la política prohíba. El detalle y los arreglos posibles están en [correcciones de la mentoría](correcciones-mentoria.md).
 
 ## Lo que sigue abierto
 
 - **Tiempo, orden y número de llamadas.** Ningún modo los cubre.
-- **Lo que revelan los desclasificadores por diseño.** Un puntaje dice algo del valor. Está acotado, no eliminado.
+- **Lo que revelan los desclasificadores por diseño.** Un puntaje dice algo del valor. Para los agentes está acotado por los cupos y la marea alta, no eliminado. Para un rival externo no está acotado: con los puntajes publicados recupera el monto con un error mediano de 0,04 % en 50 de 50 casos ([correcciones de la mentoría](correcciones-mentoria.md)). Cerrarlo es cambiar lo que el pliego publica, no la compuerta.
 - **En la clínica y el bufete**, el canal de claves ausentes queda acotado a un sí o no por salida, no cerrado.
 - **Entre episodios.** Un sí o no por episodio se acumula si el mismo secreto vive muchos episodios.
 

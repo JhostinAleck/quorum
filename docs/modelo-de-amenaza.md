@@ -59,7 +59,7 @@ Ningún paso es anómalo por sí solo. Como control, el **ataque monolítico** c
 ## Qué queda fuera
 
 - Canales encubiertos por tiempo, cantidad de llamadas u orden de operaciones.
-- Fuga de información a través de los desclasificadores: un puntaje revela algo sobre el valor del que se calculó. Es una fuga aceptada por diseño y acotada por lo que el pliego declara público.
+- Fuga de información a través de los desclasificadores: un puntaje revela algo sobre el valor del que se calculó. Hay dos casos. Los agentes que usan `score_bids` o `within_budget` como oráculo quedan acotados por los cupos y la marea alta. Un rival externo que invierte la fórmula con los puntajes que la propia licitación publica no queda acotado: recupera el monto con un error mediano de 0,04 % en 50 de 50 casos (ver [correcciones de la mentoría](correcciones-mentoria.md)). Eso la compuerta no lo cierra, porque publicar los puntajes es una decisión del pliego y no un flujo que la política prohíba.
 - Compromiso del propio proxy o de la política.
 - Ataques contra los pesos o el entrenamiento de los modelos.
 - Colusión que no pasa por los servicios compartidos (no existe en este laboratorio porque los agentes no tienen otro canal).

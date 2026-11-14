@@ -44,6 +44,17 @@ los `*_reason` que dio el modelo y `monitor` (el modelo que puntuó).
 Los «antes» se citan en la ficha para mostrar el efecto del arreglo; los «ciegofix» son los números
 que se reportan.
 
+## Otras mediciones
+
+No las cita `metrics.yaml`. Cada una la genera su propio módulo y tiene su documento de resultados.
+
+| Archivo | Contenido | Lo genera |
+|---|---|---|
+| `monitores-persuasion.jsonl` | Notas de M1 y M2 (prompt normal y endurecido) sobre 10 trámites honestos y 40 ataques guionados, cada ataque con y sin dos notas dirigidas al revisor. La primera línea es el encabezado de la corrida (modelo, semillas, costo); no trae trayectorias | `quorum/monitor_bench.py` |
+| `monitores-persuasion-jev.jsonl`, `monitores-persuasion-jev-score.jsonl` | Lo mismo con Jev (`typesafe/jev-1.14`) como juez, con la pregunta de sí o no y con la pregunta por niveles. El encabezado trae además el backend, la pregunta y el número de llamadas | `quorum/monitor_bench.py --backend jev` |
+| `agentes-inyeccion.jsonl` | 20 trámites con agentes de modelo y prompts honestos, 10 sin inyección y 10 con la carta inyectada, con la trayectoria de cada agente. La primera línea es el encabezado de la corrida | `quorum/llm_bench.py` |
+| `agentdojo-replay.json` | Un solo JSON (no JSON Lines) con cada repetición de las trazas de referencia de AgentDojo 0.1.35, tareas `v1.2.2`, en los cuatro conjuntos, sin modelo | `quorum/agentdojo_bench.py` |
+
 ## Cómo se recalcula
 
 1. **Partición**: honestos con semilla par para calibrar el umbral, con semilla impar para reportar

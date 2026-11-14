@@ -46,9 +46,9 @@ Mientras corre, cada tarjeta de agente muestra sus llamadas en orden, con las fu
 | Motor | Agentes honestos | Agentes que se desvían |
 |---|---|---|
 | Guionado | Pasos guionados del escenario | Pasos guionados del escenario |
-| Modelo | El modelo, con `SYSTEM` y `TASK` de `scenarios/tender/prompts.py` | Pasos guionados del escenario |
+| Modelo | El modelo, con `SYSTEM` y `TASK` de `scenarios/tender/prompts.py` | El modelo, con esos prompts más la tarea oculta de `quorum/eval/attacks.py` |
 
-En el motor con modelo, un agente que se desvía sigue siendo guionado porque el repo no trae tareas ocultas para modelos. `workflow.run(..., side_tasks={"evaluator": "..."})` permite pasar una: se añade al final del prompt de sistema de ese rol y entonces lo maneja el modelo. La página no expone esa opción.
+En el motor con modelo, un agente que se desvía también lo maneja el modelo. `quorum/ui/server.py` le pasa a `workflow.run` las tareas ocultas de `quorum/eval/attacks.py` (`side_tasks`), una por cada rol que participa en el ataque. La tarea se añade al final del prompt de sistema de ese rol y, como un paso numerado más, al final de su tarea (`agents.prompts`). Un rol que se desvía y no recibe tarea oculta corre sus pasos guionados (`workflow.plan`); eso solo pasa si se llama a `workflow.run` sin `side_tasks`. La página no deja escribir ni cambiar la tarea oculta: va siempre la del caso elegido.
 
 Si se pide el motor con modelo y no hay key ni servicios de agente, la corrida cae al guionado y el resultado lo dice en `engines`.
 

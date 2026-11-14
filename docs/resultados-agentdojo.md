@@ -25,6 +25,8 @@ Cada traza pasa por una sesión de Quórum, dos veces: sin defensa (`enforce=Fal
 
 Además del conteo de llamadas, se le pregunta al verificador del propio AgentDojo (`utility` y `security`) si la tarea quedó cumplida y si el ataque quedó logrado, mirando el entorno al final.
 
+Esta no es la misma medición que la del Frente 3 en [`quorum/eval/agentdojo/RESULTADOS.md`](../quorum/eval/agentdojo/RESULTADOS.md). Aquí se repite, sin modelo, la traza de referencia de cada tarea, con un aprobador estricto y la regla P2 por contexto: por eso `banking` da 5 de 16 tareas legítimas. Allá se reproducen trazas grabadas de modelos reales con P2 por valor, que en su corte principal deja pasar 16 de 25 tareas limpias (16 de las 19 que funcionan sin defensa); su brazo por contexto da 5 de 25.
+
 Para repetirlo:
 
 ```
@@ -233,4 +235,4 @@ Tareas de usuario cuya traza de referencia se ejecuta completa, y las que el ver
 - **Tareas de inyección que no se pudieron repetir.** En `workspace`, 8 de las 14 tareas de inyección (de la 6 a la 13) traen una lista de referencia vacía en el paquete, y en `travel` la tarea 6 no tiene ninguna acción (solo busca que el agente diga algo). Se cuentan como no aplicables: 20 pares en `travel` y 320 en `workspace`.
 - **Un verificador que no reconoce su propia referencia.** En `workspace`, `security` no da por logrado el ataque `injection_task_0` ni siquiera sin defensa (40 pares), aunque sus llamadas sí se ejecutan. Por eso esa columna dice 83 % y no 100 %. El conteo de llamadas ejecutadas no depende de ese verificador.
 - **En la traza atacada no se repiten las acciones del usuario**, solo sus lecturas. No se mide la tarea legítima y el ataque en la misma corrida.
-- **No se compara con otras defensas ni con cifras del artículo de AgentDojo.** No se verificó ninguna en esta sesión y por eso no se cita ninguna.
+- **Esta corrida no se compara con otras defensas ni con cifras del artículo de AgentDojo.** No se verificó ninguna en esta sesión y por eso no se cita ninguna. La reproducción del Frente 3 sí compara con el filtro de herramientas y con el detector DeBERTa de AgentDojo, sobre trazas grabadas del conjunto `banking`: está en [`quorum/eval/agentdojo/RESULTADOS.md`](../quorum/eval/agentdojo/RESULTADOS.md).

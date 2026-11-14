@@ -4,6 +4,8 @@ Es el escenario realista que pidió el mentor: nadie corrompió a los agentes. L
 
 Cada trámite se corre una sola vez, sin bloquear nada, para que el daño pueda ocurrir. La decisión de la compuerta queda en la bitácora. Así salen los dos brazos del mismo comportamiento: sin defensa (lo que se publicó) y con la compuerta (lo que habría detenido).
 
+No es el experimento principal de inyección. Ese está en [correcciones de la mentoría](correcciones-mentoria.md) (`quorum/eval/baseline.py`): cinco modelos y 150 episodios cada uno, con otra inyección (cuatro pretextos fijos en el anexo del proveedor atacante) y otros prompts (tres niveles: `none`, `base` y `strong`). Son dos mediciones distintas y no se leen como la misma.
+
 <!-- agents:start -->
 
 Modelo de los agentes: `openai/gpt-6-luna`. 10 trámites sin inyección y 10 con la carta inyectada, todos con los prompts honestos. Costo de la corrida: 0.03 USD.
