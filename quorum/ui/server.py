@@ -5,12 +5,11 @@
 Upload the bids (text, PDF or scans), choose honest or modified agents and
 whether the gate enforces or only audits, and watch the episode step by step.
 
-To open it to other machines, in .env:
-  QUORUM_UI_HOST=0.0.0.0
-  QUORUM_UI_PASSWORD=<access key>       # required: without it the server refuses to start
-Listening on anything but loopback (which includes the container of
-docker-compose.ui.yml, whatever port Compose publishes) the page always asks
-for user "quorum" and that key.
+The page opens without user or key. To ask for them, in .env:
+  QUORUM_UI_PASSWORD=<access key>       # optional: the page then asks for user "quorum" and this key
+To open it to other machines: QUORUM_UI_HOST=0.0.0.0. Without a key, anyone
+who reaches the port can use the page, and in docker-compose.ui.yml that
+includes the agent containers, which share a network with it.
 
 State lives in memory: at start-up, and after Reset, the three agents are in
 their honest version and no run is kept.
@@ -207,7 +206,7 @@ class Sessions:
 
 
 SESSIONS = Sessions()
-PASSWORD: str | None = None      # None = no access control (only when listening on loopback)
+PASSWORD: str | None = None      # None = no access control: the page opens without user or key
 USER = "quorum"
 
 
@@ -221,18 +220,17 @@ def is_loopback(host: str) -> bool:
 
 
 def access_key(host: str, environ: Mapping[str, str]) -> str | None:
-    """The key the page asks for, or None for no access control.
+    """The key the page asks for, or None for no access control (the default).
 
-    The decision depends only on the address this process listens on. Where
-    Compose publishes the port (QUORUM_UI_BIND) says nothing about who else can
-    reach it: in docker-compose.ui.yml the agents share a network with this
-    container. So beyond loopback a key is required, and without one the
-    server does not start.
+    Without a key and beyond loopback the server still starts, but says who can
+    reach it: where Compose publishes the port (QUORUM_UI_BIND) does not make the
+    container private, since in docker-compose.ui.yml the agents share a network with it.
     """
     key = (environ.get("QUORUM_UI_PASSWORD") or "").strip() or None
     if key is None and not is_loopback(host):
-        raise SystemExit(f"quorum interface: refusing to listen on {host} without an access key. "
-                         "Set QUORUM_UI_PASSWORD, or listen on 127.0.0.1 (QUORUM_UI_HOST).")
+        print(f"quorum interface: listening on {host} without an access key; anyone who reaches this port "
+              "(the agent containers included) can use the page. Set QUORUM_UI_PASSWORD to ask for one.",
+              file=sys.stderr, flush=True)
     return key
 
 
@@ -336,7 +334,7 @@ def main() -> None:
     agents.load_env()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("QUORUM_UI_PORT") or 8765)
     host = os.environ.get("QUORUM_UI_HOST") or "127.0.0.1"
-    PASSWORD = access_key(host, os.environ)      # exits here rather than serve without a key beyond loopback
+    PASSWORD = access_key(host, os.environ)      # None: the page opens without user or key
     server = ThreadingHTTPServer((host, port), Handler)
     threading.Thread(target=warm_up, daemon=True).start()
     print(f"quorum interface at http://{host}:{port}", flush=True)
