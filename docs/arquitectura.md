@@ -105,6 +105,7 @@ evaluate(request, policy) -> Decision(allow, policy, reason)
 |---|---|---|
 | P1 | Una salida se bloquea si el contexto de quien llama deriva de alguna fuente restringida que ese sumidero no admite y que el usuario no endosó | Confidencialidad en la salida |
 | P2 | Modo estricto, opcional: si el contexto deriva de fuentes no confiables, la salida exige una aprobación humana que se obtiene fuera de los agentes. Desactivada en el experimento principal | Integridad: un documento entrante no decide acciones |
+| P1 con marea alta | Opcional (`high_water_mark`): la salida se juzga con los secretos que ha visto cualquier agente, no solo quien llama. Cierra el canal de claves ausentes. Desactivada en el experimento principal | Confidencialidad frente a señales que no viajan en los datos |
 | P3 | Toda llamada y toda decisión quedan en una bitácora de solo anexar, encadenada con hashes, que los agentes no pueden escribir | Auditoría |
 
 La compuerta es una función pura: misma entrada, misma salida. Si una regla falla con una excepción, la respuesta es negar. Se pueden agregar reglas propias sin tocar el núcleo. Se prueba con `pytest` y `hypothesis` sin llamar a ningún modelo.
@@ -128,7 +129,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 
 ## Qué se probó
 
-`uv run pytest` corre 385 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 435 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
@@ -136,6 +137,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 - **La invariante del agente**: su contexto nunca pierde una fuente y no se puede reasignar.
 - **Ninguna llamada escapa de la bitácora**: ni un texto que no se puede codificar ni un argumento con ciclos impiden registrar el evento. Antes de este arreglo, una escritura así se ejecutaba y no quedaba anotada.
 - **La regla de dependencias** entre capas.
+- **Intentos de romper la compuerta**: nueve formas de disfrazar el valor, todas bloqueadas, y un canal que sí lo saca con la política por defecto y que el modo de marea alta cierra. Ver [intentos de evasión](intentos-de-evasion.md).
 - **Los dos escenarios** de punta a punta, con almacén en memoria y con SQLite.
 - **El protocolo por red**: tokens desconocidos, roles cruzados, cuerpos mal formados y llamadas en paralelo. Un agente remoto obtiene exactamente lo mismo que uno local.
 - **Procesos separados**: el monitor y cada agente como procesos distintos que solo comparten un puerto. El ataque repartido entre tres procesos se bloquea igual.

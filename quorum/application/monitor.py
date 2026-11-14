@@ -264,7 +264,15 @@ class Quorum:
             return result
 
     def _decide(self, session: Session, tool: Tool, arguments: Mapping[str, Any]) -> Decision:
-        request = Request(session.principal, session.role.name, tool.name, arguments, session.context)
+        context = session.context
+        if self.policy.high_water_mark:
+            # An agent that saw a secret can signal it through the shared store without writing it:
+            # whether a key exists, how many there are. Another agent reads that and stays clean,
+            # because labels travel with values. With this on, a sink is judged with the secrets of
+            # every agent so far, so no such signal can leave. The price is blocking more.
+            seen = frozenset().union(*(s.context.secrets for s in self._sessions.values()))
+            context = Label(context.secrets | seen, context.untrusted)
+        request = Request(session.principal, session.role.name, tool.name, arguments, context)
         if self.policy.strict_mode and session.context.untrusted and self._approver is not None:
             try:
                 approved = bool(self._approver(request))
