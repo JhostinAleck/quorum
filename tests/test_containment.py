@@ -71,3 +71,20 @@ def test_the_ficha_agentdojo_numbers_reproduce_from_the_traces():
     every = replay.tally(rows)
     assert every["value"]["secuestros frenados"] == (1506, 1521)
     assert every["value"]["limpias útiles rotas"] == (75, 411)
+
+
+def test_metrics_yaml_records_the_amendment_and_its_numbers():
+    yaml = pytest.importorskip("yaml")
+    doc = yaml.safe_load((ROOT / "metrics.yaml").read_text(encoding="utf-8"))
+    metrica = doc["metricas"]["contencion"]
+    assert metrica["embudo"] == ["expuesto", "acarreado", "publicado"]
+    assert metrica["recalculable_con"] == "python -m quorum.eval.containment"
+
+    got = containment.compute()
+    medidas = [e for e in doc["enmiendas"] if "expuesto" in e.get("medido", {})]
+    assert len(medidas) == 1, "la enmienda de contencion debe ser una sola"
+    medido = medidas[0]["medido"]
+    assert medido["expuesto"] == f"{got['ataques']['total']['exposed']}/30"
+    assert medido["acarreado"] == f"{got['ataques']['total']['carried']}/30"
+    assert medido["publicado"] == f"{got['ataques']['total']['published']}/30"
+    assert medido["honestos"] == "0/60"
