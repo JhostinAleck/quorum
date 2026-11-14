@@ -67,11 +67,16 @@ la ficha a página completa se ve ilegible en Zoom.
 - **Voz:** una sola para los 3 minutos; el equipo entra en las preguntas. Si son dos voces, un solo relevo en
   1:40: se dice el nombre en voz alta y se espera un segundo antes de hablar.
 - **Pantalla:** una persona. Comparte **la ventana del PDF**, no el escritorio, y hace zoom a cada tabla cuando
-  la voz dice la señal entre corchetes. Ensaya la secuencia con el guion:
-  - Título y Figura 1, a lo ancho.
-  - Tabla 1, Tabla 2 y Tabla 3, cada una ampliada hasta llenar la pantalla.
-  - Límites.
-  - Vuelta al título para el cierre.
+  la voz dice la señal entre corchetes. La página oficial dice que los jurados **leen la ficha** mientras
+  hablamos, así que la pantalla tiene que mostrar justo lo que se dice. Son 6 movimientos, ensayados con el
+  guion:
+  - **0:00, página 1 arriba:** el título y «En una frase».
+  - **0:40, página 1:** la Figura 1 ampliada. Se queda ahí durante la amenaza y la defensa.
+  - **1:05, página 2, columna izquierda:** la Tabla 1 ampliada.
+  - **1:40, página 2, columna izquierda:** la Tabla 2.
+  - **2:05, página 2, columna izquierda:** la Tabla 3.
+  - **2:25, página 2, columna derecha:** «5. Límites» y «6. Riesgo de uso dual».
+  - **2:45, vuelta a la página 1 arriba:** el título, para el cierre.
 - **Respaldo:** otra persona, en otra red (datos del celular), con el PDF abierto. Si la pantalla falla más de
   10 segundos, comparte ella. La voz sigue hablando: el guion se entiende sin la pantalla.
 - **Reloj y chat:** pega en el chat de Zoom el enlace del repositorio y el del PDF en el segundo 0. Lleva el
