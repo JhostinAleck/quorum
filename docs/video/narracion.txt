@@ -1,0 +1,49 @@
+NOTAS (no pegar en ElevenLabs; el texto de la voz empieza en la línea "ESCENA 1")
+
+Voz usada: ElevenLabs, voz de biblioteca "Camila ES - Melete" (femenina, acento colombiano, tono
+informativo). Es una voz de catálogo de categoría
+"professional": la voz de una persona real que la licencia a ElevenLabs para este uso. El equipo no
+clonó la voz de nadie.
+Modelo: eleven_v4. Ajustes: stability 0.5, similarity 0.75, style 0, speaker boost activado,
+speed 1.2. Son los ajustes de narración documental que repiten las publicaciones que citó Grok
+(stability 0.5, similarity 0.75, style 0); ninguna da números pensados para español.
+Cómo se generó: una toma por escena, con el endpoint que devuelve marcas de tiempo, para que la
+animación se cuelgue de cada frase (animacion/voz_elevenlabs.py). Los números van en letras para
+que la voz no los lea mal.
+Duración: 266 palabras. A 150 palabras por minuto son 1:46. Esta voz habla más despacio (unas 137
+palabras por minuto con speed 1.2), así que las tomas se ajustan un 5 % con ffmpeg (atempo 1.05,
+sin cambiar el tono) y el video queda en 1:58,5. Si se cambia de voz y el total pasa de 2:00,
+montar.sh se detiene con un error: se acorta el texto, no se acelera más.
+Pronunciación: agy oyó bien "Quórum" y "AgentDojo". La sigla "IA" sonaba pegada, así que la escena 1
+dice "inteligencia artificial".
+
+ESCENA 1
+Quórum es una compuerta determinista: impide que un dato sellado salga publicado, aunque el ataque se reparta entre varios agentes de inteligencia artificial.
+
+ESCENA 2
+El caso: tres agentes tramitan una licitación pública con ofertas selladas. Uno radica, otro evalúa y otro publica. Si el ataque se reparte, ningún paso se ve raro.
+
+ESCENA 3
+Cada dato lleva la etiqueta de sus fuentes, y lo que un agente escribe la hereda. En cada salida, la compuerta compara etiquetas: no lee texto ni llama a ningún modelo.
+
+ESCENA 4
+Así se ve funcionando, con datos sintéticos. En un trámite honesto, la adjudicación se publica.
+
+ESCENA 5
+Con los tres agentes desviados, el valor sellado pasa de uno a otro. La compuerta bloquea la salida: no se publica nada.
+
+ESCENA 6
+Lo medimos en noventa trámites con agentes de modelo. Sin defensa, el valor se fugó en dieciséis de treinta ataques. La compuerta bloqueó las dieciséis fugas y dejó pasar los sesenta trámites honestos, sin llamar a un modelo.
+
+ESCENA 7
+Un monitor por agente también las detecta, sin falsos positivos. Pero gasta tres llamadas a un modelo por trámite y califica al final: detecta, no detiene.
+
+ESCENA 8
+En cinco dominios, con agentes que siguen un guion, dejó en cero el daño en siete mil seiscientos episodios adversos. Y en trazas públicas de AgentDojo frenó mil quinientos seis de mil quinientos veintiún secuestros.
+
+ESCENA 9
+Tiene costos. Bloquea siempre al agente honesto que abre un sobre que no necesitaba. En AgentDojo detiene parte de las tareas legítimas. Y un rival externo puede recuperar el monto con los puntajes que la licitación publica.
+
+ESCENA 10
+El código, los datos y los límites están en el repositorio.
+

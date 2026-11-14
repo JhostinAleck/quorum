@@ -1,0 +1,2 @@
+Cada dato lleva la etiqueta de sus fuentes, y lo que un agente escribe la hereda.
+En cada salida, la compuerta compara etiquetas: no lee texto ni llama a ningún modelo.

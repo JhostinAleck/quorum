@@ -1,0 +1,3 @@
+El caso: tres agentes tramitan una licitación pública con ofertas selladas.
+Uno radica, otro evalúa y otro publica.
+Si el ataque se reparte, ningún paso se ve raro.

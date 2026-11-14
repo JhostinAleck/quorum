@@ -1,0 +1,2 @@
+Un monitor por agente también las detecta, sin falsos positivos.
+Pero gasta tres llamadas a un modelo por trámite y califica al final: detecta, no detiene.
