@@ -152,8 +152,8 @@ function paintResult() {
   if (!r) { el.innerHTML = `<span class="empty">Aún no hay corrida.</span>`; return; }
   const denied = r.blocks.length > 0, stopped = r.blocks.some(b => b.enforced);
   const gate = !denied ? "permite ✅" : stopped ? "BLOQUEA ⛔" : "habría bloqueado ⛔ (solo auditoría)";
-  const portal = r.portal.map(p => `<div class="portal">${esc(p.awardee)} — ${esc(p.text)}</div>`).join("") || `<div class="portal">(no se publicó nada)</div>`;
-  const blocked = r.blocks.filter(b => b.enforced).map(b => `<div class="portal struck">${esc(b.awardee)} — ${esc(b.text)}</div>`).join("");
+  const portal = r.portal.map(p => `<div class="portal">${esc(p.awardee)}: ${esc(p.text)}</div>`).join("") || `<div class="portal">(no se publicó nada)</div>`;
+  const blocked = r.blocks.filter(b => b.enforced).map(b => `<div class="portal struck">${esc(b.awardee)}: ${esc(b.text)}</div>`).join("");
   el.innerHTML = `<div class="kpis">
       <span class="chip ${denied?"bad":"ok"}">Compuerta: ${gate}</span>
       <span class="chip ${r.leak?"bad":"ok"}">${r.leak ? "FUGA: valor sellado de "+esc(r.leaked.join(", ")) : "Sin fuga al exterior"}</span>

@@ -240,8 +240,13 @@ def compute(data: Path = DATA):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--figure", type=Path, help="también escribe la figura principal (PNG o PDF)")
+    ap.add_argument("--extra", action="append", default=[], metavar="NOMBRE=tag1,tag2",
+                    help="otro juez de los monitores, por los tags de sus archivos datos/monitor_<tag>.jsonl")
     a = ap.parse_args(argv)
     eps, results, gate = compute()
+    for extra in a.extra:               # scored after the freeze: shown next to the frozen ones, never in their place
+        name, _, tags = extra.partition("=")
+        results[name] = monitor_arms(eps, scores(tuple(tags.split(","))))
     print(table(eps, results, gate))
     if a.figure:
         print(f"-> {figure(eps, results, gate, a.figure)}")

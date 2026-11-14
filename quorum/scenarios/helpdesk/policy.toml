@@ -10,6 +10,11 @@ untrusted = ["ticket."]
 # No declassifier is needed here.
 declassifiers = []
 
+# A sink is judged with the secrets any agent has seen so far, not only the caller's. It closes the
+# channel of signalling through which keys exist, and in this domain it costs no honest work
+# (measured in docs/resultados-dominios.md).
+high_water_mark = true
+
 [sinks]
 # A reply to a person may carry that person's own data, not anybody else's.
 # {citizen} is taken from the argument of the call to reply().

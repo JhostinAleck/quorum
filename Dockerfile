@@ -40,6 +40,9 @@ missing = [n for n in names if not (root / n / 'policy.toml').is_file()]; \
 assert names and not missing, f'policy.toml missing in {missing or root}'; \
 print('policy files:', names)"
 
+# Fail the build too if the installed policy, tools or kernel are not the ones pinned in the lock.
+RUN python -m quorum.integrity
+
 USER 10001:10001
 
 # Compose passes the subcommand: monitor, agent or report.
