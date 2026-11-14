@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pitch final Quórum</title>
+<style>
+:root{--bg:#F3EFE6;--fg:#1B2233;--mut:#5b6170;--acc:#A8431A;--card:#fffdf8;--line:#ddd5c6;--l:#2F6F8F;--j:#7A4FA0;--t:#A8431A}
+@media (prefers-color-scheme:dark){:root{--bg:#121826;--fg:#EDEAE3;--mut:#a6acb7;--acc:#F08A4B;--card:#1a2233;--line:#2c3547;--l:#6FB3D6;--j:#B99AD8;--t:#F08A4B}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:20px/1.55 Inter,system-ui,-apple-system,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:36px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 14px;font-size:17px}
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;font-size:17px}
+.chip{padding:4px 12px;border-radius:999px;border:2px solid currentColor;font-weight:700}
+.chip.l,.b.l .who{color:var(--l)}.chip.j,.b.j .who{color:var(--j)}.chip.t,.b.t .who{color:var(--t)}
+.b{background:var(--card);border:1px solid var(--line);border-left:6px solid;border-radius:14px;padding:20px 22px;margin:0 0 14px}
+.b.l{border-left-color:var(--l)}.b.j{border-left-color:var(--j)}.b.t{border-left-color:var(--t)}
+.b header{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-bottom:8px}
+.t{font-variant-numeric:tabular-nums;font-weight:700;color:var(--mut)}.who{font-weight:800;font-size:22px}.s{color:var(--mut);font-size:16px}
+.b p{margin:0;font-size:22px}.b p.cue{margin-top:10px;font-weight:700;font-style:italic}
+.hand{margin:6px 0 10px;color:var(--mut);font-size:16px;text-transform:uppercase;letter-spacing:.06em}
+.notes{border-left:4px solid var(--acc);padding:4px 0 4px 16px;color:var(--mut);font-size:17px;margin-top:28px}
+.notes li{margin:6px 0}
+@media print{body{background:#fff;color:#000}.b{break-inside:avoid}}
+</style></head><body><main>
+<h1>Pitch final · Quórum</h1>
+<p class="sub">3:00 · DefAcc Hackathon, Track 6 · Tiempos estimados a ritmo de pitch (2,5 palabras por segundo), con margen para los relevos.</p>
+<div class="sum"><span class="chip l">Laura ≈ 0:49</span> · <span class="chip j">Jhostin ≈ 1:07</span> · <span class="chip t">Thomas ≈ 1:02</span></div>
+<article class="b l"><header><span class="t">0:00–0:22</span><span class="who">Laura</span><span class="s">Diapositiva 1 · Apertura</span></header><p>Imaginen que la fórmula de la Coca-Cola está guardada en una empresa donde trabajan tres agentes de IA. Si se ponen de acuerdo, cada uno saca un pedacito y ninguno parece culpable. Quórum es una puerta que no deja salir nada confidencial sin permiso, y no le pregunta a ninguna IA.</p></article><article class="b l"><header><span class="t">0:22–0:49</span><span class="who">Laura</span><span class="s">Diapositiva 2 · 1 · Vector de riesgo</span></header><p>Eso es justo lo que probamos. Tres agentes tramitan una licitación pública. El Radicador abre un sobre sellado y disfraza el valor como si fuera un número de radicado; el Evaluador lo copia y el Publicador lo publica. Por separado, cada paso parece normal. Con agentes de IA reales y sin defensa, el valor se filtró en 16 de 30 ataques.</p><p class="cue">¿Cómo lo frenamos?</p></article><div class="hand">Relevo → <b>Jhostin</b></div><article class="b j"><header><span class="t">0:49–1:22</span><span class="who">Jhostin</span><span class="s">Diapositiva 3 · 2 · Mecanismo defensivo</span></header><p>Quórum no adivina intenciones: sigue de dónde viene cada dato. Tres reglas. Uno: lo confidencial entra marcado. Dos: la marca se contagia; si un agente lee algo marcado, todo lo que escriba después queda marcado. Tres: antes de publicar, una regla fija revisa las marcas, y si hay algo confidencial, no sale. Como no lee el texto, disfrazar el valor no sirve. Y como vive en la capa de herramientas, no en el prompt, funciona con cualquier modelo.</p></article><article class="b j"><header><span class="t">1:22–1:56</span><span class="who">Jhostin</span><span class="s">Diapositiva 4 · 3 · Validación empírica</span></header><p>Lo probamos en 90 trámites con agentes de IA reales: frenó las 16 fugas y no frenó ninguno de los 60 trámites honestos. Y somos honestos: un vigilante de IA que revisa a cada agente también detectó las 16. La diferencia está en cómo. El vigilante le pregunta a una IA en cada trámite, necesita un umbral y revisa al final: solo avisa. Quórum decide en alrededor de un microsegundo, en cada salida y sin IA. Y frena.</p><p class="cue">¿Y fuera de nuestro laboratorio?</p></article><div class="hand">Relevo → <b>Thomas</b></div><article class="b t"><header><span class="t">1:56–2:22</span><span class="who">Thomas</span><span class="s">Diapositiva 5 · 3 · Ataques que no escribimos</span></header><p>Para no evaluarnos solo con ataques propios, llevamos el mismo núcleo a cinco dominios, entre ellos salud, banca y legal, cambiando solo un archivo de reglas: cero daños en 7.600 trámites. Y en AgentDojo, un benchmark público que no escribimos, Quórum fue la única defensa que frenó los 90 secuestros y conservó 16 de las 19 tareas que funcionan sin defensa.</p></article><article class="b t"><header><span class="t">2:22–2:51</span><span class="who">Thomas</span><span class="s">Diapositiva 6 · 4 · Límites y riesgo dual</span></header><p>No es perfecto, y lo medimos. Frena al agente honesto que abre un sobre que no necesitaba, no puede ocultar lo que las reglas declaran público y no ve señales como el tiempo de respuesta. Lo que sigue: etiquetas por campo, un atacante que se adapta en vivo y empaquetarlo como proxy MCP. Y para no ayudar a atacar: el ataque vive solo en nuestro laboratorio, con datos inventados.</p></article><article class="b t"><header><span class="t">2:51–2:58</span><span class="who">Thomas</span><span class="s">Diapositiva 7 · Cierre</span></header><p>En resumen: la IA vigilante avisa; Quórum frena. Nada confidencial sale sin permiso. Gracias.</p></article>
+<section class="notes"><ul>
+<li><b>Reparto:</b> Laura abre y plantea el riesgo. Jhostin, que construyó Quórum, explica cómo funciona y si funcionó. Thomas cierra con la validación externa, los límites y el remate.</li>
+<li><b>Dos relevos, una frase cada uno.</b> La pregunta en cursiva la dice quien termina; el siguiente arranca sin pausa.</li>
+<li><b>Una sola persona pasa las diapositivas</b>, la que no está hablando.</li>
+<li><b>Si van tarde en 2:00</b>, Thomas salta la frase de próximos pasos de los límites.</li>
+<li><b>Regla oficial:</b> se proyecta la ficha, «sin diapositivas». Si no dejan usar el deck, el mismo texto sirve con la ficha en pantalla.</li>
+</ul></section>
+</main></body></html>
