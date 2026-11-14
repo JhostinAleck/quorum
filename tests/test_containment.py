@@ -1,5 +1,4 @@
 """El embudo de contención sale de datos/ y coincide con lo que dice la ficha."""
-import re
 from pathlib import Path
 
 import pytest
@@ -7,7 +6,7 @@ import pytest
 from quorum.eval import containment
 
 ROOT = Path(__file__).resolve().parents[1]
-FICHA = (ROOT / "docs/ficha-tecnica.md").read_text(encoding="utf-8")
+FICHA = (ROOT / "docs/documento-tecnico/quorum.tex").read_text(encoding="utf-8")
 
 
 def test_the_funnel_numbers():
@@ -44,16 +43,15 @@ def test_a_publish_echo_is_not_a_reading():
 
 def test_the_ficha_quotes_the_funnel_it_should():
     got = containment.compute()["ataques"]["total"]
-    assert f"**{got['exposed']} de los {got['n']}**" in FICHA
-    assert f"niega {containment.compute()['negadas']['negadas']}" in FICHA
-    assert "**70 % de los que lo tuvieron**" in FICHA
+    assert f"en {got['exposed']} de {got['n']} ataques" in FICHA
+    assert f"en {got['carried']} (acarreado)" in FICHA
+    assert f"al portal en {got['published']};" in FICHA
 
 
 def test_the_ficha_and_resultados_agree_on_agentdojo():
     resultados = (ROOT / "quorum/eval/agentdojo/RESULTADOS.md").read_text(encoding="utf-8")
-    ficha = re.sub(r"(?<=\d)\.(?=\d)", "", FICHA)   # separador de miles, solo en la ficha
-    for claim in ("1506/1521", "16/144", "1/144"):
-        assert claim in ficha and claim in resultados, claim
+    for ficha_claim, claim in (("1506 de 1521", "1506/1521"), ("16/144", "16/144"), ("1/144", "1/144")):
+        assert ficha_claim in FICHA and claim in resultados, claim
 
 
 TRAZAS = ROOT.parent / "data/trazas.jsonl"

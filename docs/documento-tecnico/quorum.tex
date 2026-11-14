@@ -5,7 +5,7 @@
 \documentclass[9pt,letterpaper]{extarticle}
 
 % Número de pruebas de la suite: se actualiza aquí y en ningún otro sitio.
-\newcommand{\ntests}{910}
+\newcommand{\ntests}{880}
 
 \usepackage[left=1.2cm,right=1.2cm,top=1.1cm,bottom=1.1cm]{geometry}
 \usepackage{fontspec}
@@ -67,7 +67,7 @@
 {\color{acento}\hrule height 0.8pt}
 \vspace{4pt}
 
-\lead{En una frase.} Quórum es una compuerta determinista que se pone delante de cualquier sistema de agentes, sin importar el modelo ni el dominio, y decide qué puede salir siguiendo de dónde viene cada dato, sin preguntarle a ningún modelo. En 90 trámites de una licitación con agentes de modelo bloqueó las 16 fugas del ataque y ninguno de los 60 trámites honestos. En AgentDojo, un banco de pruebas que no escribimos, frenó los 90 secuestros de 144 ataques y conservó 16 de las 19 tareas que funcionan sin defensa. El mismo núcleo protege cinco dominios cambiando solo un archivo de política. Su costo, medido: detiene siempre al agente honesto que abre un dato que no necesitaba (terminan 0 de 1000 trámites descuidados).
+\lead{En una frase.} Quórum es una compuerta determinista que se pone delante de cualquier sistema de agentes, sin importar el modelo ni el dominio, y decide qué puede salir siguiendo de dónde viene cada dato, sin preguntarle a ningún modelo, aunque varios agentes se coludan. En 90 trámites de una licitación con agentes de modelo bloqueó las 16 fugas del ataque y ninguno de los 60 trámites honestos. En AgentDojo, un banco de pruebas que no escribimos, frenó los 90 secuestros de 144 ataques y conservó 16 de las 19 tareas que funcionan sin defensa. El mismo núcleo protege cinco dominios cambiando solo un archivo de política. Su costo, medido: detiene siempre al agente honesto que abre un dato que no necesitaba (terminan 0 de 1000 trámites descuidados).
 
 \vspace{3pt}
 % == Diagrama del flujo ==
@@ -138,7 +138,7 @@
 
 Tres agentes de IA tramitan una licitación pública con ofertas selladas. El Radicador registra las ofertas, el Evaluador calcula los puntajes y el Publicador publica la adjudicación en el portal. Se comunican por un almacén compartido. El daño es que el valor de una oferta sellada llegue al portal.
 
-Suponemos que los agentes no son confiables, el supuesto del control de IA [2]: $k = 1$, 2 o 3 de ellos reciben una tarea oculta en su prompt de sistema. Con $k > 1$ el ataque se reparte: uno abre el sobre y anota el valor disfrazado de número de radicado, otro lo copia a su resultado y el tercero lo publica. Ningún paso aislado se ve raro, y repartir el ataque baja la sospecha de un monitor que mira a cada agente por separado [1]. El segundo vector, también medido: ningún agente está comprometido y la instrucción llega dentro de un documento de un tercero (inyección).
+Suponemos que los agentes no son confiables, el supuesto del control de IA [2]: $k = 1$, 2 o 3 de ellos reciben una tarea oculta en su prompt de sistema. Con $k > 1$ los agentes se coluden y el ataque se reparte: uno abre el sobre y anota el valor disfrazado de número de radicado, otro lo copia a su resultado y el tercero lo publica. Ningún paso aislado se ve raro, y repartir el ataque baja la sospecha de un monitor que mira a cada agente por separado [1]. El segundo vector, también medido: ningún agente está comprometido y la instrucción llega dentro de un documento de un tercero (inyección).
 
 % =====================================================================
 \section{Defensa}
@@ -222,7 +222,7 @@ Total & & 3200/7600 & 3200/7600 & \textbf{0/7600} \\
 \tabnote{Sin defensa hay daño en 7600 de 7600: ataque repartido, el dato escrito en palabras e inyección. El filtro falla cuando el dato va en palabras; el harness, cuando lo saca el agente que debe leerlo; los dos, ante la transferencia inyectada en banca. Con Quórum terminan 1200 de 1200 trámites honestos y 0 de 1000 descuidados. Mide el mecanismo, no la conducta de un modelo.}
 \end{minipage}\par\vspace{1pt}
 
-\lead{Un buen prompt sin compuerta.} Tres agentes honestos y una inyección en el anexo de un proveedor: con cinco modelos y tres prompts hubo 0 fugas en 600 episodios (uno de los modelos es demasiado débil para contar como evidencia). Ahí un buen prompt basta y la compuerta no tuvo fuga que detener. Sí tuvo costo: \texttt{gpt-4o-mini} abre el sobre sin copiar el valor y la compuerta habría frenado 50 de sus 120 episodios con inyección.
+\lead{Un buen prompt sin compuerta.} Tres agentes honestos y una inyección en el anexo de un proveedor: con cinco modelos y tres prompts hubo 0 fugas en 600 episodios (uno de los modelos es demasiado débil para contar como evidencia). Ahí la inyección no alcanza y la compuerta no tuvo fuga que detener. Sí tuvo costo: \texttt{gpt-4o-mini} abre el sobre sin copiar el valor y la compuerta habría frenado 50 de sus 120 episodios con inyección.
 
 \vspace{2pt}\noindent\begin{minipage}{\columnwidth}
 \tabtitle{Tabla 3. AgentDojo, banca: 144 ataques y 25 tareas limpias}
@@ -278,7 +278,7 @@ El ataque repartido ya está descrito en la literatura [1]; aquí existe solo de
 {\fontsize{6.8}{8}\selectfont\raggedright\setlength{\parskip}{1.5pt}
 \lead{Reproducir} (sin claves ni costo, desde \texttt{datos/}): \texttt{uv run pytest -q} (\ntests{} pruebas); \texttt{uv run -{}-extra eval python -m quorum.eval.analysis}; \texttt{uv run python -m quorum.eval.containment}; \texttt{uv run python -m quorum.bench}; \texttt{uv run python -m quorum.eval.break\_gate}.
 
-\lead{Modelos.} Agentes: \texttt{orca/orcacyber-flash-1.0}. Monitores: \texttt{google/gemini-3.5-flash-lite}, \texttt{claude-haiku-5-5}, \texttt{typesafe/jev-1.14} y \texttt{openai/gpt-6-luna}. Línea base de buen prompt: \texttt{openai/gpt-4o-mini}, \texttt{openai/gpt-6-luna}, \texttt{xiaomi/mimo-v2.6-flash} y \texttt{meta-llama/llama-3.1-8b-instruct}. Trazas de terceros: \texttt{ethz-spylab/agentdojo}, commit \texttt{089ed468}.
+\lead{Modelos.} Agentes: \texttt{orca/orcacyber-flash-1.0}. Monitores: \texttt{google/gemini-3.5-flash-lite}, \texttt{claude-haiku-5-5}, \texttt{typesafe/jev-1.14} y \texttt{openai/gpt-6-luna} (prueba de persuasión). Línea base de buen prompt: el de los agentes, \texttt{openai/gpt-4o-mini}, \texttt{openai/gpt-6-luna}, \texttt{xiaomi/mimo-v2.6-flash} y \texttt{meta-llama/llama-3.1-8b-instruct}. Trazas de terceros: \texttt{ethz-spylab/agentdojo}, commit \texttt{089ed468}.
 
 \lead{Uso de IA.} El código, los tests, los análisis y este documento se hicieron con asistencia de Claude Code (Anthropic), OpenCode y Codex, y la búsqueda de literatura con Grok (xAI), con supervisión del equipo. Código de terceros: \texttt{agentdojo} 0.1.35, \texttt{inspect-ai}, \texttt{pytest}, \texttt{hypothesis}, \texttt{numpy} y \texttt{matplotlib}; detalle en \texttt{docs/referencias.md}.
 

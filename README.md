@@ -4,7 +4,13 @@
 
 Proyecto del Defensive Acceleration Hackathon (AI Safety Colombia x IEEE CS Uniandes, 14 de noviembre de 2026). Track 6: riesgos multiagente, con cruce a control de IA y seguridad de agentes.
 
-> Estado: los resultados se midieron durante el sprint del 14 de noviembre de 2026 y están en la [ficha técnica](docs/ficha-tecnica.md), en [correcciones de la mentoría](docs/correcciones-mentoria.md) y en los documentos `docs/resultados-*.md`. Nada en este repo afirma un número que no salga de los logs.
+> Estado: los resultados se midieron durante el sprint del 14 de noviembre de 2026 y están en el [documento técnico](docs/documento-tecnico/quorum.pdf), en [correcciones de la mentoría](docs/correcciones-mentoria.md) y en los documentos `docs/resultados-*.md`. Nada en este repo afirma un número que no salga de los logs.
+
+## Video de dos minutos
+
+[![Video de Quórum: una compuerta determinista de procedencia](docs/video/portada.jpg)](docs/video/quorum-video.mp4)
+
+[Ver el video](docs/video/quorum-video.mp4) (1:58). El [guion](docs/video/guion.md) trae la fuente de cada cifra y [cumplimiento](docs/video/cumplimiento.md) dice qué herramientas de IA se usaron para producirlo.
 
 ## La idea: juntar dos líneas que estaban separadas
 
@@ -126,7 +132,6 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ## Documentos
 
-- [Ficha técnica](docs/ficha-tecnica.md)
 - [Documento técnico de dos páginas, en LaTeX](docs/documento-tecnico/quorum.pdf) (fuente en `docs/documento-tecnico/quorum.tex`, se compila con `docs/documento-tecnico/build.sh`)
 - [Correcciones de la mentoría: lo medido](docs/correcciones-mentoria.md)
 - [Arquitectura](docs/arquitectura.md)
@@ -150,7 +155,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ```bash
 uv sync
-uv run pytest        # 910 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
+uv run pytest        # 880 tests en un clon limpio (núcleo, escenarios, adaptadores e interfaz), sin modelos ni costo; 905 con los extras instalados
 ```
 
 Los episodios guionados recorren los ocho casos (honesto, honesto con oferta escaneada, honesto descuidado, ataque repartido entre 1, 2 y 3 agentes, ataque del agente que lee el documento e inyección) sin llamar a ningún modelo:

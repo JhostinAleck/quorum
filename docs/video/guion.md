@@ -27,6 +27,8 @@ Todo el video lleva subtítulos con la frase que se está diciendo y una barra d
 
 Las líneas son las de los archivos el 14 de noviembre a las 15:30. `quorum.tex` se estaba editando ese día, así que su numeración puede haberse corrido; las otras fuentes son estables.
 
+`docs/ficha-tecnica.md` se retiró después, cuando el documento técnico pasó a ser la ficha que se entrega: sus líneas se leen en el commit `09b315c`. Cada cifra que la cita tiene además una segunda fuente que sigue en el repositorio.
+
 | Cifra (escena) | Fuente |
 |---|---|
 | 90 trámites: 60 honestos y 30 ataques, 10 por cada reparto (6) | `docs/ficha-tecnica.md:51-52`; `metrics.yaml:121-122` y `:142` |

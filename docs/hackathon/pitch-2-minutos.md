@@ -22,8 +22,8 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 > ningún modelo.
 >
 > **(1:12) Y medimos el baseline que importa:** tres agentes honestos y una inyección dentro de un anexo.
-> Con buen prompt, con la regla del pliego y sin regla: cero fugas en 120 episodios. Ahí un buen prompt
-> basta, y lo decimos. El valor está donde el prompt no llega: el agente ya comprometido, y el agente único
+> Con buen prompt, con la regla del pliego y hasta sin regla: cero fugas en 600 episodios, con cinco modelos.
+> Ahí la inyección no alcanza, y lo decimos. El valor está donde el prompt no llega: el agente ya comprometido, y el agente único
 > que sí obedece, en AgentDojo: 90 de 90 secuestros frenados en el corte principal y 1.506 de 1.521 en
 > total. Un monitor por agente también detecta las 16 sin falsos positivos, pero paga tres llamadas a un
 > modelo por trámite y solo avisa al final. El monitor conjunto que sí se podría desplegar pierde 3 de
@@ -46,10 +46,10 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 ## Qué no decir
 
 - No abrir con «tenemos tres agentes». El mentor: «tú me hablas de agentes y la compuerta no la mencionaste».
-- No decir que el baseline «falla». El baseline de prompt **gana** en su escenario (0 fugas en 120): en
+- No decir que el baseline «falla». El baseline de prompt **no pierde** en su escenario (0 fugas en 600, también sin regla): en
   esa frase hay que decir que ahí la compuerta no aporta, y pasar a donde el prompt no llega.
 - No decir que la inyección por contenido en nuestra licitación «rompe» a los agentes: sí la medimos
-  (0 fugas en 120 episodios con buen prompt) y ahí el prompt basta. Donde la compuerta aporta frente a
+  (0 fugas en 600 episodios, también sin regla) y ahí la inyección no alcanza. Donde la compuerta aporta frente a
   la inyección es en AgentDojo.
 - No presumir de pre-registro sin decir que fue tardío.
 
@@ -57,6 +57,12 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 
 - **¿Keywords o clasificador?** Ninguno de los dos en la compuerta dura: etiquetas de procedencia. El LLM
   solo entra en la compuerta suave y ve el corte de procedencia, no el texto completo.
+- **¿Dónde falla?** Lo que la política declara público, sale: con los puntajes publicados y la fórmula, un
+  rival que conoce su oferta despeja la sellada (50 de 50, error mediano 0,04 %). No es la compuerta, es
+  el pliego: se cierra publicando el orden y no el puntaje exacto.
+- **¿Por qué bloquea al que abrió el sobre y escribió otro número?** A propósito: no lee el texto, así
+  que no se la convence. Ningún rol honesto necesita abrir un sobre (0 de 60 bloqueados); quien lo abre
+  ya se salió de su tarea y queda retenido para revisión humana.
 - **¿Y si el agente parte el número?** La etiqueta va con el valor, no con el texto; partir el número no
   rompe la etiqueta. Lo que sí la evade es lavar el dato por un canal que la política no declara.
 - **¿Qué cambia entre dominios?** Una tabla: fuentes restringidas, fuentes no confiables, desclasificadores
