@@ -12,7 +12,7 @@ Proyecto del Defensive Acceleration Hackathon (AI Safety Colombia x IEEE CS Unia
 
 ## Video de dos minutos
 
-[![Video de Quórum: una compuerta determinista de procedencia](docs/video/portada.jpg)](docs/video/quorum-video.mp4)
+https://github.com/user-attachments/assets/0e820bb2-605e-4a9a-b251-22b733fe6453
 
 [Ver el video](docs/video/quorum-video.mp4) (1:58). El [guion](docs/video/guion.md) trae la fuente de cada cifra y [cumplimiento](docs/video/cumplimiento.md) dice qué herramientas de IA se usaron para producirlo.
 
