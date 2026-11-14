@@ -1,6 +1,6 @@
 """The Quorum reference monitor.
 
-Every call an agent makes to a tool goes through here. The engine:
+Every call an agent makes to a tool goes through here. The monitor:
 
   1. checks that the agent's role has that tool and that quota remains,
   2. validates the arguments,
@@ -11,19 +11,21 @@ Every call an agent makes to a tool goes through here. The engine:
   6. appends the event to the audit log.
 
 Tools cannot forget to propagate a label, because they never touch the store
-directly. The engine knows no domain and no agent framework.
+directly. This is the application layer: it orchestrates the domain (labels,
+policy, gate, agent) and talks to the outside only through the Store port.
 """
 from __future__ import annotations
 
 import copy
 import threading
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from functools import partial
 from typing import Any
 
-from .audit_log import AuditLog
-from .errors import (
+from ..domain.agent import Agent
+from ..domain.audit_log import AuditLog
+from ..domain.errors import (
     InvalidArguments,
     InvalidConfiguration,
     PermissionDenied,
@@ -32,31 +34,13 @@ from .errors import (
     UnknownTool,
     is_id,
 )
-from .labels import PUBLIC, Label
-from .policy import BASE_RULES, Decision, Policy, Request, Role, Rule, evaluate
-from .store import MemoryStore, Store, Value
-from .tools import Kind, Tool
+from ..domain.gate import BASE_RULES, Blocked, Decision, Emission, Request, Rule, evaluate
+from ..domain.labels import PUBLIC, Label
+from ..domain.policy import Policy, Role
+from ..domain.repositories import Store, Value
+from ..domain.tools import Kind, Tool
 
 _ACCESS_CONTROL = {"ROLE", "QUOTA", "ARGUMENTS"}   # denials that do not come from the gate
-
-
-@dataclass(frozen=True)
-class Blocked:
-    """What a sink call returns when the gate did not let it run."""
-    tool: str
-    policy: str
-    reason: str
-
-    def __str__(self) -> str:
-        return f"BLOCKED by policy {self.policy}: {self.reason}"
-
-
-@dataclass(frozen=True)
-class Emission:
-    """Something that left the system through a sink."""
-    sink: str
-    principal: str
-    arguments: Mapping[str, Any]
 
 
 class Call:
@@ -106,15 +90,12 @@ class Call:
             raise PermissionDenied(f"role {self.role.name!r} cannot write {key!r}")
 
 
-class Session:
-    """An agent as seen by the monitor: its identity, its role and its context label."""
+class Session(Agent):
+    """An agent's handle on the monitor. Every call it makes goes through here."""
 
     def __init__(self, quorum: Quorum, principal: str, role: Role, context: Label) -> None:
+        super().__init__(principal, role, context)
         self._quorum = quorum
-        self.principal = principal
-        self.role = role
-        self.context = context
-        self.trajectory: list[dict[str, Any]] = []   # what a monitor would see: no labels
 
     def call(self, name: str, /, *args: Any, **kwargs: Any) -> Any:
         """Call a tool. Returns its result, or a Blocked if the gate stopped it.
@@ -136,14 +117,10 @@ class Session:
         """Create a subagent. It inherits the label: delegating does not clean the context."""
         return self._quorum.session(principal, role, inherits=self.context)
 
-    def _record(self, tool: str, arguments: Mapping[str, Any], **rest: Any) -> None:
-        self.trajectory.append({"tool": tool, "args": copy.deepcopy(dict(arguments)),
-                                **copy.deepcopy(rest)})
-
 
 class Quorum:
-    def __init__(self, policy: Policy, tools: Iterable[Tool], *,
-                 store: Store | None = None, enforce: bool = True,
+    def __init__(self, policy: Policy, tools: Iterable[Tool], store: Store, *,
+                 enforce: bool = True,
                  rules: tuple[Rule, ...] = BASE_RULES,
                  approver: Callable[[Request], bool] | None = None) -> None:
         """
@@ -155,7 +132,7 @@ class Quorum:
                        the human approval required by rule P2.
         """
         self.policy = policy
-        self.store: Store = store if store is not None else MemoryStore()
+        self.store = store
         self.enforce = enforce
         self.audit_log = AuditLog()
         self.emissions: list[Emission] = []
@@ -245,7 +222,7 @@ class Quorum:
             def deny(code: str, reason: str, error: type[QuorumError]) -> None:
                 # failed attempts are also visible to the monitors
                 self._log(session, tool, kwargs, before, Decision(False, code, reason), executed=False)
-                session._record(name, kwargs, error=reason)
+                session.record(name, kwargs, error=reason)
                 raise error(reason)
 
             if name not in session.role.tools:
@@ -265,7 +242,7 @@ class Quorum:
                 if not decision.allow and self.enforce:
                     blocked = Blocked(name, decision.policy or "?", decision.reason)
                     self._log(session, tool, arguments, before, decision, executed=False)
-                    session._record(name, arguments, result=str(blocked))
+                    session.record(name, arguments, result=str(blocked))
                     return blocked
 
             call = Call(self, session)
@@ -273,17 +250,17 @@ class Quorum:
                 result = tool.fn(call, **arguments)
             except Exception as error:
                 # on failure nothing is declassified: what was read taints the context
-                session.context = session.context.join(call.seen)
+                session.absorb(call.seen)
                 text = f"{type(error).__name__}: {error}"
                 self._log(session, tool, arguments, before, decision, executed=False, error=text)
-                session._record(name, arguments, error=text)
+                session.record(name, arguments, error=text)
                 raise
             if tool.kind is not Kind.DECLASSIFIER:
-                session.context = session.context.join(call.seen)
+                session.absorb(call.seen)
             if tool.kind is Kind.SINK:
                 self.emissions.append(Emission(name, session.principal, copy.deepcopy(arguments)))
             self._log(session, tool, arguments, before, decision, executed=True)
-            session._record(name, arguments, result=result)
+            session.record(name, arguments, result=result)
             return result
 
     def _decide(self, session: Session, tool: Tool, arguments: Mapping[str, Any]) -> Decision:

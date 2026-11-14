@@ -1,7 +1,7 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
-from quorum.core import PUBLIC, Conf, Integ, Label, restricted, untrusted
+from quorum import PUBLIC, Conf, Integ, Label, restricted, untrusted
 
 ids = st.frozensets(st.sampled_from(["a", "b", "c", "d"]))
 labels = st.builds(Label, ids, ids)

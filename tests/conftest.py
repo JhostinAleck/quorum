@@ -1,6 +1,6 @@
 import pytest
 
-from quorum.core import MemoryStore, SQLiteStore
+from quorum import MemoryStore, SQLiteStore
 
 
 @pytest.fixture(params=["memory", "sqlite"])

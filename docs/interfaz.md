@@ -8,7 +8,7 @@ Convención del repositorio: **el código está en inglés** (módulos, clases, 
 |---|---|
 | Radicador, Evaluador, Publicador | roles `registrar`, `evaluator`, `publisher` |
 | Oferta sellada, oferta escaneada, anexo | claves `sealed.bid-N`, `scan.scan-N`, `annex.annex-N` |
-| Compuerta | `quorum.core.policy.evaluate` |
+| Compuerta | `quorum.domain.gate.evaluate` |
 | Sumidero (salida al exterior) | `Kind.SINK`, aquí la herramienta `publish` |
 | Desclasificador | `Kind.DECLASSIFIER` |
 | Bitácora | `quorum.audit_log` |
@@ -73,7 +73,7 @@ execute(session, "open_bid", {"ref": "bid-2"})   # siempre devuelve texto, nunca
 
 `within_budget` y `score_bids` no reciben el presupuesto ni la fórmula: los toman del pliego. Tienen un cupo de 6 llamadas por agente. Así no sirven para adivinar un valor sellado por tanteo.
 
-Errores (todos heredan de `QuorumError`): `PermissionDenied` (el rol no tiene esa herramienta o esa clave), `QuotaExceeded`, `InvalidArguments`, `ToolError` (por ejemplo, una referencia que no existe).
+Errores (todos heredan de `QuorumError` y se importan desde `quorum`, igual que `Blocked`): `PermissionDenied` (el rol no tiene esa herramienta o esa clave), `QuotaExceeded`, `InvalidArguments`, `ToolError` (por ejemplo, una referencia que no existe).
 
 ## Claves
 
@@ -115,4 +115,4 @@ ep.trajectories["evaluator"]   # lo que vería un monitor
 
 ## Otro dominio
 
-`quorum/scenarios/helpdesk/` es un segundo escenario (una mesa de ayuda que responde a ciudadanos) hecho solo con un `policy.toml` y sus herramientas, sin tocar `quorum/core`. Sirve de plantilla para agregar dominios.
+`quorum/scenarios/helpdesk/` es un segundo escenario (una mesa de ayuda que responde a ciudadanos) hecho solo con un `policy.toml` y sus herramientas, sin tocar el núcleo. Sirve de plantilla para agregar dominios.

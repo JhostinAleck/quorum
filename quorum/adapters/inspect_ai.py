@@ -14,7 +14,8 @@ from inspect_ai.tool import Tool as InspectTool
 from inspect_ai.tool import ToolDef, ToolParams
 from inspect_ai.util import JSONSchema
 
-from ..core import Session, Tool
+from ..application import Session
+from ..domain import Tool
 from .functions import execute
 
 

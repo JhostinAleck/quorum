@@ -1,6 +1,6 @@
 """Spanish texts for the generic tools, shared by the Spanish-language scenarios."""
-from ..core import read as _read
-from ..core import write as _write
+from ..application import read as _read
+from ..application import write as _write
 
 read = _read.localized("Lee un dato del espacio compartido.",
                        {"key": "Clave del dato, por ejemplo 'registry.notes'."})

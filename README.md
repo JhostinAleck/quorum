@@ -60,11 +60,13 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 
 | Capa | Ruta | Contenido |
 |---|---|---|
-| Núcleo | `quorum/core/` | Etiquetas, política, compuerta, monitor, almacén y bitácora. Solo usa la biblioteca estándar y no conoce ningún dominio |
-| Escenarios | `quorum/scenarios/` | `tender` (la licitación) y `helpdesk` (una mesa de ayuda). Cada uno es un `policy.toml` más sus herramientas |
+| Dominio | `quorum/domain/` | El modelo de la defensa: etiquetas, política, compuerta, agente y bitácora. Puro, sin entrada ni salida |
+| Aplicación | `quorum/application/` | El monitor de referencia por el que pasa toda llamada de un agente |
+| Infraestructura | `quorum/infrastructure/` | Almacenes (memoria, SQLite) y políticas en TOML |
+| Contextos | `quorum/scenarios/` | `tender` (la licitación) y `helpdesk` (una mesa de ayuda). Cada uno es un `policy.toml` más sus herramientas y reglas |
 | Adaptadores | `quorum/adapters/` | Inspect AI y function calling genérico |
 
-El código está en inglés. Lo que leen los modelos y el jurado está en español.
+El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo comprueba (ver [arquitectura](docs/arquitectura.md)). El código está en inglés. Lo que leen los modelos y el jurado está en español.
 
 ## Documentos
 
@@ -80,7 +82,7 @@ El código está en inglés. Lo que leen los modelos y el jurado está en españ
 
 ```bash
 uv sync
-uv run pytest        # 108 tests del núcleo, los escenarios y los adaptadores, sin modelos ni costo
+uv run pytest        # 115 tests del núcleo, los escenarios y los adaptadores, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo:

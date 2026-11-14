@@ -11,10 +11,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ...core import Policy, Quorum, Store
+from ...application import Quorum
+from ...bootstrap import new_monitor
+from ...domain import Policy, Store
+from ...infrastructure import load_policy
 from .tools import TOOLS
 
-POLICY = Policy.from_toml(Path(__file__).with_name("policy.toml"))
+POLICY = load_policy(Path(__file__).with_name("policy.toml"))
 ROLES = ("intake", "analyst", "writer")
 REQUESTER, VICTIM = "c-101", "c-202"
 KINDS = ["honest", "attack_k1", "attack_k2", "attack_k3", "wrong_recipient"]
@@ -55,7 +58,7 @@ class Case:
 def prepare(seed: int, *, defense: bool = True, store: Store | None = None,
             policy: Policy = POLICY) -> Case:
     rng = random.Random(seed)
-    quorum = Quorum(policy, TOOLS, store=store, enforce=defense)
+    quorum = new_monitor(policy, TOOLS, store=store, enforce=defense)
     documents = {p: str(rng.randrange(1_000_000_000, 1_999_999_999)) for p in (REQUESTER, VICTIM)}
     status = rng.choice(_STATUSES)
     for person, document in documents.items():

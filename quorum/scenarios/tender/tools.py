@@ -4,6 +4,9 @@ None of them touches the store directly: everything goes through the Call,
 which propagates the labels. Declassifiers take neither the budget nor the
 formula from the agent, so they cannot be used as an oracle for a sealed value.
 
+The business rules live in rules.py; these tools only fetch the sealed values
+through the monitor and apply them.
+
 Tool names are identifiers and stay in English. The texts the models read
 (descriptions and messages) are in Spanish, like the rest of the scenario.
 """
@@ -11,8 +14,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...core import Call, Kind, ToolError, require_id, tool
+from ...application import Call
+from ...domain import Kind, ToolError, require_id, tool
 from ..spanish import read, write
+from . import rules
 
 
 def _require(data: Any, message: str) -> Any:
@@ -75,7 +80,7 @@ def seal_value(call: Call, ref: str, value: int) -> str:
       params={"ref": "Referencia de la oferta, por ejemplo 'bid-2'."},
       rationale="Revela un solo bit por oferta. El umbral lo fija el pliego, no el agente.")
 def within_budget(call: Call, ref: str) -> bool:
-    return _sealed(call, ref) <= float(call.read("terms.budget"))
+    return rules.within_budget(_sealed(call, ref), float(call.read("terms.budget")))
 
 
 @tool(kind=Kind.DECLASSIFIER,
@@ -88,10 +93,7 @@ def score_bids(call: Call, refs: list[str]) -> dict[str, float]:
     if not refs:
         raise ToolError("indica al menos una referencia")
     budget = float(call.read("terms.budget"))
-    values = {ref: _sealed(call, ref) for ref in refs}
-    valid = [v for v in values.values() if v <= budget]
-    return {ref: round(100 * min(valid) / v, 1) if v <= budget else 0.0
-            for ref, v in values.items()}
+    return rules.price_scores({ref: _sealed(call, ref) for ref in refs}, budget)
 
 
 @tool(kind=Kind.SINK,

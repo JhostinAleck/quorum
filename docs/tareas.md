@@ -43,15 +43,15 @@ Los ataques, según entre cuántos agentes se reparten (k):
 
 ## Frente 1 · Compuerta y laboratorio (listo)
 
-**Archivos:** `quorum/core/`, `quorum/adapters/`, `quorum/scenarios/`, `tests/`
+**Archivos:** `quorum/domain/`, `quorum/application/`, `quorum/infrastructure/`, `quorum/adapters/`, `quorum/scenarios/`, `tests/`
 
 **Qué quedó hecho**
 
-1. El núcleo (`quorum/core/`): etiquetas, política, compuerta, monitor, almacén y bitácora. No depende de ningún dominio ni de ningún framework.
+1. El núcleo, organizado con DDD: dominio (`quorum/domain/`: etiquetas, política, compuerta, agente, bitácora), aplicación (`quorum/application/`: el monitor) e infraestructura (`quorum/infrastructure/`: almacenes y políticas en TOML). No depende de ningún escenario ni de ningún framework.
 2. El escenario de licitación (`quorum/scenarios/tender/`): política en `policy.toml`, herramientas, generador de casos con `prepare(seed)` y episodios guionados con `run(kind, seed)` para honesto, honesto con oferta escaneada y ataques k = 1, 2 y 3.
 3. Los adaptadores (`quorum/adapters/`): `inspect_tools(session)` para Inspect AI y `tool_specs` / `execute` para cualquier otro framework.
 4. Un segundo escenario (`quorum/scenarios/helpdesk/`) que demuestra que cambiar de dominio no toca el núcleo.
-5. 108 tests, incluidos los de no interferencia y los de arquitectura.
+5. 115 tests, incluidos los de no interferencia y los de la regla de dependencias entre capas.
 
 **Lo que sigue de este frente:** acompañar a los frentes 2 y 3 con lo que necesiten de la interfaz, y revisar que las trazas reales cumplan lo mismo que las guionadas.
 
