@@ -40,7 +40,7 @@ Citas textuales y de dónde salen:
 | Límites dichos con honestidad | Escena 9 (1:36 a 1:52): bloquea de más, frena trabajo legítimo y no cierra lo que la licitación publica. Escena 6: pie sobre intervalos anchos. Escena 7: se dice que el monitor también detecta |
 | Nada contra sistemas reales; datos sintéticos | Escena 4 lo dice en voz ("con datos sintéticos"); las capturas llevan el rótulo; cierre (1:52): "Datos sintéticos. No se atacó ni escaneó ningún sistema real." |
 | Sin exploits ni instrucciones de ataque | El video muestra el ataque como diagrama y su bloqueo; no enseña cómo construirlo |
-| Sin voces, rostros ni correos de personas reales | No hay rostros ni correos. La voz es sintética: ver la nota de abajo |
+| Sin voces, rostros ni correos de personas reales | No hay rostros ni correos. La voz se sintetiza con una voz de catálogo que su dueño licencia a ElevenLabs: ver la nota de abajo |
 | Citar lo generado con IA | Cierre (1:52 a 1:58): declaración en pantalla. Los planos generados llevan el rótulo "Plano generado con IA · Higgsfield" mientras se ven |
 | Enlace al repositorio | Cierre: `github.com/JhostinAleck/quorum` |
 
@@ -55,6 +55,6 @@ Citas textuales y de dónde salen:
 | agy | Revisión del video completo, con imagen y audio | `revision-agy.md` |
 | ffmpeg, Chrome sin cabeza y puppeteer-core | Render y montaje | No son IA; se citan como código de terceros |
 
-Nota sobre la voz: es una voz del catálogo de ElevenLabs, no un clon hecho por el equipo ni la voz de un integrante. En el catálogo figura en la categoría "professional", que son voces que su dueño licencia a ElevenLabs. La regla del hackathon ("nada de voces... de personas reales") habla de los datos del proyecto, y aquí no hay voces como datos; aun así, si el equipo prefiere no dejar ninguna duda, la alternativa es montar con la voz de sistema de macOS (basta borrar `voz/` y correr `montar.sh`) o que narre un integrante.
+Nota sobre la voz: es una voz del catálogo de ElevenLabs de categoría "professional", es decir, la voz de una persona real que la licencia a ElevenLabs para que otros la usen. No es un clon hecho por el equipo ni la voz de un integrante. La regla del hackathon dice "Nada de voces, rostros ni correos de personas reales". La lectura del equipo es que la regla se refiere a datos de terceros usados sin permiso y que una voz licenciada para este uso no entra ahí; es una lectura, no algo que la organización haya confirmado. Si se prefiere no dejar la duda, `montar.sh` monta el mismo video con la voz de sistema de macOS cuando `voz/` está vacía.
 
 Lo que no es IA en el video: las capturas son de la interfaz real en modo guionado; todas las cifras salen de los archivos del repositorio y no de un modelo.

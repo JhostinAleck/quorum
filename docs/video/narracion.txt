@@ -1,7 +1,9 @@
 NOTAS (no pegar en ElevenLabs; el texto de la voz empieza en la línea "ESCENA 1")
 
 Voz usada: ElevenLabs, voz de biblioteca "Camila ES - Melete" (femenina, acento colombiano, tono
-informativo). Es una voz de catálogo: no se clonó la voz de nadie.
+informativo). Es una voz de catálogo de categoría
+"professional": la voz de una persona real que la licencia a ElevenLabs para este uso. El equipo no
+clonó la voz de nadie.
 Modelo: eleven_v4. Ajustes: stability 0.5, similarity 0.75, style 0, speaker boost activado,
 speed 1.2. Son los ajustes de narración documental que repiten las publicaciones que citó Grok
 (stability 0.5, similarity 0.75, style 0); ninguna da números pensados para español.
