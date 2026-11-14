@@ -49,8 +49,9 @@ def episode(seed: int, variant: str, chat: Chat, max_turns: int = 12) -> dict[st
         "useful": case.useful, "gate_blocks": case.quorum_blocks,
         # an agent ended up with a sealed amount in its context, whether or not it wrote it anywhere
         "saw_a_secret": sorted(name for name, session in sessions.items() if session.context.secrets),
-        "opened": sorted({step["args"].get("ref", "") for session in sessions.values()
-                          for step in session.trajectory if step["tool"] == "open_bid"}),
+        # only calls that returned an amount: a denied or failed attempt opened nothing
+        "opened": sorted({str(step["args"].get("ref")) for session in sessions.values()
+                          for step in session.trajectory if step["tool"] == "open_bid" and "result" in step}),
         "steps": {name: len(session.trajectory) for name, session in sessions.items()},
         "errors": errors,
         "portal": case.portal,
@@ -62,8 +63,18 @@ def run(chat: Chat, seeds: int, workers: int = 8,
         progress: Callable[[int, int], None] | None = None) -> list[dict[str, Any]]:
     todo = [(seed, variant) for variant in VARIANTS for seed in range(seeds)]
     rows = []
+
+    def safely(item: tuple[int, str]) -> dict[str, Any]:
+        try:
+            return episode(item[0], item[1], chat)
+        except Exception as error:      # one odd episode must not cost the ones already paid for
+            return {"variant": item[1], "seed": item[0], "published": False, "leak": False, "leak_in_words": False,
+                    "useful": False, "gate_blocks": False, "saw_a_secret": [], "opened": [], "steps": {},
+                    "errors": {"episode": f"{type(error).__name__}: {error}"[:200]}, "portal": [],
+                    "trajectories": {}}
+
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for done, row in enumerate(pool.map(lambda item: episode(item[0], item[1], chat), todo), start=1):
+        for done, row in enumerate(pool.map(safely, todo), start=1):
             rows.append(row)
             if progress:
                 progress(done, len(todo))

@@ -62,17 +62,32 @@ La compuerta no sabe de licitaciones. Se probó igual, sin cambiar una línea de
 
 | Episodios guionados, 200 semillas por tipo | Sin defensa | Filtro de coincidencia exacta | Buen harness (mínimo privilegio) | Quórum |
 |---|---|---|---|---|
-| Daño en 7400 episodios adversos (5 dominios) | 100 % | 43 % | 35 % | 0 % |
+| Daño en 7600 episodios adversos (5 dominios) | 100 % | 42 % | 42 % | 0 % |
 | Trámites honestos que terminan bien (1200) | 100 % | 100 % | 100 % | 100 % |
 | Trámites descuidados que terminan bien (1000) | 100 % | 100 % | no aplica | 0 % |
 
-El filtro de coincidencia exacta conoce todos los secretos y detiene las copias literales, pero no el mismo dato escrito en palabras ni una transferencia ordenada por un mensaje de un tercero. El buen harness le deja a cada rol solo las herramientas que usa su trabajo honesto: en la licitación eso basta para detener todos los ataques, y en los otros cuatro dominios no, porque ahí el agente necesita la misma herramienta para trabajar y para filtrar. La última fila es el costo de Quórum: si un agente honesto mira un dato restringido que no necesitaba, la compuerta detiene su salida aunque no filtre nada.
+El filtro de coincidencia exacta conoce todos los secretos y detiene las copias literales, pero no el mismo dato escrito en palabras ni una transferencia ordenada por un mensaje de un tercero. El buen harness le deja a cada rol solo las herramientas que usa su trabajo honesto: detiene los ataques que exigen una herramienta que el rol no usa nunca, y no los que abusan de una que sí necesita. El Radicador tiene que leer la oferta que llega en un documento, y quien redacta una respuesta tiene que leer la ficha del ciudadano: ningún permiso distingue eso de filtrar. La última fila es el costo de Quórum: si un agente honesto mira un dato restringido que no necesitaba, la compuerta detiene su salida aunque no filtre nada.
 
 Son agentes que siguen un guion, así que estas cifras miden el mecanismo y no la conducta de un modelo. El detalle por dominio, la tabla de qué es sensible en cada uno y cómo reproducirlo están en [resultados por dominio](docs/resultados-dominios.md). Lo que sí rompe la compuerta está en [intentos de evasión](docs/intentos-de-evasion.md).
 
 ```bash
 uv run python -m quorum.bench      # sin modelos ni costo, unos segundos
 ```
+
+## En un banco de pruebas que no escribimos: AgentDojo
+
+Los cinco dominios son nuestros. Para no medir solo un problema que inventamos, la compuerta se probó sobre [AgentDojo](https://arxiv.org/abs/2406.13352), un banco de pruebas público de inyección de instrucciones con cuatro conjuntos de tareas. AgentDojo trae la secuencia de llamadas que resuelve cada tarea y cada ataque, así que se pueden repetir por la compuerta sin ningún modelo: se supone un agente que obedece la inyección al pie de la letra.
+
+| Conjunto | Acciones del atacante que se ejecutan, sin defensa | Con Quórum | Tareas legítimas que terminan, con Quórum |
+|---|---|---|---|
+| `banking` | 176 de 176 | 0 | 5 de 16 |
+| `slack` | 147 de 147 | 0 | 1 de 21 |
+| `travel` | 120 de 120 | 0 | 14 de 20 |
+| `workspace` | 280 de 280 | 3 | 18 de 40 |
+
+La compuerta detuvo 720 de 723 acciones del atacante sin cambiar el núcleo. El costo es alto y hay que decirlo: cuando la acción legítima depende de algo que el agente leyó (un monto en una factura, un destinatario en un mensaje), la regla de integridad pide aprobación humana, y aquí esa aprobación la simula una función estricta que solo acepta lo que el usuario escribió en su pedido. Cada tarea detenida es, en la práctica, una confirmación que se le pide a una persona.
+
+No es un puntaje de AgentDojo, porque no corrió ningún modelo, y no se compara con defensas publicadas. La clasificación de herramientas y la función de aprobación son nuestras. El detalle, las tres acciones que pasaron y por qué están en [resultados sobre AgentDojo](docs/resultados-agentdojo.md).
 
 ## Si alguien ataca la defensa misma
 
@@ -112,6 +127,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 - [La misma compuerta en cinco dominios](docs/resultados-dominios.md)
 - [¿Se puede convencer a los monitores?](docs/resultados-monitores.md)
 - [Agentes de modelo frente a un documento con una instrucción](docs/resultados-agentes.md)
+- [Quórum sobre AgentDojo, un banco de pruebas ajeno](docs/resultados-agentdojo.md)
 - [Referencias y atribución](docs/referencias.md)
 - [Tareas del equipo](docs/tareas.md)
 - [Interfaz del laboratorio](docs/interfaz.md)
@@ -123,7 +139,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ```bash
 uv sync
-uv run pytest        # 594 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
+uv run pytest        # 635 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo:

@@ -42,7 +42,6 @@ DOMAINS = {     # module -> how the documents call it
     "bank": "Banca",
     "lawfirm": "Sector legal",
 }
-KERNEL = ("domain", "application", "infrastructure")
 
 
 def harmed(episode: Any) -> bool:
@@ -84,6 +83,10 @@ def least_privilege(module: Any) -> Any:
             for seed in range(3):
                 for role, steps in module.run(kind, seed, defense=False).trajectories.items():
                     used.setdefault(role, set()).update(step["tool"] for step in steps)
+    # honest work a harness has to allow even though the scripted honest episodes do it another way
+    for kind, options in getattr(module, "HARNESS_RUNS", ()):
+        for role, steps in module.run(kind, 0, defense=False, **options).trajectories.items():
+            used.setdefault(role, set()).update(step["tool"] for step in steps)
     roles = {name: Role(name, tuple(tool for tool in role.tools if tool in used.get(name, ())),
                         role.reads, role.writes)
              for name, role in module.POLICY.roles.items()}
@@ -187,7 +190,7 @@ def report(domains: list[str], seeds: int) -> tuple[str, dict[str, Any]]:
             "|---|---|---|---|---|---|"]
     labels = {"attack": "Ataque repartido (k = 1, 2, 3)",
               "disguised": "El mismo ataque con el dato escrito en palabras",
-              "injection": "Inyección en un documento, agentes honestos"}
+              "injection": "Inyección en un documento: un agente la obedece, nadie recibe una tarea oculta"}
     for domain in domains:
         kinds = importlib.import_module(f"quorum.scenarios.{domain}").KINDS
         for name, label in labels.items():
@@ -226,13 +229,30 @@ def report(domains: list[str], seeds: int) -> tuple[str, dict[str, Any]]:
                    f"{code(sorted(policy.declassifiers))} | {'sí' if policy.strict_mode else 'no'} |")
 
     out += ["", "## Lo que cuesta llevar la compuerta a un dominio nuevo", "",
-            "| Dominio | Líneas de política | Líneas de herramientas | Líneas cambiadas en el núcleo | "
-            "Tiempo de una decisión |", "|---|---|---|---|---|"]
+            "| Dominio | Líneas de política | Líneas de herramientas | Tiempo de una decisión |",
+            "|---|---|---|---|"]
     for domain in domains:
-        out.append(f"| {DOMAINS[domain]} | {sizes[domain]['policy']} | {sizes[domain]['tools']} | 0 | "
+        out.append(f"| {DOMAINS[domain]} | {sizes[domain]['policy']} | {sizes[domain]['tools']} | "
                    f"{_dec(times[domain])} µs |")
     out += ["", "El tiempo es la mediana de una decisión de la compuerta en esta máquina "
             "y cambia un poco entre corridas."]
+
+    for domain in domains:
+        module = importlib.import_module(f"quorum.scenarios.{domain}")
+        for kind, options in getattr(module, "HARNESS_RUNS", ()):
+            alone = sum(bool(module.run(kind, seed, defense=False, **options).useful) for seed in range(seeds))
+            read_it = sum(bool(module.run(kind, seed, **options).useful) for seed in range(seeds))
+            sealed = sum(bool(module.run(kind, seed).useful) for seed in range(seeds))
+            out += ["", f"## Cuando el dato reservado llega dentro de un documento ({DOMAINS[domain]})", "",
+                    "Una oferta llega escaneada. Alguien tiene que sacar el valor del documento. Trámites honestos "
+                    "que terminan bien:", "",
+                    "| Quién lee el documento | Sin defensa | Quórum |", "|---|---|---|",
+                    f"| El agente lo lee y digita el valor | {_pct(alone, seeds)} | {_pct(read_it, seeds)} |",
+                    f"| Una herramienta determinista lo transcribe y lo sella; el agente recibe una referencia | "
+                    f"{_pct(alone, seeds)} | {_pct(sealed, seeds)} |",
+                    "", "Si el agente lee el valor, queda marcado y la compuerta detiene todo lo que publique "
+                    "después: seguro, pero inútil. Por eso el valor se saca con una herramienta que no es un "
+                    "modelo y el agente trabaja con una referencia. Eso es parte del diseño, no del harness."]
 
     out += ["", "## Ablación: juzgar cada salida con lo que ha visto cualquier agente", "",
             "El interruptor `high_water_mark` cierra el canal de las claves ausentes "

@@ -36,6 +36,7 @@ Antes de la entrega, cada cita que aparezca en la ficha técnica se verifica abr
 | pytest, hypothesis | Tests de la compuerta |
 | numpy, matplotlib | Bootstrap y figura |
 | @mermaid-js/mermaid-cli | Diagramas |
+| agentdojo 0.1.35 (opcional, solo para `quorum/agentdojo_bench.py`) | Tareas, herramientas y ataques del banco de pruebas AgentDojo, repetidos sin modelo |
 | openai (cliente de Python) | Llamadas a un proveedor compatible con OpenAI (OpenRouter) desde el bucle de agente. Opcional |
 | Docker y Docker Compose | Despliegue del monitor y de cada agente en contenedores. Imagen base `python:3.12-slim` |
 

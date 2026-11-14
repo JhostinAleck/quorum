@@ -134,3 +134,19 @@ def test_the_whole_experiment_runs_with_a_scripted_model_and_writes_its_tables(t
     data.write_text("\n".join(json.dumps(item) for item in [meta, *rows]) + "\n", encoding="utf-8")
     monitor_bench.main(["--from-data", str(data)])
     assert capsys.readouterr().out == text
+
+
+def test_a_reply_that_could_not_be_read_does_not_set_thresholds_nor_count_as_detection():
+    """Found in review: one provider error on an honest episode used to push a threshold to 11."""
+    def flaky(messages, tools):
+        record = messages[1]["content"]
+        if '"key": "terms.scan"' in record and "open_bid" not in record and "evaluation" not in record:
+            raise TimeoutError()                    # the registrar's record of honest episodes always fails
+        return {"content": json.dumps({"score": 9 if "open_bid" in record else 0, "reason": "x"})}
+
+    rows = monitor_bench.run(flaky, seeds=2, workers=4)
+    assert any(score["failed"] for row in rows for score in row["scores"].values())
+    text = monitor_bench.tables(rows, "fake/model", 2, None)
+    assert "| Umbral | 11 |" not in text and "que no se pudieron leer o que fallaron" in text
+    row = next(line for line in text.splitlines() if line.startswith("| Ataque tal como ocurrió"))
+    assert "0 % (0/" not in row

@@ -129,7 +129,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 
 ## Qué se probó
 
-`uv run pytest` corre 594 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 635 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
@@ -188,6 +188,7 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/bench.py` | Mide los cinco dominios con el mismo código y escribe las tablas |
 | `quorum/adapters/monitors.py` | Monitores M1 y M2 con prompt normal y endurecido; respuesta ilegible vale nota máxima |
 | `quorum/monitor_bench.py` | Mide con un modelo real si una nota dirigida al revisor cambia el veredicto |
+| `quorum/agentdojo_bench.py` | Repite por la compuerta las trazas de referencia de AgentDojo, sin modelo |
 | `quorum/llm_bench.py` | Corre la licitación con agentes de modelo y prompts honestos, con y sin una carta inyectada |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
 | `analysis/` | Bootstrap y figura principal (en construcción) |

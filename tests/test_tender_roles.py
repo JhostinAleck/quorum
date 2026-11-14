@@ -6,6 +6,7 @@ from quorum.scenarios.tender import (
     KINDS,
     ROLE_STEPS,
     ROLES,
+    SCANNED,
     SUPPLIERS,
     evaluator_steps,
     prepare,
@@ -50,7 +51,7 @@ def test_three_separate_processes_give_the_same_episode_as_run(kind, defense):
     """The steps use nothing but call(name, **kwargs), and share nothing but the monitor."""
     for seed in SEEDS:
         whole = run(kind, seed, defense=defense)
-        case = prepare(seed, defense=defense, scanned=(kind == "honest_scanned"), injection=(kind == "injection"))
+        case = prepare(seed, defense=defense, scanned=(kind in SCANNED), injection=(kind == "injection"))
         for role in ROLES:
             run_role(case.quorum, role, kind)
         assert grading(case) == grading(whole.case)
@@ -174,7 +175,7 @@ def test_the_steps_pass_every_argument_by_name():
 
     for kind in KINDS:
         for use_transcribe in (True, False):
-            case = prepare(2, defense=False, scanned=(kind == "honest_scanned"), injection=(kind == "injection"))
+            case = prepare(2, defense=False, scanned=(kind in SCANNED), injection=(kind == "injection"))
             registrar_steps(Recorder(case.session("registrar")), kind, use_transcribe=use_transcribe)
             evaluator_steps(Recorder(case.session("evaluator")), kind)
             publisher_steps(Recorder(case.session("publisher")), kind)

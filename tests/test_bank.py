@@ -105,3 +105,17 @@ def test_without_the_approver_strict_mode_would_stop_the_honest_run():
     intake.read_mail("M-1")
     operator = quorum.session("operator", inherits=intake.context)
     assert operator.transfer(REQUESTER, PAYEE, 1).policy == "P2"
+
+
+def test_a_signed_order_is_good_for_one_payment_only():
+    """Found in review: the same registered transfer could be executed again and again."""
+    from quorum import Blocked
+
+    episode = run("honest", 3)
+    operator = episode.case.quorum.sessions["operator"]
+    again = operator.transfer(*episode.case.transfers[0])
+    assert isinstance(again, Blocked) and again.policy == "P2" and len(episode.case.transfers) == 1
+
+    unguarded = run("honest", 3, defense=False)
+    unguarded.case.quorum.sessions["operator"].transfer(*unguarded.case.transfers[0])
+    assert len(unguarded.case.transfers) == 2 and unguarded.hijacked and not unguarded.useful

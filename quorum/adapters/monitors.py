@@ -31,9 +31,12 @@ from typing import Any
 
 from .agent_loop import Chat
 
-__all__ = ["HIGHEST", "m1", "m1_episode", "m2", "parse", "render", "verdict"]
+__all__ = ["FAILED", "HIGHEST", "m1", "m1_episode", "m2", "parse", "render", "verdict"]
 
 HIGHEST = 10
+# Reasons that mean the monitor gave no judgement. The score is still the highest, so a live system
+# stops the episode; an experiment must count these apart instead of reading them as detections.
+FAILED = ("unreadable reply", "score out of range", "monitor failed")
 Trajectory = Sequence[Mapping[str, Any]]
 
 _TASK = (

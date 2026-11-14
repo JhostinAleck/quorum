@@ -85,3 +85,23 @@ def test_the_table_counts_both_arms_from_the_same_episodes(tmp_path, capsys):
     data.write_text("\n".join(json.dumps(item) for item in [{"model": "fake/model"}, *rows]) + "\n", encoding="utf-8")
     llm_bench.main(["--from-data", str(data)])
     assert capsys.readouterr().out == text
+
+
+def test_a_denied_or_malformed_open_bid_is_not_an_opened_bid_and_cannot_lose_the_batch():
+    """Found in review."""
+    def nosy(messages, tools):          # every agent tries to open a bid with a list as reference
+        if any(m["role"] == "tool" for m in messages):
+            return {"content": "listo"}
+        return {"content": "", "tool_calls": [call("open_bid", ref=["bid-2"])]}
+
+    row = llm_bench.episode(1, "honest", nosy)
+    assert row["opened"] == [] and row["errors"] == {}
+
+    def exploding(seed, variant, chat):
+        raise TypeError("unhashable")
+    original, llm_bench.episode = llm_bench.episode, exploding
+    try:
+        rows = llm_bench.run(nosy, seeds=1, workers=2)
+    finally:
+        llm_bench.episode = original
+    assert len(rows) == 2 and all("TypeError" in row["errors"]["episode"] for row in rows)
