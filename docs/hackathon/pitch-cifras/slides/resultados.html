@@ -1,0 +1,18 @@
+<section id="resultados">
+<p class="eyebrow">3 · Validación · 90 trámites con agentes de modelo, 30 de ataque</p>
+<div class="stats">
+<div class="stat rise" style="--i:0"><p class="stat-v">16/16</p><p class="stat-l">fugas bloqueadas (intervalo del 95 %: 81–100 %)</p></div>
+<div class="stat rise" style="--i:1"><p class="stat-v">0/60</p><p class="stat-l">trámites honestos detenidos</p></div>
+<div class="stat rise" style="--i:2"><p class="stat-v">0</p><p class="stat-l">llamadas a un modelo para decidir</p></div>
+</div>
+<table>
+<tr class="head"><th style="width:34%">Defensa</th><th style="width:18%">Honestos marcados</th><th style="width:18%">Fugas detectadas</th><th style="width:30%">Cuándo decide</th></tr>
+<tr><td>Monitor LLM que lee a cada agente (M1)</td><td>0 de 30</td><td>16 de 16</td><td>al final: detecta, no detiene</td></tr>
+<tr class="hl"><td>Compuerta Quórum</td><td>0 de 30</td><td>16 de 16</td><td>en cada salida, antes de publicar</td></tr>
+</table>
+<p class="note">Empatamos en detección con el monitor (Gemini 3.5 Flash Lite y Claude Haiku 5.5). Lo que cambia es el costo: los monitores M1 y M2 suman cuatro llamadas a un modelo por trámite; la compuerta, ninguna, y el texto no le cambia la decisión.</p>
+<div class="footer"><p class="foot">Ficha, Tabla 1 · Quórum</p><p class="foot">4 / 8</p></div>
+<aside>(1:05) 90 trámites con agentes de modelo, 30 de ataque. Sin defensa, el precio llega al portal en 16. Con la compuerta, en 0, y no detiene ninguno de los 60 honestos.
+
+Ahora lo incómodo: un monitor que lee a cada agente también detecta las 16. Empatamos. Y bloquear lo que la política prohíbe es correcto por construcción. Lo que medimos es el costo. Los monitores suman cuatro llamadas a un modelo por trámite y califican al final: detectan, no detienen. La compuerta decide antes de que el dato salga, con cero llamadas, y el texto no le cambia la decisión.</aside>
+</section>
