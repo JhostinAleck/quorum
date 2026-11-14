@@ -233,14 +233,21 @@ def main(argv=None):
     a = ap.parse_args(argv)
     eps = [json.loads(line) for line in open(ROOT / "datos" / f"pilot_{a.episodes}.jsonl", encoding="utf-8")]
     honest = [(e["id"], e["trajectories"]) for e in eps if e["kind"].startswith("honest")]
+    def safe(e):  # a provider outage drops that episode, not the run; rerunning reuses the cache
+        try:
+            return score_episode(e, a.model, background_for(e["id"], honest, a.simultaneous) if a.simultaneous else [])
+        except RuntimeError as err:
+            return {"id": e["id"], "kind": e["kind"], "monitor": a.model, "error": str(err)[:200]}
     with ThreadPoolExecutor(a.threads) as pool:
-        rows = list(pool.map(lambda e: score_episode(e, a.model, background_for(e["id"], honest, a.simultaneous)
-                                                     if a.simultaneous else []), eps))
+        rows = list(pool.map(safe, eps))
+    failed = [r for r in rows if "error" in r]
+    rows = [r for r in rows if "error" not in r]
     out = ROOT / "datos" / f"monitor_{a.episodes}.jsonl"
     out.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     arms = ("m1", "m2", "m2_blind", "soft_gate")
     unreadable = sum(UNREADABLE in str(r.get(f"{b}_reason", "")) for r in rows for b in arms)
-    print(f"{len(rows)} episodios puntuados -> {out.relative_to(ROOT)}; puntajes ilegibles {unreadable}")
+    print(f"{len(rows)} episodios puntuados -> {out.relative_to(ROOT)}; puntajes ilegibles {unreadable}; "
+          f"episodios caídos por el proveedor {len(failed)} (vuelve a correr para completarlos)")
 
 
 if __name__ == "__main__":
