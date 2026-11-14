@@ -1,5 +1,7 @@
 # Revisión del video con agy
 
+> **Versión que quedó en el repositorio:** voz de sistema de macOS (Paulina, es_MX), sintetizada en local con `say`; dura 1:51,2. Los tiempos exactos de cada frase están en `tiempos.tsv`. La primera versión usó una voz del catálogo de ElevenLabs de categoría "professional" (la voz de una persona real que la licencia) y se descartó por la regla "nada de voces, rostros ni correos de personas reales". Lo que este documento dice de ElevenLabs y los tiempos de sus tablas describen esa primera versión (1:58,5); el guion, las cifras, las capturas y los planos son los mismos.
+
 `agy` vio el video completo, con imagen y audio, las dos veces (él mismo lo dice en el punto 1 de cada revisión). No hizo falta pasarle fotogramas sueltos. Se le pasó el MP4 en una carpeta vacía con `agy --print "<pregunta>"`, sin datos del equipo en la pregunta.
 
 Las respuestas van tal como las devolvió, con un solo cambio mecánico: las rayas largas se sustituyeron por un guion corto.

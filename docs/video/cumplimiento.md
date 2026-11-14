@@ -30,7 +30,7 @@ Citas textuales y de dónde salen:
 
 | Requisito | Dónde lo cumple (escena y segundo) |
 |---|---|
-| Se entiende en 2 minutos qué hicieron y qué encontraron | Dura 1:58,5. Qué hicieron: escenas 1 a 5 (0:00 a 0:53). Qué encontraron: escenas 6 a 9 (0:53 a 1:52) |
+| Se entiende en 2 minutos qué hicieron y qué encontraron | Dura 1:51,2 (los tiempos de esta tabla son de la primera versión, de 1:58,5; los exactos están en `tiempos.tsv`). Qué hicieron: escenas 1 a 5 (0:00 a 0:53). Qué encontraron: escenas 6 a 9 (0:53 a 1:52) |
 | Español | Voz, subtítulos y textos en español |
 | El vector de riesgo, definido con precisión | Escena 2 (0:10 a 0:23): el ataque repartido entre tres agentes de una licitación |
 | El mecanismo defensivo | Escena 3 (0:23 a 0:36): etiquetas de procedencia y compuerta. Escena 1 abre por la compuerta, como pidió el mentor |
@@ -40,7 +40,7 @@ Citas textuales y de dónde salen:
 | Límites dichos con honestidad | Escena 9 (1:36 a 1:52): bloquea de más, frena trabajo legítimo y no cierra lo que la licitación publica. Escena 6: pie sobre intervalos anchos. Escena 7: se dice que el monitor también detecta |
 | Nada contra sistemas reales; datos sintéticos | Escena 4 lo dice en voz ("con datos sintéticos"); las capturas llevan el rótulo; cierre (1:52): "Datos sintéticos. No se atacó ni escaneó ningún sistema real." |
 | Sin exploits ni instrucciones de ataque | El video muestra el ataque como diagrama y su bloqueo; no enseña cómo construirlo |
-| Sin voces, rostros ni correos de personas reales | No hay rostros ni correos. La voz es sintética: ver la nota de abajo |
+| Sin voces, rostros ni correos de personas reales | No hay rostros ni correos. La voz es la de sistema de macOS (Paulina), no un clon ni la voz de un integrante: ver la nota de abajo |
 | Citar lo generado con IA | Cierre (1:52 a 1:58): declaración en pantalla. Los planos generados llevan el rótulo "Plano generado con IA · Higgsfield" mientras se ven |
 | Enlace al repositorio | Cierre: `github.com/JhostinAleck/quorum` |
 
@@ -49,12 +49,13 @@ Citas textuales y de dónde salen:
 | Herramienta | Para qué | Detalle |
 |---|---|---|
 | Claude Code (Anthropic) | Guion, storyboard, animación en código (`animacion/`), capturas automatizadas de la interfaz, montaje con ffmpeg y estos documentos | Con supervisión del equipo |
-| ElevenLabs | Voz de la narración | Voz de biblioteca "Camila ES - Melete", modelo `eleven_v4`, stability 0.5, similarity 0.75, style 0, speed 1.2; las tomas se ajustaron un 5 % de velocidad con ffmpeg |
+| macOS `say` (no es IA generativa) | Voz de la narración | Voz de sistema Paulina (es_MX), sintetizada en local, una frase por archivo |
+| ElevenLabs | Solo en la primera versión, descartada | Voz de catálogo "Camila ES - Melete" (categoría "professional"), modelo `eleven_v4`. No está en el video del repositorio ni sus tomas en `voz/` |
 | Higgsfield | Tres planos de fondo: apertura (g1, 8 s), el caso (g2, 5 s) y cierre (g3, 6 s) | Modelo Seedance 2.5 (`seedance_2_5`), texto a video, 720p, sin audio. Prompts en `storyboard.md` |
 | Grok (xAI) | Investigación en X del flujo de producción | Pregunta genérica, sin datos del equipo: `investigacion-grok.md` |
 | agy | Revisión del video completo, con imagen y audio | `revision-agy.md` |
 | ffmpeg, Chrome sin cabeza y puppeteer-core | Render y montaje | No son IA; se citan como código de terceros |
 
-Nota sobre la voz: es una voz del catálogo de ElevenLabs, no un clon hecho por el equipo ni la voz de un integrante. En el catálogo figura en la categoría "professional", que son voces que su dueño licencia a ElevenLabs. La regla del hackathon ("nada de voces... de personas reales") habla de los datos del proyecto, y aquí no hay voces como datos; aun así, si el equipo prefiere no dejar ninguna duda, la alternativa es montar con la voz de sistema de macOS (basta borrar `voz/` y correr `montar.sh`) o que narre un integrante.
+Nota sobre la voz: la primera versión del video se narró con una voz del catálogo de ElevenLabs de categoría "professional", que es la voz de una persona real licenciada a ElevenLabs. La regla dice "Nada de voces, rostros ni correos de personas reales", así que esa versión se descartó y el video del repositorio usa la voz de sistema de macOS. Matiz: las voces de sistema también se construyen con grabaciones de locutores; no es el clon de una persona identificable ni la voz de un integrante. La versión con la voz de macOS no pasó por una revisión de oído completa: `say` recibe "AgentDojo" escrito como suena.
 
 Lo que no es IA en el video: las capturas son de la interfaz real en modo guionado; todas las cifras salen de los archivos del repositorio y no de un modelo.

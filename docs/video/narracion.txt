@@ -1,4 +1,14 @@
-NOTAS (no pegar en ElevenLabs; el texto de la voz empieza en la línea "ESCENA 1")
+NOTAS (el texto de la voz empieza en la línea "ESCENA 1")
+
+Voz del video que está en el repositorio: voz de sistema de macOS (Paulina, es_MX), sintetizada en
+local con `say`, una frase por archivo. Dura 1:51,2. A `say` se le pasa "AgentDojo" escrito como
+suena. Los números van en letras para que la voz no los lea mal.
+Primera versión, descartada: voz del catálogo de ElevenLabs "Camila ES - Melete", de categoría
+"professional" (la voz de una persona real que la licencia), modelo eleven_v4. Se descartó por la
+regla "nada de voces, rostros ni correos de personas reales".
+Si se cambia de voz y el total pasa de 2:00, montar.sh se detiene con un error: se acorta el texto.
+
+ESCENA 1")
 
 Voz usada: ElevenLabs, voz de biblioteca "Camila ES - Melete" (femenina, acento colombiano, tono
 informativo). Es una voz de catálogo: no se clonó la voz de nadie.

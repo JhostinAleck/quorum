@@ -72,7 +72,7 @@ Todos se usaron el 14 de noviembre de 2026. El identificador es el que queda reg
 | Claude Code (Anthropic, Claude Opus 5.5) | Frente 3: ataques, monitores, piloto, `metrics.yaml`, análisis con intervalos de confianza, reproducción de AgentDojo, línea base, ablación, intentos de romper la compuerta, conexión de los ataques a la interfaz, notas de la mentoría y tests |
 | OpenCode | Frente 3: ficha técnica, `metrics.yaml` (enmiendas), `datos/README.md` y revisión de cifras |
 | Claude Code (Anthropic) | Video del proyecto (`docs/video/`): guion, storyboard, animación en código, capturas de la interfaz y montaje |
-| ElevenLabs | Voz sintética de la narración del video (voz de catálogo, modelo `eleven_v4`) |
+| ElevenLabs | Voz de la primera versión del video, descartada: era una voz de catálogo licenciada por una persona real. El video del repositorio usa la voz de sistema de macOS |
 | Higgsfield | Tres planos de fondo del video (modelo Seedance 2.5), rotulados en pantalla como generados con IA |
 | Grok (xAI) | Investigación del flujo de producción del video (`docs/video/investigacion-grok.md`) |
 | agy | Revisión del video completo, con imagen y audio (`docs/video/revision-agy.md`) |

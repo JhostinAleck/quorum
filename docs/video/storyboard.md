@@ -1,5 +1,7 @@
 # Storyboard
 
+> **Versión que quedó en el repositorio:** voz de sistema de macOS (Paulina, es_MX), sintetizada en local con `say`; dura 1:51,2. Los tiempos exactos de cada frase están en `tiempos.tsv`. La primera versión usó una voz del catálogo de ElevenLabs de categoría "professional" (la voz de una persona real que la licencia) y se descartó por la regla "nada de voces, rostros ni correos de personas reales". Lo que este documento dice de ElevenLabs y los tiempos de sus tablas describen esa primera versión (1:58,5); el guion, las cifras, las capturas y los planos son los mismos.
+
 Formato: 1920x1080, 30 fotogramas por segundo, 1:58,5. Todo lleva subtítulos y una barra de avance.
 
 Tres tipos de plano:
