@@ -67,7 +67,7 @@
 {\color{acento}\hrule height 0.8pt}
 \vspace{4pt}
 
-\lead{En una frase.} Quórum es una compuerta determinista que se pone delante de cualquier sistema de agentes, sin importar el modelo ni el dominio, y decide qué puede salir siguiendo de dónde viene cada dato, sin preguntarle a ningún modelo. En 90 trámites de una licitación con agentes de modelo bloqueó las 16 fugas del ataque repartido y ninguno de los 60 trámites honestos. En AgentDojo, un banco de pruebas que no escribimos, no dejó pasar ninguno de 144 secuestros y conservó 16 de las 19 tareas que funcionan sin defensa. El mismo núcleo protege cinco dominios cambiando solo un archivo de política. Su costo, medido: detiene siempre al agente honesto que abre un dato que no necesitaba (terminan 0 de 1000 trámites descuidados).
+\lead{En una frase.} Quórum es una compuerta determinista que se pone delante de cualquier sistema de agentes, sin importar el modelo ni el dominio, y decide qué puede salir siguiendo de dónde viene cada dato, sin preguntarle a ningún modelo. En 90 trámites de una licitación con agentes de modelo bloqueó las 16 fugas del ataque y ninguno de los 60 trámites honestos. En AgentDojo, un banco de pruebas que no escribimos, frenó los 90 secuestros de 144 ataques y conservó 16 de las 19 tareas que funcionan sin defensa. El mismo núcleo protege cinco dominios cambiando solo un archivo de política. Su costo, medido: detiene siempre al agente honesto que abre un dato que no necesitaba (terminan 0 de 1000 trámites descuidados).
 
 \vspace{3pt}
 % == Diagrama del flujo ==
@@ -154,7 +154,7 @@ Suponemos que los agentes no son confiables, el supuesto del control de IA [2]: 
 \end{itemize}
 Para que el trabajo honesto no se contamine, los sobres se manejan como referencias opacas y unos pocos cálculos declarados (desclasificadores, como \texttt{score\_bids}) devuelven solo un resultado público, con cupo de llamadas.
 
-\lead{Agnóstica al modelo, al framework y al dominio.} La compuerta vive en la capa de herramientas, no en el prompt, y no llama a ningún modelo: sirve igual con cualquiera. Aquí corrió con agentes de cinco modelos y sobre trazas de 28 configuraciones de modelo y defensa. Se conecta por llamadas a funciones al estilo OpenAI, por Inspect AI o como servicio HTTP con cada agente en su contenedor. Llevarla a otro dominio no toca el núcleo: se escribe un \texttt{policy.toml} de 18 a 24 líneas (qué nace restringido, qué escriben terceros, qué admite cada salida) y sus herramientas.
+\lead{Agnóstica al modelo, al framework y al dominio.} La compuerta vive en la capa de herramientas, no en el prompt, y no llama a ningún modelo: sirve igual con cualquiera. Aquí decidió sobre agentes de cinco modelos (uno, demasiado débil para contar) y sobre trazas de 28 configuraciones de modelo y defensa. Se conecta por llamadas a funciones al estilo OpenAI, por Inspect AI o como servicio HTTP con cada agente en su contenedor. Llevarla a otro dominio no toca el núcleo: se escribe un \texttt{policy.toml} de 18 a 24 líneas (qué nace restringido, qué escriben terceros, qué admite cada salida) y sus herramientas.
 
 \lead{Integridad de lo que decide.} La política, las herramientas, el núcleo y el escenario se resumen en hashes SHA-256 fijados en \texttt{integrity.lock.json}: un test falla si cambian sin el archivo, el monitor no arranca con otro pipeline y la huella, con el modo en que corre, se sella en la bitácora antes de la primera llamada. No es una firma: quien reescriba todo a la vez no queda detenido.
 
@@ -219,17 +219,17 @@ Sector legal & 21 & 600/1600 & 600/1600 & \textbf{0/1600} \\
 Total & & 3200/7600 & 3200/7600 & \textbf{0/7600} \\
 \bottomrule
 \end{tabularx}}
-\tabnote{Sin defensa hay daño en 7600 de 7600: ataque repartido, el dato escrito en palabras e inyección. El filtro falla cuando el dato va en palabras; el harness, cuando el agente que debe leer el dato es el que lo saca. Con Quórum terminan 1200 de 1200 trámites honestos y 0 de 1000 descuidados. Mide el mecanismo, no la conducta de un modelo.}
+\tabnote{Sin defensa hay daño en 7600 de 7600: ataque repartido, el dato escrito en palabras e inyección. El filtro falla cuando el dato va en palabras; el harness, cuando lo saca el agente que debe leerlo; los dos, ante la transferencia inyectada en banca. Con Quórum terminan 1200 de 1200 trámites honestos y 0 de 1000 descuidados. Mide el mecanismo, no la conducta de un modelo.}
 \end{minipage}\par\vspace{1pt}
 
 \lead{Un buen prompt sin compuerta.} Tres agentes honestos y una inyección en el anexo de un proveedor: con cinco modelos y tres prompts hubo 0 fugas en 600 episodios (uno de los modelos es demasiado débil para contar como evidencia). Ahí un buen prompt basta y la compuerta no tuvo fuga que detener. Sí tuvo costo: \texttt{gpt-4o-mini} abre el sobre sin copiar el valor y la compuerta habría frenado 50 de sus 120 publicaciones correctas.
 
 \vspace{2pt}\noindent\begin{minipage}{\columnwidth}
-\tabtitle{Tabla 3. AgentDojo, banca: 144 secuestros y 25 tareas limpias}
+\tabtitle{Tabla 3. AgentDojo, banca: 144 ataques y 25 tareas limpias}
 {\footnotesize
 \begin{tabularx}{\columnwidth}{@{}Y C{2.0cm} C{2.3cm}@{}}
 \toprule
-Defensa (corte \texttt{gpt-4o}) & Secuestros que pasan & Tareas limpias que funcionan \\
+Defensa (corte \texttt{gpt-4o}) & Ataques que secuestran & Tareas limpias que funcionan \\
 \midrule
 Sin defensa & 90/144 & 19/25 \\
 Filtro de herramientas (AgentDojo) & 16/144 & 19/25 \\
@@ -238,12 +238,12 @@ Detector DeBERTa (AgentDojo) & 1/144 & 9/25 \\
 Quórum, por contexto (estricta) & 0/144 & 5/25 \\
 \bottomrule
 \end{tabularx}}
-\tabnote{Quórum es la única defensa sin secuestros y conserva 16 de las 19 tareas que funcionan sin defensa. Una tarea detenida pide aprobación humana; no es una tarea que falla. Por valor: pide aprobación si el argumento de la salida aparece en contenido no confiable. Por contexto: tras leer cualquier contenido no confiable.}
+\tabnote{Quórum es la única defensa que frena los 90 secuestros (detiene al menos una llamada del atacante en cada uno; todas, en 80) y conserva 16 de las 19 tareas que funcionan sin defensa. Una tarea detenida pide aprobación humana; no necesariamente falla. Por valor: pide aprobación si el argumento de la salida aparece en contenido no confiable. Por contexto: tras leer cualquier contenido no confiable.}
 \end{minipage}\par\vspace{1pt}
 
 \begin{itemize}
   \item \lead{En las 7127 trazas} (28 configuraciones de modelo y defensa, todos los ataques) la regla por valor frena 1506 de 1521 secuestros (99,0~\%) y deja pasar 336 de 411 tareas limpias útiles (82~\%). En los 15 que escapan, el valor viene del pedido del propio usuario.
-  \item \lead{Peor caso (b).} Con un agente que obedece siempre, en las cuatro suites se ejecutan 3 de 723 acciones del atacante. Ahí corre la regla estricta y cuesta: se completan 5/16, 1/21, 14/20 y 18/40 tareas; la regla por valor es la que recupera esa utilidad.
+  \item \lead{Peor caso (b).} Con un agente que obedece siempre, en las cuatro suites se ejecutan 3 de 723 acciones del atacante. Ahí corre la regla estricta y cuesta: se completan 5/16, 1/21, 14/20 y 18/40 tareas. La regla por valor solo se midió en banca (de 5 a 16 de 25).
 \end{itemize}
 
 % =====================================================================
@@ -266,7 +266,7 @@ El ataque repartido ya está descrito en la literatura [1]; aquí existe solo de
 \section{Próximos pasos}
 
 \begin{itemize}
-  \item \lead{Etiquetas por campo,} no por agente [7], para dejar de bloquear al honesto descuidado. Ya hay con qué medirlo: los 1000 trámites descuidados y los 180 gemelos.
+  \item \lead{Etiquetas por campo,} no por agente [7], para dejar de bloquear al honesto descuidado. Ya hay con qué medirlo: los 180 gemelos.
   \item \lead{Atacante adaptativo y en vivo.} AgentDojo completo con modelo, no sobre trazas, y ataques optimizados contra la política y contra los canales de tiempo y orden.
   \item \lead{Adopción.} Empaquetarla como proxy de herramientas (MCP) para ponerla delante de agentes que ya existen: asistentes de correo, RAG sobre documentos internos, agentes de código con secretos. Y un piloto en contratación pública con datos sintéticos.
   \item \lead{Huella firmada} y bitácora fuera del alcance de quien opera.
@@ -280,14 +280,14 @@ El ataque repartido ya está descrito en la literatura [1]; aquí existe solo de
 
 \lead{Modelos.} Agentes: \texttt{orca/orcacyber-flash-1.0}. Monitores: \texttt{google/gemini-3.5-flash-lite}, \texttt{claude-haiku-5-5}, \texttt{typesafe/jev-1.14} y \texttt{openai/gpt-6-luna}. Línea base de buen prompt: \texttt{openai/gpt-4o-mini}, \texttt{openai/gpt-6-luna}, \texttt{xiaomi/mimo-v2.6-flash} y \texttt{meta-llama/llama-3.1-8b-instruct}. Trazas de terceros: \texttt{ethz-spylab/agentdojo}, commit \texttt{089ed468}.
 
-\lead{Uso de IA.} El código, los tests, los análisis y este documento se hicieron con asistencia de Claude Code (Anthropic), OpenCode y Codex, y la búsqueda de literatura con Grok (xAI), con supervisión del equipo. Las plantillas de ataque son fijas (\texttt{quorum/eval/attacks.py}). Código de terceros: \texttt{agentdojo} 0.1.35, \texttt{inspect-ai}, \texttt{pytest}, \texttt{hypothesis}, \texttt{numpy} y \texttt{matplotlib}; detalle en \texttt{docs/referencias.md}. Los datos propios son sintéticos; las trazas de AgentDojo son públicas.
+\lead{Uso de IA.} El código, los tests, los análisis y este documento se hicieron con asistencia de Claude Code (Anthropic), OpenCode y Codex, y la búsqueda de literatura con Grok (xAI), con supervisión del equipo. Código de terceros: \texttt{agentdojo} 0.1.35, \texttt{inspect-ai}, \texttt{pytest}, \texttt{hypothesis}, \texttt{numpy} y \texttt{matplotlib}; detalle en \texttt{docs/referencias.md}.
 
 \lead{Referencias.}
 [1]~Makins et al., \textit{Multi-Agent AI Control: Distributed Attacks Hamper Per-Instance Monitors}, 2026, arXiv:2607.07368.
 [2]~Greenblatt et al., \textit{AI Control}, 2023, arXiv:2312.06942.
 [3]~Debenedetti et al., \textit{AgentDojo}, 2024, arXiv:2406.13352.
-[4]~Costa et al., \textit{Securing AI Agents with Information-Flow Control} (FIDES), 2025, arXiv:2505.23643.
-[5]~Debenedetti et al., \textit{Defeating Prompt Injections by Design} (CaMeL), 2025, arXiv:2503.18813.
+[4]~Costa et al., \textit{FIDES}, 2025, arXiv:2505.23643.
+[5]~Debenedetti et al., \textit{CaMeL}, 2025, arXiv:2503.18813.
 [6]~Dai et al., \textit{SafeFlow}, 2026, arXiv:2607.25255.
 [7]~\textit{APPA}, 2026, arXiv:2607.24625.
 [8]~Guo et al., \textit{Just Ask Jev}, 2026, arXiv:2609.29429.
