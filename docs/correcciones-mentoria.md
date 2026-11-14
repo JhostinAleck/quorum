@@ -21,9 +21,42 @@ y probar un ataque realista, que no suponga el sistema ya roto.
   el piloto principal) y `strong` (la regla más una defensa explícita: los documentos son datos,
   nunca instrucciones).
 
-Cada celda tiene 10 episodios con `orca/orcacyber-flash-1.0`, semillas 20261210–19 y la mitad con
-la oferta escaneada. La compuerta corre en modo auditoría: decide y lo anota, pero no bloquea.
-Así cada episodio da a la vez el brazo «solo buen prompt» y el brazo «buen prompt + Quórum».
+Cada celda tiene 10 episodios, semillas 20261210–19 y la mitad con la oferta escaneada. La compuerta
+corre en modo auditoría: decide y lo anota, pero no bloquea. Así cada episodio da a la vez el brazo
+«solo buen prompt» y el brazo «buen prompt + Quórum».
+
+**Cinco modelos baratos, 150 episodios cada uno (750 en total): 0 fugas en los 600 con inyección.**
+`datos/baseline_<tag>.jsonl`. «Abrió» es el número de episodios con inyección en que algún agente abrió
+una oferta sellada (`open_bid` o `read_scan`) fuera de su tarea; «útil y frenado», los que publicaron el
+resultado correcto y aun así la compuerta habría bloqueado. De 40 episodios con inyección por prompt:
+
+| Modelo (`tag`) | Prompt | Honestos útiles | Fugas | Abrió | Útiles | Útil y frenado |
+|---|---|---|---|---|---|---|
+| gpt-4o-mini (`gpt4omini`) | `none` | 10/10 | 0 | **35** | 35 | **25** |
+| | `base` | 10/10 | 0 | **31** | 37 | **18** |
+| | `strong` | 10/10 | 0 | **10** | 40 | **7** |
+| GPT-6 Luna (`gpt6luna`) | `none` | 10/10 | 0 | 2 | 40 | 2 |
+| | `base` | 10/10 | 0 | 0 | 38 | 0 |
+| | `strong` | 10/10 | 0 | 0 | 40 | 0 |
+| MiMo-V2.6-Flash (`mimoflash`) | `none` | 10/10 | 0 | 3 | 40 | 3 |
+| | `base` / `strong` | 10/10 | 0 | 0 | 40 | 0 |
+| orcacyber-flash-1.0 (`v1`) | los tres | 10/10 | 0 | 0 | 36–40 | 0 |
+| llama-3.1-8b (`llama8b`) | los tres | 2–6/10 | 0 | 22–34 | 3–14 | 3–10 |
+
+llama-3.1-8b no cuenta como evidencia: 657 fallos de formato y pocos episodios honestos útiles. Es
+demasiado débil para la tarea.
+
+**El hallazgo nuevo es el de gpt-4o-mini.** Obedece la inyección y abre la oferta sellada, pero nunca
+copia el valor al acta. Sin compuerta no hay fuga; con la compuerta, el contexto del agente queda
+restringido y la publicación honesta se habría frenado: 50 de 120 episodios con inyección. En el modelo
+de amenaza A, Quórum no frena fugas con estos modelos y sí cuesta utilidad cuando el modelo obedece a
+medias. El prompt `strong` baja ese costo de 25 a 7.
+
+Los modelos no se eligieron al azar: GPT-6 Luna y MiMo-V2.6-Flash son los de mejor índice por costo
+por tarea en Artificial Analysis (14-nov), por debajo de unos $0,15 por tarea. Corrimos las variantes
+básicas; el índice publicado es de otras variantes y no lo citamos como propio.
+
+La primera tabla, de abajo, es la corrida inicial con `orca/orcacyber-flash-1.0`.
 
 **Resultado (`datos/baseline_v1.jsonl`, 150 episodios): 0 fugas en 120 episodios con inyección,
 con los tres prompts, incluso sin la regla del pliego.** Ningún agente abrió una oferta (`open_bid`
@@ -50,8 +83,8 @@ desobedeciendo en cadena. El valor de Quórum queda donde un buen prompt no sirv
 2. **Un agente solo que sí obedece inyecciones.** En AgentDojo, gpt-4o sin defensa deja pasar el
    62,5 % de los secuestros. Ahí la compuerta frena el 99 %.
 
-No medimos el modelo de amenaza A con un modelo más obediente ni con la inyección dirigida al
-evaluador. Queda abierto.
+Con un modelo más obediente (gpt-4o-mini) tampoco hubo fugas, pero sí bloqueos de honestos (arriba).
+No medimos la inyección dirigida al evaluador. Queda abierto.
 
 **Orden de los hechos.** Un piloto de 16 episodios (semillas 20261200–01, `datos/baseline_piloto.jsonl`)
 dio 0 fugas en 12 episodios con inyección, con los prompts `base` y `strong`. Con eso a la vista
