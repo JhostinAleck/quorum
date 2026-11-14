@@ -29,6 +29,11 @@ MONITORS = {   # the final scores, after 94446cd (BLIND_SCOPE)
     "Gemini 3.5 Flash Lite": ("orca_v4_ciegofix", "honest_extra_ciegofix"),
     "Claude Haiku 5.5": ("orca_v4_haiku55_ciegofix", "honest_extra_haiku55_ciegofix"),
 }
+# Added after the freeze (amendment of 14-nov, 14:20): same arms and calibration rule, another judge.
+# Kept out of the main figure and of compute(), so the frozen tables do not change.
+POST_HOC = {
+    "Jev 1.13 (TypeSafe, OpenCode Zen gratis), a posteriori": ("orca_v4_jev", "honest_extra_jev"),
+}
 ARMS = {"m1": "M1 por agente", "m2": "M2 con oráculo", "m2_blind": "M2 ciego", "soft_gate": "Compuerta suave"}
 KS = (1, 2, 3)
 
@@ -167,7 +172,7 @@ def leak_table(eps) -> str:
     return "\n".join(lines)
 
 
-def table(eps, results: dict[str, dict[str, Arm]], gate: Arm) -> str:
+def table(eps, results: dict[str, dict[str, Arm]], gate: Arm, portal: bool = True) -> str:
     lines = [f"{len(eps)} episodios: {len(honest(eps))} honestos, {len(attacks(eps))} ataques; "
              f"fuga sin defensa por k: " + ", ".join(f"k{k} {frac(v)}" for k, v in leak_by_k(eps).items())]
     for monitor, arms in results.items():
@@ -179,7 +184,8 @@ def table(eps, results: dict[str, dict[str, Arm]], gate: Arm) -> str:
             lines.append(f"{ARMS.get(arm, arm):16} {cut:>6} {frac(a.fpr):>6} {frac(a.leaks):>6} "
                          + " ".join(f"{frac(a.by_k[k]):>6}" for k in KS) + f" {frac(a.utility):>6}"
                          + f"   {ci(a.fpr)} · {ci(a.leaks)}")
-    lines.append(leak_table(eps))
+    if portal:
+        lines.append(leak_table(eps))
     return "\n".join(lines)
 
 
@@ -243,6 +249,11 @@ def main(argv=None):
     a = ap.parse_args(argv)
     eps, results, gate = compute()
     print(table(eps, results, gate))
+    post = {name: monitor_arms(eps, scores(tags)) for name, tags in POST_HOC.items()
+            if all((DATA / f"monitor_{tag}.jsonl").exists() for tag in tags)}
+    if post:
+        print("\n--- A posteriori, fuera del congelamiento de metrics.yaml ---")
+        print(table(eps, post, gate, portal=False).split("\n", 1)[1])
     if a.figure:
         print(f"-> {figure(eps, results, gate, a.figure)}")
 
