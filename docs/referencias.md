@@ -12,7 +12,19 @@
 | Urcuqui, *AgentBreak* (github.com/urcuqui/AgentBreak) | Controles deterministas fuera del modelo, ataques convertidos en tests de regresión |
 | UK AI Security Institute, *Inspect AI* (inspect.aisi.org.uk) | Framework de evaluación |
 
-**Diferencia con FIDES y CaMeL:** ambos protegen a un agente. Quórum conserva la etiqueta cuando el dato pasa de un agente a otro a través de servicios compartidos, y mide el resultado contra un ataque repartido.
+## Trabajo relacionado más cercano
+
+| Trabajo | Relación con Quórum |
+|---|---|
+| Makins, Angelini, Shams y Phuong, *Multi-Agent AI Control: Distributed Attacks Hamper Per-Instance Monitors*, UK AISI y MATS, 2026. arXiv:2607.07368 | Formaliza el ataque repartido y muestra que repartirlo baja la sospecha de cada agente ante un monitor. Evalúa monitores, no seguimiento de procedencia. Es el problema que tomamos como punto de partida |
+| Dai et al., *SafeFlow: Semantic Information-Flow Control for Blocking Malicious Propagation in Multi-Agent Systems*, 2026. arXiv:2607.25255 | Propaga etiquetas entre agentes y valida el flujo antes de acciones irreversibles. Parte de las etiquetas iniciales las asigna un clasificador LLM, su modelo de amenaza es contenido malicioso y no agentes no confiables, y no se compara con monitores de control |
+| *APPA: Recoverable Information-Flow Control for Real-World LLM Agents*, 2026. arXiv:2607.24625 | Aborda el bloqueo de más del taint monótono, el mismo costo que medimos aquí |
+
+**Qué aporta Quórum.** Llevar etiquetas de procedencia entre agentes no es una idea nueva. Lo que este proyecto aporta es:
+
+1. Medir una compuerta determinista de procedencia contra el ataque repartido, cara a cara con monitores por agente y de composición, bajo el supuesto de que los propios agentes son los atacantes.
+2. Reportar el costo en trabajo legítimo bloqueado junto al beneficio.
+3. Un laboratorio abierto, pequeño y en español, con un escenario de contratación pública.
 
 Antes de la entrega, cada cita que aparezca en la ficha técnica se verifica abriendo la fuente.
 

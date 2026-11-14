@@ -8,7 +8,7 @@ Proyecto del Defensive Acceleration Hackathon (AI Safety Colombia x IEEE CS Unia
 
 ## El problema en una frase
 
-Cuando una acción dañina se reparte entre varios agentes, un monitor que revisa a cada agente por separado ve tres pasos normales y ninguna alarma. El daño solo existe en el conjunto.
+Cuando una acción dañina se reparte entre varios agentes, un monitor que revisa a cada agente por separado ve tres pasos normales y ninguna alarma. El daño solo existe en el conjunto. Este efecto ya fue medido para monitores (Makins et al., UK AISI, 2026, arXiv:2607.07368). Aquí medimos si una compuerta determinista de procedencia lo detiene y cuánto cuesta. El trabajo relacionado y lo que aportamos está en [referencias](docs/referencias.md).
 
 ## La defensa
 
