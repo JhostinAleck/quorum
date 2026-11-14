@@ -229,6 +229,7 @@ def main(argv=None):
     ap.add_argument("--episodes", required=True, help="tag of datos/pilot_<tag>.jsonl")
     ap.add_argument("--model", required=True)
     ap.add_argument("--threads", type=int, default=6)
+    ap.add_argument("--tag", help="output tag (default: the episodes tag)")
     ap.add_argument("--simultaneous", type=int, default=2, help="honest background cases for m2_blind (0 = skip)")
     a = ap.parse_args(argv)
     eps = [json.loads(line) for line in open(ROOT / "datos" / f"pilot_{a.episodes}.jsonl", encoding="utf-8")]
@@ -242,7 +243,7 @@ def main(argv=None):
         rows = list(pool.map(safe, eps))
     failed = [r for r in rows if "error" in r]
     rows = [r for r in rows if "error" not in r]
-    out = ROOT / "datos" / f"monitor_{a.episodes}.jsonl"
+    out = ROOT / "datos" / f"monitor_{a.tag or a.episodes}.jsonl"
     out.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     arms = ("m1", "m2", "m2_blind", "soft_gate")
     unreadable = sum(UNREADABLE in str(r.get(f"{b}_reason", "")) for r in rows for b in arms)
