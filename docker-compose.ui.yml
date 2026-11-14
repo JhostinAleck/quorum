@@ -3,6 +3,9 @@
 #
 #   docker compose -f docker-compose.ui.yml up --build      ->  http://127.0.0.1:8765
 #
+# QUORUM_UI_PASSWORD is required: lab listens on 0.0.0.0 inside its container, which the
+# agents reach over their networks, so the page and its API always ask for the key.
+#
 # Same isolation as the base deployment (docs/despliegue.md), with long-running services:
 #   - lab holds the monitor, the store, the audit log and the gate, plus the page and the OCR
 #     tools. It has no model key.
@@ -53,8 +56,7 @@ services:
     ports: ["${QUORUM_UI_BIND:-127.0.0.1}:${QUORUM_UI_PORT:-8765}:8765"]
     environment:
       QUORUM_UI_HOST: 0.0.0.0
-      QUORUM_UI_BIND: ${QUORUM_UI_BIND:-127.0.0.1}
-      QUORUM_UI_PASSWORD: ${QUORUM_UI_PASSWORD:-}
+      QUORUM_UI_PASSWORD: ${QUORUM_UI_PASSWORD:?set QUORUM_UI_PASSWORD in .env (see docs/interfaz-web.md)}
       QUORUM_MONITOR_HOST: 0.0.0.0
       QUORUM_MODEL: ${QUORUM_MODEL:-openai/gpt-6-luna}
       QUORUM_AGENT_URLS: registrar=http://registrar:8000,evaluator=http://evaluator:8000,publisher=http://publisher:8000

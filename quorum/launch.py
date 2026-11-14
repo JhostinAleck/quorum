@@ -67,7 +67,8 @@ def monitor(args: argparse.Namespace) -> None:
         if os.path.exists(args.store):      # every start is a fresh episode
             os.remove(args.store)
         store = SQLiteStore(args.store)
-    case = tender.prepare(args.seed, defense=not args.audit, scanned=args.scanned, store=store)
+    case = tender.prepare(args.seed, defense=not args.audit, scanned=args.scanned, injection=args.injection,
+                          store=store)
 
     def grading() -> dict[str, Any]:
         return {"scenario": args.scenario, "seed": args.seed, "enforce": not args.audit,
@@ -148,6 +149,7 @@ def parser() -> argparse.ArgumentParser:
     m.add_argument("--scenario", choices=SCENARIOS, default="tender")
     m.add_argument("--seed", type=int, default=1)
     m.add_argument("--scanned", action="store_true", help="one bid arrives as a scan")
+    m.add_argument("--injection", action="store_true", help="one cover letter carries an instruction for the agents")
     m.add_argument("--audit", action="store_true", help="the gate only audits: nothing is blocked")
     m.add_argument("--host", default="127.0.0.1")
     m.add_argument("--port", type=int, default=8080)

@@ -38,7 +38,7 @@ Las piezas, con el nombre que les da DDD:
 | `Store` | Puerto (repositorio) | El dominio define qué necesita; la infraestructura lo implementa |
 | `Quorum` (el monitor) | Servicio de aplicación | Toda llamada pasa por él; las herramientas nunca tocan el almacén |
 
-**Contextos delimitados.** El dominio de Quórum es el control de flujo de información, no las licitaciones. La licitación (`tender`) y la mesa de ayuda (`helpdesk`) son contextos aparte que usan ese núcleo. Las reglas de negocio de la licitación (cómo se puntúa, qué es estar dentro del presupuesto, quién gana) viven en `quorum/scenarios/tender/rules.py` como funciones puras, separadas de las herramientas que las exponen a los agentes. Cambiar de dominio es escribir un `policy.toml`, unas herramientas y sus reglas. No se toca la compuerta.
+**Contextos delimitados.** El dominio de Quórum es el control de flujo de información, no las licitaciones. La licitación (`tender`), la mesa de ayuda (`helpdesk`), las historias clínicas (`clinic`) y la banca (`bank`) son contextos aparte que usan ese núcleo. Las reglas de negocio de la licitación (cómo se puntúa, qué es estar dentro del presupuesto, quién gana) viven en `quorum/scenarios/tender/rules.py` como funciones puras, separadas de las herramientas que las exponen a los agentes. Cambiar de dominio es escribir un `policy.toml`, unas herramientas y sus reglas. No se toca la compuerta. Los cuatro se miden con el mismo código en [resultados por dominio](resultados-dominios.md).
 
 **La regla de dependencias se prueba.** `tests/test_architecture.py` falla si el dominio importa algo fuera de la biblioteca estándar o hace entrada y salida, si la aplicación importa infraestructura, si alguna capa del núcleo menciona una palabra de un contexto, o si un contexto conoce a otro.
 
@@ -129,7 +129,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 
 ## Qué se probó
 
-`uv run pytest` corre 435 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 533 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
@@ -180,6 +180,9 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/adapters/agent_loop.py`, `openai_chat.py` | Bucle de agente con modelo y cliente de un proveedor compatible con OpenAI |
 | `Dockerfile`, `docker-compose.yml`, `docker-compose.llm.yml` | Una imagen para todos los servicios, el despliegue guionado y la variante con modelo |
 | `quorum/scenarios/tender/` | La licitación: política, reglas, herramientas, casos, episodios guionados y prompts base de cada rol |
-| `quorum/scenarios/helpdesk/` | La mesa de ayuda, segundo contexto |
+| `quorum/scenarios/helpdesk/` | La mesa de ayuda: permiso por destinatario |
+| `quorum/scenarios/clinic/` | Historias clínicas: dos salidas con permisos distintos |
+| `quorum/scenarios/bank/` | Banca: integridad, un mensaje de un tercero no ordena pagos |
+| `quorum/bench.py` | Mide los cuatro dominios con el mismo código y escribe las tablas |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
 | `analysis/` | Bootstrap y figura principal (en construcción) |

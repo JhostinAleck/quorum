@@ -21,11 +21,19 @@ docker compose -f docker-compose.ui.yml up --build      # http://127.0.0.1:8765
 docker compose -f docker-compose.ui.yml down
 ```
 
-Necesita en `.env` los tres tokens de agente de [despliegue](despliegue.md) y `OPENROUTER_API_KEY`. Es un archivo de Compose aparte: no modifica ni reemplaza `docker-compose.yml`.
+Necesita en `.env` los tres tokens de agente de [despliegue](despliegue.md), `OPENROUTER_API_KEY` y `QUORUM_UI_PASSWORD`, la clave de acceso de la página. Sin esa clave Compose no levanta nada. Se genera igual que un token:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+En contenedores la página pide siempre el usuario `quorum` y esa clave, aunque el puerto solo se publique en `127.0.0.1`: dentro de su contenedor `lab` escucha en todas las interfaces y los agentes comparten red con él, así que sin clave un agente podría leer `/api/state` o lanzar corridas.
+
+Es un archivo de Compose aparte: no modifica ni reemplaza `docker-compose.yml`.
 
 ## Qué se puede hacer en la página
 
-1. **Ofertas.** Se arrastran archivos de texto, PDF o imágenes, o se cargan los ejemplos (tres ofertas de texto, o dos PDF y un PDF escaneado). Cada documento necesita una línea `Valor: <número>` y, si se quiere, `Proveedor: <nombre>`. El valor se sella en el almacén y el resto del texto entra como anexo no confiable. La página nunca muestra el valor, solo cuántos dígitos tiene.
+1. **Ofertas.** Se arrastran archivos de texto, PDF o imágenes, o se cargan los ejemplos (tres ofertas de texto, o dos PDF y un PDF escaneado). Cada documento necesita una línea `Valor: <número>` y, si se quiere, `Proveedor: <nombre>`. El valor va en pesos enteros, con o sin separador de miles (`468.915.720`); si trae centavos (`,00`) se descartan. El nombre del proveedor va en la misma línea que su etiqueta y es un nombre corto de empresa: letras, dígitos, espacios y `. , & -`, máximo 60 caracteres y menos de cinco dígitos. Un documento que no cumpla se rechaza con un mensaje. El nombre se restringe porque entra a `terms.bids`, un dato público del pliego que los agentes leen sin etiqueta de no confiable. El valor se sella en el almacén y el resto del texto entra como anexo no confiable. La página nunca muestra el valor, solo cuántos dígitos tiene.
 2. **Agentes.** Honestos, o desviados con k = 1, 2 o 3 agentes (los mismos casos `attack_k1` a `attack_k3` del escenario).
 3. **Compuerta.** Activa (bloquea) o solo auditoría (deja pasar y registra qué habría bloqueado).
 4. **Motor.** Guionado, sin modelo, o con modelo.
@@ -67,15 +75,15 @@ La tarjeta de cada agente muestra si su contenedor responde, qué modelo usa y s
 
 ## Abrirla a otras máquinas
 
-Por defecto solo escucha en `127.0.0.1` y no pide clave. Para abrirla:
+Sin Docker, por defecto solo escucha en `127.0.0.1` y no pide clave. Con Docker, por defecto el puerto solo se publica en `127.0.0.1` y la página pide la clave. Para abrirla:
 
 ```bash
 QUORUM_UI_HOST=0.0.0.0            # sin Docker
 QUORUM_UI_BIND=0.0.0.0            # con Docker: dónde publica Compose el puerto
-QUORUM_UI_PASSWORD=<clave>        # si falta, se genera una y se imprime al arrancar
+QUORUM_UI_PASSWORD=<clave>        # obligatoria: sin ella la página no arranca
 ```
 
-Fuera de `127.0.0.1` la página siempre pide el usuario `quorum` y esa clave.
+Siempre que el servidor escucha en algo distinto de `127.0.0.1`, la página y su API piden el usuario `quorum` y esa clave. Si falta, el servidor se niega a arrancar: ya no genera una clave por su cuenta ni corre sin control de acceso.
 
 ## Qué no da
 

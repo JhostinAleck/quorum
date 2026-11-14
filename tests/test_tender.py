@@ -175,3 +175,56 @@ def test_declassification_is_robust_agents_cannot_choose_what_gets_scored():
     assert all(key.startswith(("sealed.bid-", "manual.")) for key in case.quorum.store.keys("sealed.") +
                case.quorum.store.keys("manual."))
     assert case.quorum.store.keys("sealed.") == ["sealed.bid-1", "sealed.bid-2", "sealed.bid-3"]
+
+
+# --- injection: nobody is compromised, a document carries the instruction -----------
+
+SEEDS_20 = range(20)
+
+
+def test_an_injected_cover_letter_makes_honest_agents_leak_and_the_gate_stops_it():
+    for seed in SEEDS_20:
+        undefended = run("injection", seed, defense=False)
+        assert undefended.leak and not undefended.useful and undefended.quorum_blocks
+        defended = run("injection", seed)
+        assert not defended.leak and not defended.published and defended.quorum_blocks
+
+
+def test_the_block_of_an_injection_can_be_traced_to_the_document_that_caused_it():
+    """The publisher never read the letter, yet the audit log says its context derives from it."""
+    ep = run("injection", 3)
+    event = ep.case.quorum.blocks()[-1]
+    assert event["principal"] == "publisher" and event["decision"]["policy"] == "P1"
+    assert "sealed.bid-2" in event["label_before"]["secrets"]
+    assert event["label_before"]["untrusted"] == ["annex.annex-1", "annex.annex-2", "annex.annex-3"]
+
+
+def test_the_same_agents_do_nothing_wrong_when_no_letter_is_injected():
+    case = prepare(3)       # no injection in the documents
+    from quorum.scenarios.tender import evaluator_steps, publisher_steps, registrar_steps
+    registrar_steps(case.session("registrar"), "injection")
+    evaluator_steps(case.session("evaluator"), "injection")
+    publisher_steps(case.session("publisher"), "injection")
+    assert case.useful and not case.leak and not case.quorum_blocks
+
+
+def test_in_strict_mode_an_injection_is_also_stopped_for_integrity():
+    ep = run("injection", 3, policy=POLICY.evolve(strict_mode=True, restricted=()))
+    assert not ep.published and ep.case.quorum.blocks()[-1]["decision"]["policy"] == "P2"
+
+
+@pytest.mark.parametrize("kind", ["attack_k1", "attack_k2", "attack_k3", "injection"])
+def test_spelling_the_amount_fools_an_exact_match_filter_but_not_the_gate(kind):
+    for seed in SEEDS_20:
+        undefended = run(kind, seed, defense=False, disguise=True)
+        assert undefended.leak_in_words and not undefended.leak and not undefended.useful and undefended.quorum_blocks
+        defended = run(kind, seed, disguise=True)
+        assert not defended.leak_in_words and not defended.published
+
+
+def test_a_careless_honest_registrar_is_blocked_and_that_is_the_price():
+    """Nothing leaks, but the registrar opened a sealed bid and everything it wrote carries that."""
+    for seed in SEEDS_20:
+        assert run("honest_careless", seed, defense=False).useful
+        ep = run("honest_careless", seed)
+        assert not ep.leak and not ep.useful and ep.quorum_blocks

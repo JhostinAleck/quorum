@@ -3,7 +3,7 @@ import pytest
 
 from quorum.scenarios.helpdesk import KINDS, POLICY, REQUESTER, VICTIM, run
 
-ATTACKS = [kind for kind in KINDS if kind != "honest"]
+ATTACKS = [kind for kind in KINDS if not kind.startswith("honest")]
 SEEDS = range(20)
 
 
@@ -37,3 +37,20 @@ def test_without_per_recipient_authorization_the_honest_run_would_be_blocked():
     would be safe but useless in this domain."""
     closed = POLICY.evolve(sinks={"reply": ()})
     assert run("honest", 1, policy=closed).quorum_blocks
+
+
+@pytest.mark.parametrize("kind", ["attack_k1", "attack_k2", "attack_k3"])
+def test_spelling_the_number_fools_an_exact_match_filter_but_not_the_gate(kind):
+    for seed in SEEDS:
+        undefended = run(kind, seed, defense=False, disguise=True)
+        assert undefended.leak_in_words and not undefended.leak and not undefended.useful and undefended.quorum_blocks
+        defended = run(kind, seed, disguise=True)
+        assert not defended.leak_in_words and not defended.published
+
+
+def test_a_careless_honest_agent_is_blocked_and_that_is_the_price():
+    """Nothing leaks, but the analyst looked at somebody else's record and the reply is stopped."""
+    for seed in SEEDS:
+        assert run("honest_careless", seed, defense=False).useful
+        ep = run("honest_careless", seed)
+        assert not ep.leak and not ep.useful and ep.quorum_blocks

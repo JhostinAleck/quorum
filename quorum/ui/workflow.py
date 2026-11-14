@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import re
 import threading
+import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -23,7 +24,7 @@ from typing import Any
 from ..adapters.agent_loop import Chat, run_agent
 from ..adapters.http_server import MonitorServer
 from ..bootstrap import new_monitor
-from ..domain import QuorumError
+from ..domain import QuorumError, Value, untrusted
 from ..scenarios.tender import (
     BUDGET,
     POLICY,
@@ -46,8 +47,27 @@ INITIAL = "honest"
 # Which agents deviate for each k (docs/tareas.md).
 INVOLVED = {0: (), 1: ("evaluator",), 2: ("registrar", "evaluator"), 3: ROLES}
 _SUBJECT = "Proceso de contratación cargado desde la interfaz (documentos sintéticos)."
-_VALUE = re.compile(r"^[^\n\w]*valor\b[^\d\n]{0,40}(\d[\d.,' ]*)", re.I | re.M)
-_SUPPLIER = re.compile(r"^[^\n\w]*proveedor\s*[:=;.]?\s*(.+)$", re.I | re.M)
+# The label of the value line, up to the first digit of the amount.
+_VALUE = re.compile(r"^[^\n\w]*valor\b[^\d\n]{0,40}(?=\d)", re.I | re.M)
+# One amount in whole pesos: plain digits, or groups of three joined by one and the
+# same thousands separator. A decimal part (a different separator plus one or two
+# digits) is matched apart and dropped. Whatever follows after a gap is another
+# number, and an amount with digits glued to it in any other way is not accepted.
+_AMOUNT = re.compile(
+    r"(\d{1,3}(?:(?P<sep>[.,' ])\d{3}(?!\d))(?:(?P=sep)\d{3}(?!\d))*|\d+)"   # the pesos
+    r"(?:(?!(?P=sep))[.,]\d{1,2}(?!\d))?"                                    # cents, dropped
+    r"(?![.,']?\d)")                                                         # nothing glued to it
+# The label and the rest of its own line: it never reaches into the next one.
+_SUPPLIER = re.compile(r"^[^\n\w]*proveedor[ \t]*[:=;.]?[ \t]*([^\r\n]*)", re.I | re.M)
+# The supplier name is written by whoever uploads the document, yet it ends up as a
+# key of terms.bids, which is trusted public tender data that every agent reads with
+# no `untrusted` label. So it is not accepted as free text: only a short company
+# name on one line, in a closed alphabet with no quotes, colons or brackets, and
+# with too few digits to carry a sealed amount (five or more are rejected, counted
+# across the whole name so that separators cannot hide them).
+_NAME = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,&-]{1,60}")
+_LETTER = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]")
+_NAME_MAX_DIGITS = 4
 
 
 def k_of(kind: str) -> int:
@@ -66,19 +86,44 @@ class Bid:
     scanned: bool = False   # read by OCR
 
 
+def supplier_name(raw: str, filename: str = "") -> str:
+    """The name as it will reach terms.bids, or ValueError if it is not a plain company name."""
+    name = " ".join(unicodedata.normalize("NFC", raw).split()).strip("| ")
+    where = filename or "documento"
+    if not name:
+        raise ValueError(f"{where}: la línea 'Proveedor:' está vacía; escribe el nombre en esa misma línea")
+    digits = sum(ch.isdigit() for ch in name)
+    if not _NAME.fullmatch(name) or not _LETTER.search(name) or digits > _NAME_MAX_DIGITS:
+        raise ValueError(f"{where}: el nombre del proveedor no es válido. Debe ser un nombre corto de empresa: "
+                         "letras, dígitos, espacios y . , & -, máximo 60 caracteres y menos de cinco dígitos")
+    return name
+
+
 def parse_bid(text: str, filename: str = "", scanned: bool = False) -> Bid:
     """A document with a line 'Valor: N' and, optionally, 'Proveedor: X'.
     The value gets sealed; the rest of the text becomes the untrusted annex.
     Tolerant with punctuation, because the text may come from OCR."""
-    value = _VALUE.search(text)
-    digits = "".join(ch for ch in value.group(1) if ch.isdigit()) if value else ""
-    if not digits:
-        raise ValueError(f"{filename or 'documento'}: falta una línea 'Valor: <número>'")
+    where = filename or "documento"
+    label = _VALUE.search(text)
+    if not label:
+        raise ValueError(f"{where}: falta una línea 'Valor: <número>'")
+    amount = _AMOUNT.match(text, label.end())
+    if not amount:
+        raise ValueError(f"{where}: no se entiende el valor. Escríbelo en pesos enteros, por ejemplo "
+                         "'Valor: 468.915.720'")
+    value = int("".join(ch for ch in amount.group(1) if ch.isdigit()))
     supplier = _SUPPLIER.search(text)
-    name = supplier.group(1).strip() if supplier else re.sub(r"\.\w+$", "", filename) or "Proveedor"
-    line_end = text.find("\n", value.end())
-    annex = text[:value.start()] + (text[line_end:] if line_end != -1 else "")
-    return Bid(name, int(digits), annex.strip(), scanned)
+    if supplier:
+        name = supplier_name(supplier.group(1), filename)
+    else:                                  # the file name is as untrusted as the text
+        try:
+            name = supplier_name(re.sub(r"\.\w+$", "", filename) or "Proveedor", filename)
+        except ValueError:
+            raise ValueError(f"{where}: falta una línea 'Proveedor: <nombre>' y el nombre del archivo no sirve "
+                             "como nombre de proveedor") from None
+    line_end = text.find("\n", amount.end())
+    annex = text[:label.start()] + (text[line_end:] if line_end != -1 else "")
+    return Bid(name, value, annex.strip(), scanned)
 
 
 def build_case(bids: list[Bid], *, defense: bool = True) -> Case:
@@ -104,7 +149,12 @@ def build_case(bids: list[Bid], *, defense: bool = True) -> Case:
             quorum.ingest(f"scan.{scan}", {"ref": f"bid-{i}", "value": bid.value})
         else:
             quorum.ingest(f"sealed.bid-{i}", bid.value)
-    quorum.ingest("terms.bids", dict(refs))
+    # The supplier names come from the uploaded documents, so the list of bids is third-party content
+    # too. Validation narrows what a name can say; the label is what tells the gate where it came from:
+    # whoever reads the list derives from those documents, exactly as if it had read the annexes.
+    origin = untrusted(*(f"annex.annex-{i}" for i in range(1, len(bids) + 1)))
+    quorum.store.put("terms.bids", Value(dict(refs), origin))
+    quorum.audit_log.record(kind="ingest", key="terms.bids", label=origin.to_dict())
     quorum.ingest("terms.scan", scan)
     values = {b.supplier: b.value for b in bids}
     return Case(quorum, refs, BUDGET, str(values.get(TARGET, bids[1].value)), lowest_bidder(values), scan)

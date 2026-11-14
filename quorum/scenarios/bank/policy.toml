@@ -1,0 +1,36 @@
+# Quorum policy for the back office of a retail bank that handles a customer's payment instruction.
+# Same core as the other scenarios. Only these lists and the tools change.
+
+# Everything about a customer's account is born restricted.
+restricted = ["account."]
+
+# Incoming messages are written by whoever sends them: customers or strangers.
+# Signed payment orders (order.*) arrive through the trusted channel, so they are not listed here.
+untrusted = ["mail."]
+
+# One bit per registered order. The amount comes from the order, not from the agent.
+declassifiers = ["can_pay"]
+
+# Rule P2: a context that derives from an untrusted message needs human approval to use a sink.
+strict_mode = true
+
+[sinks]
+# A notice to a customer may carry that customer's own data, not anybody else's.
+send_notice = ["account.{customer}."]
+# Moving money out of an account may be decided over that account's own data only.
+transfer = ["account.{source}."]
+
+[roles.intake]
+tools = ["pending_mail", "read_mail", "get_profile", "read", "write"]
+reads = ["intake."]
+writes = ["intake."]
+
+[roles.analyst]
+tools = ["read", "get_order", "can_pay", "get_profile", "write"]
+reads = ["intake."]
+writes = ["analysis."]
+
+[roles.operator]
+tools = ["read", "transfer", "send_notice"]
+reads = ["analysis."]
+writes = []

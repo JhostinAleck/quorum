@@ -7,8 +7,10 @@ whether the gate enforces or only audits, and watch the episode step by step.
 
 To open it to other machines, in .env:
   QUORUM_UI_HOST=0.0.0.0
-  QUORUM_UI_PASSWORD=<access key>       # if missing, one is generated and printed at start-up
-Outside 127.0.0.1 the page always asks for user "quorum" and that key.
+  QUORUM_UI_PASSWORD=<access key>       # required: without it the server refuses to start
+Listening on anything but loopback (which includes the container of
+docker-compose.ui.yml, whatever port Compose publishes) the page always asks
+for user "quorum" and that key.
 
 State lives in memory: at start-up, and after Reset, the three agents are in
 their honest version and no run is kept.
@@ -17,11 +19,12 @@ from __future__ import annotations
 
 import base64
 import hmac
+import ipaddress
 import json
 import os
-import secrets
 import sys
 import threading
+from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -100,7 +103,33 @@ class State:
 
 
 STATE = State()
-PASSWORD: str | None = None      # None = no access control (only on 127.0.0.1)
+PASSWORD: str | None = None      # None = no access control (only when listening on loopback)
+USER = "quorum"
+
+
+def is_loopback(host: str) -> bool:
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def access_key(host: str, environ: Mapping[str, str]) -> str | None:
+    """The key the page asks for, or None for no access control.
+
+    The decision depends only on the address this process listens on. Where
+    Compose publishes the port (QUORUM_UI_BIND) says nothing about who else can
+    reach it: in docker-compose.ui.yml the agents share a network with this
+    container. So beyond loopback a key is required, and without one the
+    server does not start.
+    """
+    key = (environ.get("QUORUM_UI_PASSWORD") or "").strip() or None
+    if key is None and not is_loopback(host):
+        raise SystemExit(f"quorum interface: refusing to listen on {host} without an access key. "
+                         "Set QUORUM_UI_PASSWORD, or listen on 127.0.0.1 (QUORUM_UI_HOST).")
+    return key
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -115,7 +144,10 @@ class Handler(BaseHTTPRequestHandler):
             user, _, key = base64.b64decode(header.removeprefix("Basic ")).decode().partition(":")
         except ValueError:
             user = key = ""
-        if user == "quorum" and hmac.compare_digest(key.encode(), PASSWORD.encode()):
+        # both comparisons always run, in constant time
+        user_ok = hmac.compare_digest(user.encode(), USER.encode())
+        key_ok = hmac.compare_digest(key.encode(), PASSWORD.encode())
+        if user_ok and key_ok:
             return True
         self.send_response(401)
         self.send_header("WWW-Authenticate", 'Basic realm="Quorum", charset="UTF-8"')
@@ -176,16 +208,11 @@ def main() -> None:
     agents.load_env()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("QUORUM_UI_PORT") or 8765)
     host = os.environ.get("QUORUM_UI_HOST") or "127.0.0.1"
-    loopback = ("127.0.0.1", "localhost", "::1")
-    # In Docker the server listens on 0.0.0.0 inside the container; what matters is
-    # where compose publishes the port (QUORUM_UI_BIND).
-    local = host in loopback or os.environ.get("QUORUM_UI_BIND") in loopback
-    PASSWORD = os.environ.get("QUORUM_UI_PASSWORD") or (None if local else secrets.token_urlsafe(12))
+    PASSWORD = access_key(host, os.environ)      # exits here rather than serve without a key beyond loopback
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"quorum interface at http://{host}:{port}", flush=True)
     if PASSWORD:
-        generated = "" if os.environ.get("QUORUM_UI_PASSWORD") else f" (generated: {PASSWORD})"
-        print(f"access with user 'quorum' and the key in QUORUM_UI_PASSWORD{generated}", flush=True)
+        print(f"access with user '{USER}' and the key in QUORUM_UI_PASSWORD", flush=True)
     server.serve_forever()
 
 
