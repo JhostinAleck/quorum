@@ -3,6 +3,7 @@
 No model and no network beyond 127.0.0.1: the model is the fake one of test_agent_loop.
 """
 import base64
+import http.cookiejar
 import json
 import os
 import socket
@@ -367,28 +368,95 @@ def test_compose_requires_the_key_of_the_page():
     assert "QUORUM_UI_PASSWORD:-" not in compose
 
 
-def test_the_page_runs_an_episode_end_to_end(monkeypatch):
-    monkeypatch.setattr(server, "PASSWORD", None)
-    monkeypatch.setattr(server, "STATE", server.State())
-    srv, url = serve(server.Handler)
+def browser(url):
+    """A client that keeps its cookies, like one browser."""
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 
     def call(path, body=None):
         data = None if body is None else json.dumps(body).encode()
-        return json.loads(urllib.request.urlopen(urllib.request.Request(url + path, data=data), timeout=10).read())
+        return json.loads(opener.open(urllib.request.Request(url + path, data=data), timeout=10).read())
+    return call
+
+
+def finished(call, view):
+    for _ in range(100):
+        if not view["running"]:
+            return view
+        time.sleep(0.1)
+        view = call("/api/state")
+    raise AssertionError("the run did not finish")
+
+
+def test_the_page_runs_an_episode_end_to_end(monkeypatch):
+    monkeypatch.setattr(server, "PASSWORD", None)
+    monkeypatch.setattr(server, "SESSIONS", server.Sessions())
+    srv, url = serve(server.Handler)
+    call = browser(url)
     try:
         docs = call("/api/examples")
         assert [d["supplier"] for d in docs][1] == WINNER and all("value" not in d for d in docs)
-        view = call("/api/run", {"documents": docs, "kind": "attack_k3", "defense": True})
-        for _ in range(100):
-            if not view["running"]:
-                break
-            time.sleep(0.1)
-            view = call("/api/state")
+        view = finished(call, call("/api/run", {"documents": docs, "kind": "attack_k3", "defense": True}))
         assert view["error"] is None and not view["result"]["leak"] and view["result"]["blocks"]
         assert view["events"] and [a["version"] for a in view["agents"]] == ["modified"] * 3
         assert call("/api/reset", {})["initial"]
     finally:
         srv.shutdown()
+
+
+def test_two_browsers_at_the_same_time_do_not_step_on_each_other(monkeypatch):
+    monkeypatch.setattr(server, "PASSWORD", None)
+    monkeypatch.setattr(server, "SESSIONS", server.Sessions())
+    srv, url = serve(server.Handler)
+    ana, beto = browser(url), browser(url)
+    try:
+        docs = ana("/api/examples")
+        a = ana("/api/run", {"documents": docs, "kind": "attack_k3", "defense": True})
+        b = beto("/api/run", {"documents": docs, "kind": "honest", "defense": True})
+        a, b = finished(ana, a), finished(beto, b)
+        assert a["kind"] == "attack_k3" and a["result"]["blocks"]
+        assert b["kind"] == "honest" and not b["result"]["blocks"] and b["result"]["useful"]
+        assert beto("/api/reset", {})["initial"]
+        assert ana("/api/state")["result"]["blocks"]          # Beto's reset did not touch Ana's run
+        assert browser(url)("/api/state")["initial"]          # someone new starts clean
+        assert len(server.SESSIONS.states) == 3
+    finally:
+        srv.shutdown()
+
+
+def test_a_cookie_the_server_did_not_give_out_gets_a_fresh_state():
+    sessions = server.Sessions()
+    sid, state, new = sessions.get(None)
+    assert new and server._SID.fullmatch(sid)
+    assert sessions.get(sid) == (sid, state, False)
+    for forged in ("x" * 40, "abc", "", sid + "!"):
+        other, fresh, new = sessions.get(forged)
+        assert new and other != forged and fresh is not state
+
+
+def test_idle_states_are_forgotten_but_not_while_running(monkeypatch):
+    sessions = server.Sessions()
+    old, busy = sessions.get(None)[0], sessions.get(None)
+    sessions.states[busy[0]].running = True
+    for s in sessions.states.values():
+        s.touched -= server.SESSION_TTL + 1
+    sessions.get(None)
+    assert old not in sessions.states and busy[0] in sessions.states
+    monkeypatch.setattr(server, "MAX_SESSIONS", 3)
+    for _ in range(10):
+        sessions.get(None)
+    assert len(sessions.states) <= 3 and busy[0] in sessions.states
+
+
+def test_the_preview_hides_exactly_the_sealed_amount():
+    for name, text in DOCS:
+        bid = workflow.parse_bid(text, name)
+        preview = workflow.mask_value(text)
+        assert workflow.SEALED in preview and str(bid.value) not in preview.replace(".", "")
+        # nothing else changed
+        assert workflow.parse_bid(preview.replace(workflow.SEALED, "1"), name).annex == bid.annex
+    assert workflow.mask_value("sin valor aquí") == "sin valor aquí"
+    doc = server.read_document("oferta.md", b"Proveedor: Uno SAS\nValor: 512.480.300\n\nCarta.")
+    assert doc["preview"] == "Proveedor: Uno SAS\nValor: [sellado]\n\nCarta." and "512.480.300" in doc["text"]
 
 
 # --- one service per agent ---------------------------------------------------------

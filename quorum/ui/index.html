@@ -27,6 +27,10 @@
   .drop.over { border-color:var(--acc); background:var(--accbg); }
   .doc { display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); }
   .doc small { color:var(--mute); } .doc a { color:var(--bad); cursor:pointer; text-decoration:none; }
+  a.lnk, .doc a.lnk { color:var(--acc); cursor:pointer; text-decoration:none; }
+  .docw .preview { background:#f8f9fb; border:1px solid var(--line); border-radius:7px; margin:6px 0 8px; padding:8px 10px; }
+  .preview .ptools { color:var(--mute); font-size:12px; margin-bottom:4px; }
+  .preview pre { margin:0; font:12px/1.45 ui-monospace,Consolas,monospace; white-space:pre-wrap; word-break:break-word; max-height:260px; overflow:auto; }
   .chip { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; }
   .ok { background:var(--okbg); color:var(--ok); } .bad { background:var(--badbg); color:var(--bad); }
   .warn { background:var(--warnbg); color:var(--warn); } .neu { background:#eef0f4; color:var(--mute); }
@@ -95,13 +99,26 @@ function seg(id, key) {
     b.onclick = () => { if (b.disabled) return; cfg[key] = b.dataset.v; paint(); };
   });
 }
+// Which documents have their text open, and which of those show the sealed value too.
+const open = new Set(), unmasked = new Set();
 function paintDocs() {
   $("docs").innerHTML = docs.map((d,i) => {
     const how = {text:["texto","neu"], pdf:["PDF","neu"], ocr:["escaneado · OCR","warn"]}[d.method];
-    return `<div class="doc"><span>${esc(d.supplier)} <small>${esc(d.name)}</small></span><span>
-      <span class="chip ${how[1]}">${how[0]}</span> <span class="chip neu">valor sellado 🔒 ${d.digits} dígitos</span> <a data-i="${i}">quitar</a></span></div>`;
+    const id = d.name + "\u0000" + d.supplier, shown = open.has(id), plain = unmasked.has(id);
+    const body = !shown ? "" : `<div class="preview"><div class="ptools">${d.method === "ocr" ? "Texto leído por OCR" : "Contenido"}
+        · <a class="lnk" data-act="mask" data-i="${i}">${plain ? "ocultar el valor" : "mostrar el valor sellado"}</a></div>
+      <pre>${esc(plain ? d.text : (d.preview ?? d.text))}</pre></div>`;
+    return `<div class="docw"><div class="doc"><span>${esc(d.supplier)} <small>${esc(d.name)}</small></span><span>
+      <span class="chip ${how[1]}">${how[0]}</span> <span class="chip neu">valor sellado 🔒 ${d.digits} dígitos</span>
+      <a class="lnk" data-act="view" data-i="${i}">${shown ? "cerrar" : "ver"}</a> <a data-act="drop" data-i="${i}">quitar</a></span></div>${body}</div>`;
   }).join("");
-  $("docs").querySelectorAll("a").forEach(a => a.onclick = () => { docs.splice(+a.dataset.i,1); paintDocs(); });
+  $("docs").querySelectorAll("a[data-act]").forEach(a => a.onclick = () => {
+    const d = docs[+a.dataset.i], id = d.name + "\u0000" + d.supplier;
+    if (a.dataset.act === "drop") { docs.splice(+a.dataset.i,1); open.delete(id); unmasked.delete(id); }
+    else if (a.dataset.act === "view") { open.has(id) ? open.delete(id) : open.add(id); }
+    else { unmasked.has(id) ? unmasked.delete(id) : unmasked.add(id); }
+    paintDocs();
+  });
 }
 const b64 = file => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result.split(",")[1] || ""); r.onerror = bad; r.readAsDataURL(file); });
 // Several files are read at the same time (the server OCRs each one on its own
@@ -162,6 +179,7 @@ function paintAgents() {
 function paintResult() {
   const r = state && state.result, el = $("result");
   if (state && state.error) { el.innerHTML = `<div class="note bad">${esc(state.error)}</div>`; return; }
+  if (state && state.waiting) { el.innerHTML = `<span class="empty">En cola: otra persona está usando los contenedores de los agentes; tu corrida empieza cuando termine la suya…</span>`; return; }
   if (state && (state.running || (r && shown < state.events.length))) { el.innerHTML = `<span class="empty">Corriendo…</span>`; return; }
   if (!r) { el.innerHTML = `<span class="empty">Aún no hay corrida.</span>`; return; }
   const denied = r.blocks.length > 0, stopped = r.blocks.some(b => b.enforced);
