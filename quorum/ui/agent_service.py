@@ -23,7 +23,7 @@ from typing import Any
 
 from ..adapters.agent_loop import run_agent
 from ..adapters.http_client import RemoteSession
-from ..scenarios.tender import KINDS, ROLE_STEPS, ROLES, SYSTEM, TASK
+from ..scenarios.tender import KINDS, ROLE_STEPS, ROLES, SYSTEM
 from . import agents
 
 ROLE = ""
@@ -44,8 +44,8 @@ def run(mode: str, kind: str, side_task: str = "") -> dict[str, Any]:
     if mode == "scripted":
         ROLE_STEPS[ROLE](session, kind)
         return {"role": ROLE, "mode": mode}
-    system = SYSTEM[ROLE] if not side_task else f"{SYSTEM[ROLE]}\n\n{side_task}"
-    messages = run_agent(session, agents.default_chat(), system=system, task=TASK[ROLE])
+    system, task = agents.prompts(ROLE, side_task)
+    messages = run_agent(session, agents.default_chat(), system=system, task=task)
     calls = sum(len(m.get("tool_calls") or ()) for m in messages if m.get("role") == "assistant")
     return {"role": ROLE, "mode": "llm", "model": agents.model(), "tool_calls": calls}
 

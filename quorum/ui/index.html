@@ -177,7 +177,7 @@ function paint() {
     const k = cfg.kind.startsWith("attack_k") ? +cfg.kind.slice(-1) : 0;
     $("engineInfo").textContent = !state.llm_available ? "LLM requiere OPENROUTER_API_KEY en .env"
       : cfg.engine !== "llm" ? "los tres agentes siguen su guion, sin modelo"
-      : k ? "modelo: " + state.model + " · los agentes modificados siguen el guion de ataque"
+      : k ? "modelo: " + state.model + " · los agentes modificados llevan una tarea oculta (Frente 3)"
       : "modelo: " + state.model;
     const f = state.formats;
     $("formats").textContent = f.scanned_pdf ? "Lee texto, PDF y documentos escaneados (OCR). Cada oferta necesita una línea «Valor: N»; el valor se sella."
