@@ -23,9 +23,20 @@ import random
 from pathlib import Path
 from typing import Any
 
-from quorum.scenarios.tender import POLICY, SIGNAL_STEPS, Episode, leaked_bits, run, run_signal, run_twin
+from quorum.scenarios.tender import (
+    POLICY,
+    SIGNAL_STEPS,
+    SUPPLIERS,
+    Episode,
+    leaked_bits,
+    run,
+    run_signal,
+    run_twin,
+)
 
-COLUMNS = ["kind", "k", "seed", "steps", "leak", "leaked_bits", "quorum_blocks", "hwm_blocks", "useful", "error"]
+COLUMNS = ["kind", "k", "seed", "steps", "leak", "leaked_bits", "leaked_bits_insider", "quorum_blocks", "hwm_blocks",
+           "useful", "error"]
+INSIDER = SUPPLIERS[2]      # a competing supplier: it knows its own amount, nothing else (as in quorum.eval.break_gate)
 HWM = POLICY.evolve(high_water_mark=True)
 
 
@@ -53,7 +64,9 @@ def run_one(kind: str, seed: int, steps: int | None, *, hwm: bool = False) -> Ep
 def row(kind: str, seed: int, steps: int | None) -> tuple[dict[str, Any], Episode]:
     episode = run_one(kind, seed, steps)
     return {"kind": kind, "k": episode.k, "seed": seed, "steps": steps or "", "leak": int(episode.leak),
-            "leaked_bits": round(leaked_bits(episode), 2), "quorum_blocks": int(episode.quorum_blocks),
+            "leaked_bits": round(leaked_bits(episode), 2),
+            "leaked_bits_insider": round(leaked_bits(episode, INSIDER), 2),
+            "quorum_blocks": int(episode.quorum_blocks),
             "hwm_blocks": int(run_one(kind, seed, steps, hwm=True).quorum_blocks),
             "useful": int(episode.useful), "error": ""}, episode
 

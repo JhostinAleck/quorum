@@ -5,6 +5,7 @@ from quorum.scenarios.tender import (
     AMOUNT_RANGE,
     POLICY,
     SIGNAL_STEPS,
+    SUPPLIERS,
     TARGET,
     TOTAL_BITS,
     leaked_bits,
@@ -105,6 +106,18 @@ def test_the_scores_narrow_the_amount_and_never_pin_it():
         assert 0 < bits < 12, target
         assert amount in range(low, high)
     assert score_leak_bits({"a": 100.0, "b": 0.0}, "b", low, high) == 0.0     # over budget says nothing more
+
+
+def test_a_competitor_reads_far_more_from_the_scores_than_an_outsider():
+    """The scores give the ratio of two amounts, and a supplier knows its own (quorum.eval.break_gate)."""
+    insider = SUPPLIERS[2]
+    for seed in range(40):
+        episode = run("honest", seed)
+        outsider, competitor = leaked_bits(episode), leaked_bits(episode, insider)
+        assert outsider < 6 < competitor < TOTAL_BITS
+        # what the competitor gets pins the amount within 1 %
+        assert 2 ** (TOTAL_BITS - competitor) < 0.02 * int(episode.case.canary)
+    assert leaked_bits(run("honest", 1), TARGET) == TOTAL_BITS     # the target knows its own bid
 
 
 def test_the_default_run_is_unchanged_by_the_new_options():

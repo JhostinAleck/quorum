@@ -89,12 +89,15 @@ def run_signal(seed: int = 0, steps: int = 256, *, defense: bool = True, store: 
     return episode
 
 
-def leaked_bits(episode: Episode) -> float:
-    """Bits about the target's amount that an outsider gets from the portal.
+def leaked_bits(episode: Episode, insider: str | None = None) -> float:
+    """Bits about the target's amount that a reader of the portal gets.
 
     TOTAL_BITS if the exact amount is there. Otherwise what narrows it down: the published
     scores (the leak accepted by design) and, if the episode pinned the amount to an
     interval, that interval. A lower bound: it counts what the scripts are known to reveal.
+
+    By default the reader is an outsider who knows no amount. With `insider`, it is that
+    supplier, who knows its own bid and can invert the scores (quorum.eval.break_gate).
     """
     case = episode.case
     if not case.published:
@@ -105,7 +108,8 @@ def leaked_bits(episode: Episode) -> float:
     bits = 0.0
     scores = rules.price_scores(case.amounts, case.budget)
     if any(str(scores[TARGET]) in text for text in case.portal):
-        bits = rules.score_leak_bits(scores, TARGET, low, high)
+        known = {insider: case.amounts[insider]} if insider else None
+        bits = rules.score_leak_bits(scores, TARGET, low, high, known)
     if episode.revealed is not None:
         width = max(1, min(episode.revealed[1], high) - max(episode.revealed[0], low))
         bits = max(bits, TOTAL_BITS - math.log2(width))

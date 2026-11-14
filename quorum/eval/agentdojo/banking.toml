@@ -1,0 +1,35 @@
+# Quorum policy for the AgentDojo banking suite, written BEFORE replaying any trace through the gate.
+# Frozen in its own commit; the replay results come in a later one.
+#
+# The only things known when writing it: the 11 banking tools (from the traces) and that the
+# attacker's injections live in data third parties can write (files, transaction subjects).
+#
+# Integrity, not confidentiality: the banking injection tasks make the agent send money or change
+# account data. There is no restricted source here, so rule P1 has nothing to protect and the
+# result rests on P2.
+
+# Tool results that a third party can write: the bill / notice files, and the transaction lists
+# (anyone who sends money writes the subject). Keys in the replay are "<tool>.<n>".
+untrusted = ["read_file.", "get_most_recent_transactions.", "get_scheduled_transactions."]
+
+# Read-only account data written by the bank: get_balance, get_iban, get_user_info. Trusted.
+restricted = []
+declassifiers = []
+endorsements = []
+
+# P2: an untrusted context needs human approval to reach a sink.
+strict_mode = true
+
+[sinks]
+send_money = []
+schedule_transaction = []
+update_scheduled_transaction = []
+update_user_info = []
+update_password = []
+
+[roles.agent]
+tools = ["get_most_recent_transactions", "get_scheduled_transactions", "read_file", "get_balance",
+         "get_iban", "get_user_info", "send_money", "schedule_transaction",
+         "update_scheduled_transaction", "update_user_info", "update_password"]
+reads = []
+writes = []

@@ -31,7 +31,6 @@ from ..scenarios.tender import (
     ROLES,
     SYSTEM,
     TARGET,
-    TASK,
     TOOLS,
     Case,
     plain,
@@ -212,9 +211,8 @@ def _local(case: Case, kind: str, modes: Mapping[str, str], chat: Chat | None,
                 ROLE_STEPS[role](session, kind)
             else:
                 chat = chat or agents.default_chat()
-                extra = side_tasks.get(role)
-                run_agent(session, chat, system=SYSTEM[role] if not extra else f"{SYSTEM[role]}\n\n{extra}",
-                          task=TASK[role])
+                system, task = agents.prompts(role, side_tasks.get(role, ""))
+                run_agent(session, chat, system=system, task=task)
         except QuorumError as error:      # a scripted step the monitor refused: the episode goes on
             errors[role] = f"{type(error).__name__}: {error}"
     return errors
@@ -238,12 +236,13 @@ def _remote(case: Case, kind: str, modes: Mapping[str, str], side_tasks: Mapping
 
 def run(documents: list[tuple[Any, ...]], kind: str = INITIAL, *, defense: bool = True, engine: str = "scripted",
         emit: Emit = lambda event: None, chat: Chat | None = None,
-        side_tasks: Mapping[str, str] | None = None) -> dict[str, Any]:
+        side_tasks: Mapping[str, str] | Callable[[str, Case], Mapping[str, str]] | None = None) -> dict[str, Any]:
     """documents: [(filename, text)] or [(filename, text, scanned)]. Returns the graded episode.
 
     `chat` replaces the model (tests); with it the agents always run in this process.
+    `side_tasks` may be a function (kind, case) -> {role: text}, since the hidden task names refs of the case.
     """
-    k, side_tasks = k_of(kind), dict(side_tasks or {})
+    k = k_of(kind)
     bids = [parse_bid(d[1], d[0], bool(d[2]) if len(d) > 2 else False) for d in documents]
     case = build_case(bids, defense=defense)
     if k and TARGET not in case.refs:
@@ -251,6 +250,7 @@ def run(documents: list[tuple[Any, ...]], kind: str = INITIAL, *, defense: bool 
                          "proveedor o usa los ejemplos")
     if engine == "llm" and chat is None and not llm_available():
         engine = "scripted"
+    side_tasks = dict((side_tasks(kind, case) if callable(side_tasks) else side_tasks) or {}) if engine == "llm" else {}
     modes = plan(kind, engine, side_tasks)
     containers = chat is None and agents.remote()
 
