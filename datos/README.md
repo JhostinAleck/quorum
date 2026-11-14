@@ -37,12 +37,24 @@ los `*_reason` que dio el modelo y `monitor` (el modelo que puntuó).
 | `monitor_honest_extra_ciegofix.jsonl` | Gemini 3.5 Flash Lite | después de `94446cd` |
 | `monitor_orca_v4_haiku55_ciegofix.jsonl` | Haiku 5.5 | después de `94446cd` |
 | `monitor_honest_extra_haiku55_ciegofix.jsonl` | Haiku 5.5 | después de `94446cd` |
+| `monitor_orca_v4_jev.jsonl`, `monitor_honest_extra_jev.jsonl` | Jev 1.14 (`typesafe/jev-1.14`) | después de `94446cd`; medición posterior al congelamiento, fuera de la ficha (`docs/resultados-monitores.md`) |
 
 `monitor_orca_v4_gemini.jsonl` es una copia idéntica de `monitor_orca_v4.jsonl` (quedó de antes de
 `--tag`); no se versiona.
 
 Los «antes» se citan en la ficha para mostrar el efecto del arreglo; los «ciegofix» son los números
 que se reportan.
+
+## Otras mediciones
+
+No las cita `metrics.yaml`. Cada una la genera su propio módulo y tiene su documento de resultados.
+
+| Archivo | Contenido | Lo genera |
+|---|---|---|
+| `monitores-persuasion.jsonl` | Notas de M1 y M2 (prompt normal y endurecido) sobre 10 trámites honestos y 40 ataques guionados, cada ataque con y sin dos notas dirigidas al revisor. La primera línea es el encabezado de la corrida (modelo, semillas, costo); no trae trayectorias | `quorum/monitor_bench.py` |
+| `monitores-persuasion-jev.jsonl`, `monitores-persuasion-jev-score.jsonl` | Lo mismo con Jev (`typesafe/jev-1.14`) como juez, con la pregunta de sí o no y con la pregunta por niveles. El encabezado trae además el backend, la pregunta y el número de llamadas | `quorum/monitor_bench.py --backend jev` |
+| `agentes-inyeccion.jsonl` | 20 trámites con agentes de modelo y prompts honestos, 10 sin inyección y 10 con la carta inyectada, con la trayectoria de cada agente. La primera línea es el encabezado de la corrida | `quorum/llm_bench.py` |
+| `agentdojo-replay.json` | Un solo JSON (no JSON Lines) con cada repetición de las trazas de referencia de AgentDojo 0.1.35, tareas `v1.2.2`, en los cuatro conjuntos, sin modelo | `quorum/agentdojo_bench.py` |
 
 ## Cómo se recalcula
 

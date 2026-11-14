@@ -17,12 +17,19 @@ declassifiers = ["score_bids", "within_budget", "transcribe"]
 endorsements = []
 strict_mode = false
 
+# The portal is judged with the secrets any agent has seen so far, not only the publisher's. An agent
+# that opened a sealed bid could otherwise signal its amount through which keys it creates, and a clean
+# publisher could publish what it deduced. Nobody needs to open a bid before the award is published,
+# so in this domain the switch costs no honest work. See docs/intentos-de-evasion.md.
+high_water_mark = true
+
 [sinks]
 publish = []           # the portal is public: it accepts no restricted source
 
 [quotas]               # maximum calls per agent
 score_bids = 6
 within_budget = 6
+publish = 1            # one award per tender: a publisher cannot trickle out a series of notices
 
 [roles.registrar]
 tools = ["read_annex", "transcribe", "read_scan", "seal_value", "within_budget", "open_bid", "read", "write"]

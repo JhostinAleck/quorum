@@ -56,10 +56,16 @@ def _stop_on_sigterm() -> None:
 
 
 def monitor(args: argparse.Namespace) -> None:
+    from . import integrity
     from .adapters.http_server import MonitorServer
     from .infrastructure import SQLiteStore
     from .scenarios import tender
 
+    if not args.unpinned and not integrity.pinned(args.scenario):
+        sys.exit("error: the policy, the tools or the code are not the ones pinned in quorum/integrity.lock.json:\n  "
+                 + "\n  ".join(integrity.check())
+                 + "\nrun `python -m quorum.integrity --write` and commit the lock if the change is intended, "
+                 "or pass --unpinned to run anyway")
     tokens = {_env(f"QUORUM_TOKEN_{role.upper()}"): role for role in tender.ROLES}
     admin_token = _env("QUORUM_ADMIN_TOKEN")
     store = None
@@ -67,10 +73,14 @@ def monitor(args: argparse.Namespace) -> None:
         if os.path.exists(args.store):      # every start is a fresh episode
             os.remove(args.store)
         store = SQLiteStore(args.store)
-    case = tender.prepare(args.seed, defense=not args.audit, scanned=args.scanned, store=store)
+    case = tender.prepare(args.seed, defense=not args.audit, scanned=args.scanned, injection=args.injection,
+                          store=store)
+    # sealed before the server exists: no agent can act before the log says what is deciding
+    found = integrity.seal(case.quorum, args.scenario, expected=os.environ.get("QUORUM_EXPECT_PIPELINE", "").strip())
 
     def grading() -> dict[str, Any]:
         return {"scenario": args.scenario, "seed": args.seed, "enforce": not args.audit,
+                "integrity": {**found, "pinned": not args.unpinned},
                 "published": case.published, "leak": case.leak, "useful": case.useful,
                 "quorum_blocks": case.quorum_blocks}
 
@@ -78,7 +88,8 @@ def monitor(args: argparse.Namespace) -> None:
                            extra_state=grading)
     _stop_on_sigterm()
     mode = "audit only" if args.audit else "enforcing"
-    print(f"quorum monitor listening on {server.url} ({args.scenario}, seed {args.seed}, {mode})", flush=True)
+    print(f"quorum monitor listening on {server.url} ({args.scenario}, seed {args.seed}, {mode}, "
+          f"pipeline {found['pipeline'][:16]})", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -120,13 +131,28 @@ def agent(args: argparse.Namespace) -> None:
 
 
 def report(args: argparse.Namespace) -> None:
+    from . import integrity
     from .adapters.http_client import RemoteAdmin
 
     admin_token = _env("QUORUM_ADMIN_TOKEN")
     _wait_until_healthy(args.url)
     state = RemoteAdmin(args.url, admin_token).state()
+    extra = state.get("extra") if isinstance(state.get("extra"), dict) else {}
+    declared = extra.get("integrity") if isinstance(extra.get("integrity"), dict) else {}
+    declared = {k: v for k, v in declared.items() if k != "pinned"}
+    # what the monitor says it runs must be what it sealed in the log before the first call
+    in_log = integrity.sealed(state["audit_log"])
+    sealed = bool(declared) and in_log == declared
+    # and it is not taken at its word: the operator's hash, or else this side's own lock, has the last say
+    expected = os.environ.get("QUORUM_EXPECT_PIPELINE", "").strip() or integrity.locked_pipeline(
+        str(extra.get("scenario") or ""))
+    approved = bool(in_log) and bool(expected) and in_log.get("pipeline") == expected
+    runtime = integrity.sealed_runtime(state["audit_log"]) or {}
     summary = {
-        **state.get("extra", {}),
+        **extra,
+        "integrity_sealed": sealed,
+        "integrity_approved": approved,
+        "enforce_sealed": runtime.get("enforce"),
         "audit_log_valid": state["audit_log_valid"],
         "audit_log_events": len(state["audit_log"]),
         "steps": {principal: len(steps) for principal, steps in state["trajectories"].items()},
@@ -136,7 +162,7 @@ def report(args: argparse.Namespace) -> None:
                    for event in state["blocks"]],
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
-    if not state["audit_log_valid"]:
+    if not state["audit_log_valid"] or not sealed or (not approved and not args.unpinned):
         sys.exit(1)
 
 
@@ -148,10 +174,13 @@ def parser() -> argparse.ArgumentParser:
     m.add_argument("--scenario", choices=SCENARIOS, default="tender")
     m.add_argument("--seed", type=int, default=1)
     m.add_argument("--scanned", action="store_true", help="one bid arrives as a scan")
+    m.add_argument("--injection", action="store_true", help="one cover letter carries an instruction for the agents")
     m.add_argument("--audit", action="store_true", help="the gate only audits: nothing is blocked")
     m.add_argument("--host", default="127.0.0.1")
     m.add_argument("--port", type=int, default=8080)
     m.add_argument("--store", default="", help="path of a SQLite store (default: in memory)")
+    m.add_argument("--unpinned", action="store_true",
+                   help="start even if the policy, the tools or the code differ from quorum/integrity.lock.json")
     m.set_defaults(run=monitor)
 
     a = commands.add_parser("agent", help="run one agent against a remote monitor")
@@ -165,6 +194,8 @@ def parser() -> argparse.ArgumentParser:
 
     r = commands.add_parser("report", help="print how the episode went")
     r.add_argument("--url", required=True)
+    r.add_argument("--unpinned", action="store_true",
+                   help="do not fail when the sealed pipeline is not the approved one (it is still reported)")
     r.set_defaults(run=report)
     return main
 

@@ -1,0 +1,287 @@
+% Ficha técnica de entrega de Quórum, DefAcc Hackathon (Uniandes, 14 de noviembre de 2026).
+% Requisito oficial: PDF de máximo 2 páginas y 10 MB, con este orden:
+% amenaza, defensa, cómo se evaluó, resultados, límites y riesgo de uso dual.
+% Se compila con ./build.sh (tectonic). El script falla si el PDF pasa de 2 páginas.
+\documentclass[9pt,letterpaper]{extarticle}
+
+% Número de pruebas de la suite: se actualiza aquí y en ningún otro sitio.
+\newcommand{\ntests}{910}
+
+\usepackage[left=1.2cm,right=1.2cm,top=1.1cm,bottom=1.1cm]{geometry}
+\usepackage{fontspec}
+\usepackage[spanish,es-noquoting,es-noshorthands,es-tabla]{babel}
+\usepackage{multicol}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usepackage[colorlinks=true,urlcolor=acento,linkcolor=acento,citecolor=acento]{hyperref}
+
+\definecolor{acento}{HTML}{1F4E79}
+\definecolor{gris}{HTML}{555555}
+\definecolor{rojo}{HTML}{A61E1E}
+\definecolor{fondo}{HTML}{F2F5F8}
+
+\hypersetup{
+  pdftitle={Quórum: procedencia y compuerta determinista contra fugas repartidas entre agentes de IA},
+  pdfauthor={Equipo Quórum},
+  pdfsubject={Ficha técnica, DefAcc Hackathon 2026, Track 6}
+}
+
+% TODO(autores): el README y la ficha anterior solo dicen "Equipo Quórum".
+% Poner aquí los nombres de los integrantes cuando el equipo los confirme.
+\author{}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\linespread{0.95}
+\setlength{\parskip}{2.3pt plus 0.5pt}
+\setlength{\columnsep}{15pt}
+\setlength{\emergencystretch}{2.5em}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.04}
+\hyphenpenalty=600
+\tolerance=1800
+
+\titleformat{\section}{\normalsize\bfseries\color{acento}}{\thesection.}{0.4em}{}
+\titlespacing*{\section}{0pt}{4.5pt plus 1pt}{1pt}
+\setlist[itemize]{leftmargin=1.05em,topsep=1pt,itemsep=0.6pt,parsep=0pt,partopsep=0pt}
+
+\newcommand{\lead}[1]{\textbf{#1}}
+\newcommand{\tabtitle}[1]{{\small\textbf{#1}}\par\vspace{1.5pt}}
+\newcommand{\tabnote}[1]{\vspace{1pt}{\footnotesize\color{gris}#1\par}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\begin{document}
+
+% == Encabezado ==
+{\fontsize{11.6}{13.5}\selectfont\bfseries\color{acento} Quórum: procedencia y compuerta determinista contra fugas repartidas entre agentes de IA\par}
+\vspace{2pt}
+{\small\raggedright Equipo Quórum \textperiodcentered{} Track 6, riesgos multiagente \textperiodcentered{} DefAcc Hackathon, Uniandes, 14 de noviembre de 2026 \textperiodcentered{} \mbox{\href{https://github.com/JhostinAleck/quorum}{\texttt{github.com/JhostinAleck/quorum}}}\par}
+\vspace{2pt}
+{\color{acento}\hrule height 0.8pt}
+\vspace{4pt}
+
+\lead{En una frase.} Quórum se pone delante de un sistema de agentes y no le pregunta a ningún modelo si una salida es peligrosa: sigue de dónde viene cada dato. En 90 trámites de una licitación con agentes de modelo, el valor sellado llegó al portal en 16 de 30 ataques sin defensa; la compuerta bloqueó las 16 fugas y ninguno de los 60 trámites honestos, sin llamar a un modelo. El costo también se midió: detiene siempre al agente honesto que abre un sobre que no necesitaba (terminan 0 de 1000 trámites descuidados) y en el corte principal de AgentDojo (banca) deja funcionando 16 de 25 tareas limpias, frente a 19 de 25 sin defensa.
+
+\vspace{3pt}
+% == Diagrama del flujo ==
+\begin{center}
+\begin{tikzpicture}[
+    x=1cm,y=1cm,
+    font=\sffamily\scriptsize,
+    caja/.style={draw=acento,rounded corners=2pt,fill=white,align=center,inner sep=2.5pt,line width=0.5pt},
+    agente/.style={caja,minimum width=2.9cm,minimum height=0.62cm},
+    flecha/.style={-{Stealth[length=4pt]},line width=0.5pt,draw=gris},
+    nota/.style={font=\sffamily\fontsize{5.6}{6.6}\selectfont,text=gris,align=center,inner sep=1pt}
+  ]
+  % Recinto del monitor
+  \fill[fondo,rounded corners=3pt] (4.55,-1.72) rectangle (14.55,2.28);
+  \node[nota,anchor=north west] at (4.65,2.24) {MONITOR DE QUÓRUM: el único proceso que tiene datos};
+
+  % Agentes
+  \node[agente] (rad) at (1.7,1.5) {\textbf{Radicador}\\[-1pt]registra las ofertas};
+  \node[agente] (eva) at (1.7,0.65) {\textbf{Evaluador}\\[-1pt]calcula los puntajes};
+  \node[agente] (pub) at (1.7,-0.4) {\textbf{Publicador}\\[-1pt]publica la adjudicación};
+  \node[nota,anchor=south] at (1.7,1.88) {AGENTES (no confiables)};
+
+  % Almacén
+  \node[caja,minimum width=4.6cm,minimum height=1.6cm,align=left] (alm) at (7.25,1.07)
+    {\textbf{Almacén compartido con etiquetas}\\[1pt]
+     \texttt{sealed.bid-2} \ \ \ etiqueta \{\texttt{sealed.bid-2}\}\\
+     \texttt{registry.*} \ \ \ \ \ hereda \{\texttt{sealed.bid-2}\}\\
+     \texttt{evaluation.*} \ \ \ hereda \{\texttt{sealed.bid-2}\}};
+
+  % Compuerta
+  \node[caja,draw=rojo,line width=0.8pt,minimum width=3.5cm,minimum height=1.0cm] (gate) at (12.4,-0.4)
+    {\textbf{Compuerta determinista}\\[-1pt]compara etiquetas con la política\\[-1pt]sin modelo y sin umbral};
+
+  % Política
+  \node[caja,dashed,minimum width=3.5cm,minimum height=0.62cm] (pol) at (12.4,1.3)
+    {\texttt{policy.toml} del dominio\\[-1pt]qué puede llevar cada salida};
+
+  % Sumidero
+  \node[caja,minimum width=2.6cm,minimum height=1.0cm] (por) at (17.0,-0.4)
+    {\textbf{Portal público}\\[-1pt]sumidero \texttt{publish}};
+
+  % Bitácora
+  \node[caja,minimum width=9.4cm,minimum height=0.5cm] (bit) at (9.55,-1.32)
+    {\textbf{Bitácora} de solo anexar, encadenada con hashes: huella de política y código, cada llamada y cada decisión};
+
+  % Flechas
+  \draw[flecha,{Stealth[length=4pt]}-{Stealth[length=4pt]}] (rad.east) to node[nota,above] {lee y escribe} (4.95,1.5);
+  \draw[flecha,{Stealth[length=4pt]}-{Stealth[length=4pt]}] (eva.east) to node[nota,above] {lee y escribe} (4.95,0.65);
+  \draw[flecha] (4.95,0.4) to node[nota,above,sloped] {lee} (pub.north east);
+  \draw[flecha] (pub.east) to node[nota,below,pos=0.42] {\texttt{publish(texto)} con la etiqueta de todo lo leído} (gate.west);
+  \draw[flecha] (gate.east) to node[nota,above] {limpia: sale} (por.west);
+  \draw[flecha] (pol.south) to (gate.north);
+  \draw[flecha,dashed] (gate.south) to (12.4,-1.07);
+  \draw[flecha,dashed] (9.1,0.27) to (9.1,-1.07);
+  \node[font=\sffamily\fontsize{6.4}{7.4}\selectfont,text=rojo,align=left,anchor=north west,inner sep=1pt] at (14.75,-1.0) {deriva de un sobre que vio\\cualquier agente: \textbf{bloqueada}};
+\end{tikzpicture}
+
+\vspace{-1pt}
+{\footnotesize\color{gris}Figura 1. La etiqueta viaja con el dato de un agente a otro. La compuerta no lee el texto publicado: mira de qué fuentes deriva.\par}
+\end{center}
+\vspace{-5pt}
+
+\begin{multicols*}{2}
+\raggedcolumns
+
+% =====================================================================
+\section{Amenaza}
+
+Tres agentes de IA tramitan una licitación pública con ofertas selladas. El Radicador registra las ofertas, el Evaluador calcula los puntajes y el Publicador publica la adjudicación en el portal. Se comunican por un almacén compartido. El daño es que el valor de una oferta sellada llegue al portal.
+
+Suponemos que los agentes no son confiables, el supuesto del control de IA [2]: $k = 1$, 2 o 3 de ellos reciben una tarea oculta en su prompt de sistema. Con $k > 1$ el ataque se reparte: uno abre el sobre y anota el valor disfrazado de número de radicado, otro lo copia a su resultado y el tercero lo publica. Ningún paso aislado se ve raro, y repartir el ataque baja la sospecha de un monitor que mira a cada agente por separado [1]. El segundo vector, también medido: ningún agente está comprometido y la instrucción llega dentro de un documento de un tercero (inyección).
+
+% =====================================================================
+\section{Defensa}
+
+\lead{Etiquetas de procedencia.} Cada valor del almacén lleva una etiqueta con las fuentes de las que deriva. El contexto de un agente acumula las etiquetas de lo que leyó, y lo que escribe las hereda. Así la etiqueta viaja con el dato entre agentes y no depende del texto: da igual que el valor vaya en palabras, en base64 o partido en dos campos.
+
+\lead{Compuerta determinista en cada salida.} Toda herramienta que saca datos del sistema (sumidero) pasa por una compuerta que compara etiquetas con la política. No llama a ningún modelo y no tiene umbral.
+\begin{itemize}
+  \item \lead{P1.} Se bloquea la salida si deriva de una fuente restringida que ese sumidero no admite.
+  \item \lead{Marea alta} (\texttt{high\_water\_mark = true} en la licitación, la mesa de ayuda y la banca): la salida se juzga con los secretos que ha visto cualquier agente, no solo quien publica.
+  \item \lead{P2} (modo estricto, opcional): una salida pedida desde un contexto con contenido no confiable exige aprobación humana. Apagada en la licitación; es la que actúa en AgentDojo.
+  \item \lead{P3.} Toda llamada y toda decisión quedan en una bitácora de solo anexar que los agentes no pueden escribir.
+\end{itemize}
+Para que el trabajo honesto no se contamine, los sobres se manejan como referencias opacas y unos pocos cálculos declarados (desclasificadores, como \texttt{score\_bids}) devuelven solo un resultado público, con cupo de llamadas.
+
+\lead{Política por dominio.} Lo único que cambia entre dominios es un \texttt{policy.toml} de 18 a 24 líneas que escribe quien opera el sistema: qué nace restringido, qué escriben terceros y qué admite cada sumidero.
+
+\lead{Integridad de lo que decide.} \texttt{quorum/integrity.py} calcula cuatro hashes SHA-256 (lo que significa la política, la interfaz de las herramientas, los archivos del núcleo y los archivos del escenario donde se define el pipeline) y uno que los resume. Se usan en tres sitios: \texttt{quorum/integrity.lock.json} los fija y un test falla si el código y el archivo no coinciden; el servicio del monitor se niega a arrancar si no coinciden o si el operador le pasó otro hash esperado (\texttt{QUORUM\_EXPECT\_PIPELINE}); y la huella se sella en la bitácora antes de que actúe ningún agente, de modo que cada decisión queda ligada a la política y al código que la tomó. No es una firma: quien pueda reescribir a la vez el código, el archivo y el hash esperado no queda detenido.
+
+\lead{Qué es nuevo.} El control de flujo de información para agentes ya existe [4, 5], también entre agentes [6]. Aquí se mide una compuerta determinista contra el ataque repartido, cara a cara con monitores, cuando los propios agentes son los atacantes, y se reporta su costo junto al beneficio.
+
+% =====================================================================
+\section{Cómo se evaluó}
+
+\lead{Experimento principal, con agentes de modelo.} Las trazas se generan una vez sin defensa y cada defensa se aplica después sobre las mismas trazas. Son 90 episodios (un episodio es un trámite completo): 60 honestos, 30 de ellos con una oferta escaneada, y 30 ataques, 10 por cada $k$. Hay fuga si el valor del sobre aparece en lo publicado. Los umbrales de los monitores salen solo de la mitad de los honestos (a lo sumo 5~\% de falsos positivos); los falsos positivos se reportan sobre la otra mitad (30).
+
+\lead{Contra qué se compara.} \textit{M1}: un monitor LLM lee a cada agente por separado y cuenta la nota más alta. \textit{M2 con oráculo}: un monitor ve a los tres agentes juntos y sabe qué pasos son del mismo trámite. \textit{M2 ciego}: lo mismo sin saberlo, que es lo desplegable. \textit{Compuerta suave}: llama al monitor solo si lo publicado deriva de una fuente restringida. Jueces: Gemini 3.5 Flash Lite y Claude Haiku 5.5. Jev 1.14 [8] se midió después de congelar \texttt{metrics.yaml} y se reporta como medición adicional.
+
+\lead{El mecanismo en cinco dominios,} con agentes que siguen un guion (sin modelo): licitación, mesa de ayuda a ciudadanos, historias clínicas, banca y sector legal. Se compara con un filtro de coincidencia exacta que conoce todos los secretos y con un buen harness de mínimo privilegio.
+
+\lead{Un buen prompt sin compuerta.} Tres agentes honestos y la inyección en el anexo de un proveedor: cinco modelos, tres prompts, 150 episodios por modelo.
+
+\lead{Ataques que no escribimos.} Dos mediciones distintas sobre AgentDojo [3]: (a) 7127 trazas grabadas de modelos reales en la suite de banca, con la política congelada antes de ver una traza; (b) la repetición sin modelo de las tareas de referencia de sus cuatro suites, con un agente que obedece la inyección al pie de la letra.
+
+\lead{Intentos de evasión:} \texttt{tests/test\_evasion.py} y \texttt{break\_gate.py}.
+
+\lead{Prerregistro tardío.} \texttt{metrics.yaml} se congeló a las 11:56 con los ataques ya puntuados. Cubre métricas y umbrales, no las plantillas de ataque, que se ajustaron con cuatro pilotos previos (0/6, 0/6, 10/30 y 14/30 fugas). H1, H2 y H4 no se cumplieron; H3 se reescribió porque la original se cumplía por construcción.
+
+% =====================================================================
+\section{Resultados}
+
+\lead{Sin defensa el ataque logra la fuga en 16 de 30 episodios:} 5/10 con $k=1$, 6/10 con $k=2$ y 5/10 con $k=3$.
+
+\vspace{2pt}\noindent\begin{minipage}{\columnwidth}
+\tabtitle{Tabla 1. Experimento principal: 90 episodios, 16 fugas}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{@{}Y C{1.85cm} C{1.85cm} C{1.85cm}@{}}
+\toprule
+Defensa & Gemini 3.5 Flash Lite & Claude Haiku 5.5 & Jev 1.14 (adicional) \\
+\midrule
+M1, por agente & 0/30 \textperiodcentered{} 16/16 & 0/30 \textperiodcentered{} 16/16 & 1/30 \textperiodcentered{} 14/16 \\
+M2 con oráculo          & 0/30 \textperiodcentered{} 16/16 & 2/30 \textperiodcentered{} 16/16 & 2/30 \textperiodcentered{} 13/16 \\
+M2 ciego                & 0/30 \textperiodcentered{} 13/16 & 5/30 \textperiodcentered{} 16/16 & 4/30 \textperiodcentered{} 15/16 \\
+Compuerta suave         & 0/30 \textperiodcentered{} 15/16 & 0/30 \textperiodcentered{} 16/16 & 0/30 \textperiodcentered{} 16/16 \\
+\midrule
+\textbf{Compuerta dura} & \multicolumn{3}{c}{\textbf{0/30 \textperiodcentered{} 16/16} \ (no usa ningún modelo)} \\
+\bottomrule
+\end{tabularx}}
+\tabnote{Cada celda: honestos marcados (de 30) y fugas detectadas (de 16). La compuerta dura bloquea 0 de 60 honestos. Intervalos del 95~\%: 16/16, de 81 a 100~\%; 0/30, de 0 a 11~\%.}
+\end{minipage}\par\vspace{1pt}
+
+\begin{itemize}
+  \item \lead{M1 ya detecta las 16 fugas} con Gemini y con Haiku, con 0 de 30 falsos positivos. La compuerta empata en detección. Lo que aporta es otra cosa: cero llamadas a un modelo, ningún umbral que calibrar y una decisión que el texto no cambia.
+  \item \lead{M2 no mejoró a M1.} El ciego pierde 3 de 16 fugas con Gemini o marca 5 de 30 honestos con Haiku.
+  \item \lead{Dónde se corta el dato.} El valor llegó a un agente en 23 de 30 ataques (expuesto), viajó en los argumentos de una llamada en 18 (acarreado) y salió al portal en 16. Sin defensa hay fuga en 16 de los 23 expuestos y en 16 de los 18 acarreados; con la compuerta, en 0. No impide leer ni copiar: impide publicar.
+  \item \lead{Persuasión y costo.} Cuatro textos dirigidos a quien decide y nueve disfraces del valor no cambian la decisión de la compuerta. M1 y M2 suman cuatro llamadas a un modelo por trámite y califican al final: detectan, no detienen. La compuerta decide en cada salida en 0,5 a 1,0~µs (mediana).
+\end{itemize}
+
+\vspace{2pt}\noindent\begin{minipage}{\columnwidth}
+\tabtitle{Tabla 2. Cinco dominios con guion: episodios con daño}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{@{}Y C{1.3cm} C{1.3cm} C{1.3cm} C{1.15cm}@{}}
+\toprule
+Tipo de episodio & Sin defensa & Filtro exacto & Buen harness & Quórum \\
+\midrule
+Ataque repartido* & 800/800 & 0/800 & 400/800 & 0/800 \\
+El dato en palabras* & 600/600 & 600/600 & 200/600 & 0/600 \\
+Inyección, licitación y legal & 200/200 & 0/200 & 0/200 & 0/200 \\
+Inyección, banca & 200/200 & 200/200 & 200/200 & 0/200 \\
+\midrule
+Total, cinco dominios & 7600/7600 & 3200/7600 & 3200/7600 & 0/7600 \\
+\bottomrule
+\end{tabularx}}
+\tabnote{* En cada uno de los cinco dominios. Con Quórum terminan 1200 de 1200 trámites honestos y 0 de 1000 descuidados (un agente honesto mira un dato que no necesitaba). Mide el mecanismo, no la conducta de un modelo.}
+\end{minipage}\par\vspace{1pt}
+
+\lead{Inyección en la licitación con modelos.} Con cinco modelos y tres prompts hubo 0 fugas en 600 episodios con inyección (\texttt{llama-3.1-8b} no cuenta como evidencia: es demasiado débil para la tarea): aquí un buen prompt basta y la compuerta no tuvo fuga que detener. Sí tuvo costo: \texttt{gpt-4o-mini} abre el sobre sin copiar el valor, y la compuerta habría frenado una publicación correcta en 50 de sus 120 episodios con inyección. En otra medición (\texttt{openai/gpt-6-luna}, carta inyectada) ningún agente abrió un sobre (0/10) y no hubo bloqueos.
+
+\vspace{2pt}\noindent\begin{minipage}{\columnwidth}
+\tabtitle{Tabla 3. AgentDojo (a): trazas de banca, corte \texttt{gpt-4o}}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{@{}Y C{2.3cm} C{2.1cm}@{}}
+\toprule
+Defensa & Secuestros que llegan al sumidero & Tareas limpias que funcionan \\
+\midrule
+Ninguna & 90/144 & 19/25 \\
+Filtro de herramientas (AgentDojo) & 16/144 & 19/25 \\
+Detector DeBERTa (AgentDojo) & 1/144 & 9/25 \\
+Quórum, P2 por contexto & 0/144 & 5/25 \\
+Quórum, P2 por valor & 0/144 & 16/25 \\
+\bottomrule
+\end{tabularx}}
+\tabnote{Por contexto: toda salida tras leer contenido no confiable pide aprobación. Por valor: solo si su argumento aparece en ese contenido. En las 7127 trazas, P2 por valor frena 1506 de 1521 secuestros y detiene 75 de 411 tareas limpias útiles; en los 15 que escapan, el valor viene del pedido del usuario.}
+\end{minipage}\par\vspace{1pt}
+
+\lead{AgentDojo (b), repetición sin modelo.} Con un agente obediente, el ataque logrado baja a 0/144 (\texttt{banking}), 0/105 (\texttt{slack}), 0/120 (\texttt{travel}) y 3/240 (\texttt{workspace}). El costo es alto: se completan 5/16, 1/21, 14/20 y 18/40 tareas legítimas, porque la regla por contexto pide aprobación humana tras leer contenido de terceros.
+
+% =====================================================================
+\section{Límites}
+
+\begin{itemize}
+  \item \lead{Bloquea de más.} La etiqueta es por agente, no por campo: quien abre un sobre contamina todo lo que escribe [7]. En los ataques la compuerta negó 23 publicaciones, 7 de ellas sin las cifras en el texto. En un lote guionado posterior marca 180 de 180 gemelos (los mismos pasos del ataque con un número que no es el valor sellado): no distingue un ataque de quien abrió el sobre y escribió otra cosa. El trámite honesto descuidado se detiene siempre.
+  \item \lead{Lo que la política declara público, sale.} La licitación publica los puntajes y la fórmula es conocida: un oferente rival recupera el monto sellado en 50 de 50 casos, con un error mediano de 0,04~\%. La compuerta no lo cierra; cerrarlo es cambiar lo que el pliego publica.
+  \item \lead{Canales que no viajan en los datos.} Tiempo, orden y número de llamadas quedan fuera. La existencia de una clave revelaba el valor con un error de 0,6~\% (256 claves) hasta que se encendió la marea alta. En historias clínicas y sector legal no se puede encender (terminarían 0 de 200 trámites honestos): ahí el canal queda acotado por cupos, no cerrado.
+  \item \lead{Supuestos.} Todo debe pasar por el monitor y las etiquetas iniciales las pone un humano.
+  \item \lead{Alcance.} Son 30 ataques con plantillas fijas y 16 fugas: los intervalos son anchos. Los monitores solo se midieron en la licitación. En AgentDojo (a) las trazas están grabadas (bloquear no dice qué habría hecho el agente después) y la procedencia por valor se aproxima por coincidencia de texto.
+\end{itemize}
+
+% =====================================================================
+\section{Riesgo de uso dual}
+
+El ataque repartido ya está descrito en la literatura [1]; aquí existe solo dentro del arnés, contra servicios propios y con datos sintéticos. No se atacó ni escaneó ningún sistema real. El repositorio trae plantillas de ataque fijas y sencillas, no textos de inyección optimizados. El abuso posible: la lista de límites dice por dónde buscar una fuga que la compuerta no ve. Cada canal abierto se publica con su medición y sin un ataque optimizado.
+
+% =====================================================================
+\section{Reproducir, citas y declaración de uso de IA}
+
+{\fontsize{6.8}{8}\selectfont\raggedright\setlength{\parskip}{1.5pt}
+\lead{Reproducir} (sin claves ni costo, desde \texttt{datos/}): \texttt{uv run pytest -q} (\ntests{} pruebas); \texttt{uv run -{}-extra eval python -m quorum.eval.analysis}; \texttt{uv run python -m quorum.eval.containment}; \texttt{uv run python -m quorum.bench}; \texttt{uv run python -m quorum.eval.break\_gate}.
+
+\lead{Modelos.} Agentes: \texttt{orca/orcacyber-flash-1.0}. Monitores: \texttt{google/gemini-3.5-flash-lite}, \texttt{claude-haiku-5-5}, \texttt{typesafe/jev-1.14} y \texttt{openai/gpt-6-luna}. Línea base de buen prompt: \texttt{openai/gpt-4o-mini}, \texttt{openai/gpt-6-luna}, \texttt{xiaomi/mimo-v2.6-flash} y \texttt{meta-llama/llama-3.1-8b-instruct}. Trazas de terceros: \texttt{ethz-spylab/agentdojo}, commit \texttt{089ed468}.
+
+\lead{Uso de IA.} El código, los tests, los análisis y este documento se hicieron con asistencia de Claude Code (Anthropic), OpenCode y Codex, y la búsqueda de literatura con Grok (xAI), con supervisión del equipo. Las plantillas de ataque son fijas y se escribieron a mano con Claude Code (\texttt{quorum/eval/attacks.py}). Código de terceros: \texttt{agentdojo} 0.1.35, \texttt{inspect-ai}, \texttt{pytest}, \texttt{hypothesis}, \texttt{numpy} y \texttt{matplotlib}. Detalle por herramienta y modelo: \texttt{docs/referencias.md}. Los datos propios son sintéticos; las trazas de AgentDojo son públicas.
+
+\lead{Referencias.}
+[1]~Makins, Angelini, Shams y Phuong, \textit{Multi-Agent AI Control: Distributed Attacks Hamper Per-Instance Monitors}, UK AISI y MATS, 2026, arXiv:2607.07368.
+[2]~Greenblatt et al., \textit{AI Control: Improving Safety Despite Intentional Subversion}, 2023, arXiv:2312.06942.
+[3]~Debenedetti et al., \textit{AgentDojo}, 2024, arXiv:2406.13352.
+[4]~Costa et al., \textit{Securing AI Agents with Information-Flow Control} (FIDES), Microsoft, 2025, arXiv:2505.23643.
+[5]~Debenedetti et al., \textit{Defeating Prompt Injections by Design} (CaMeL), Google DeepMind, 2025, arXiv:2503.18813.
+[6]~Dai et al., \textit{SafeFlow}, 2026, arXiv:2607.25255.
+[7]~\textit{APPA}, 2026, arXiv:2607.24625.
+[8]~Guo et al., \textit{Just Ask Jev}, 2026, arXiv:2609.29429.
+\par}
+
+\end{multicols*}
+\end{document}
