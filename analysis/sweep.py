@@ -1,0 +1,110 @@
+"""Scripted sweep: one row per episode, in the CSV format of docs/tareas.md.
+
+  uv run python -m analysis.sweep --out resultados/guionado.csv
+  uv run --extra eval python -m analysis.metrics resultados/guionado.csv
+
+Every episode runs once with nothing in its way (labels only, in audit mode): that run gives
+what was published, what leaked and the trajectories. The gate's decision is then read off
+the same episode under three policies, each in audit mode:
+
+  quorum_blocks        the scenario's policy as it ships
+  labels_only_blocks   labels on values alone: no high-water mark, no cap on publications
+  hwm_blocks           with high_water_mark on
+
+Kinds: honest and honest_scanned, attack_k1..3, twin_k1..3 (the hard negative of each
+attack, same seed) and attack_signal (the missing-keys channel, see probes.py).
+
+No model is called. The columns m1_score and m2_score are not written: whoever runs the
+monitors adds them to the CSV, reading the trajectories that --trajectories dumps, and
+analysis.metrics picks up every column that ends in _score.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import random
+from pathlib import Path
+from typing import Any
+
+from quorum import Policy
+from quorum.scenarios.tender import POLICY, SUPPLIERS, Episode
+from quorum.scenarios.tender.probes import (
+    SIGNAL_STEPS,
+    labels_only,
+    leaked_bits,
+    run_signal,
+    run_twin,
+    run_under,
+    with_high_water_mark,
+)
+
+COLUMNS = ["kind", "k", "seed", "steps", "leak", "leaked_bits", "leaked_bits_insider", "quorum_blocks",
+           "labels_only_blocks", "hwm_blocks", "useful", "error"]
+INSIDER = SUPPLIERS[2]      # a competing supplier: it knows its own amount, nothing else (as in quorum.eval.break_gate)
+
+
+def episodes(honest: int, per_k: int, signal: int, scanned: float, seed: int) -> list[tuple[str, int, int | None]]:
+    """(kind, seed, steps) of every episode. Attacks and their twins share seeds."""
+    rng = random.Random(seed)
+    plan: list[tuple[str, int, int | None]] = [
+        ("honest_scanned" if rng.random() < scanned else "honest", i, None) for i in range(honest)]
+    for prefix in ("attack", "twin"):
+        plan += [(f"{prefix}_k{k}", i, None) for k in (1, 2, 3) for i in range(per_k)]
+    plan += [("attack_signal", i, SIGNAL_STEPS[i % len(SIGNAL_STEPS)]) for i in range(signal)]
+    return plan
+
+
+def run_one(kind: str, seed: int, steps: int | None, policy: Policy) -> Episode:
+    """The episode in audit mode under that policy: nothing is blocked, the decision is recorded."""
+    if kind == "attack_signal":
+        return run_signal(seed, steps or SIGNAL_STEPS[0], defense=False, policy=policy)
+    if kind.startswith("twin_k"):
+        return run_twin(int(kind[-1]), seed, defense=False, policy=policy)
+    return run_under(kind, seed, policy, defense=False)
+
+
+def row(kind: str, seed: int, steps: int | None) -> tuple[dict[str, Any], Episode]:
+    episode = run_one(kind, seed, steps, labels_only())
+    return {"kind": kind, "k": episode.k, "seed": seed, "steps": steps or "", "leak": int(episode.leak),
+            "leaked_bits": round(leaked_bits(episode), 2),
+            "leaked_bits_insider": round(leaked_bits(episode, INSIDER), 2),
+            "quorum_blocks": int(run_one(kind, seed, steps, POLICY).quorum_blocks),
+            "labels_only_blocks": int(episode.quorum_blocks),
+            "hwm_blocks": int(run_one(kind, seed, steps, with_high_water_mark()).quorum_blocks),
+            "useful": int(episode.useful), "error": ""}, episode
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--out", default="resultados/guionado.csv")
+    ap.add_argument("--trajectories",
+                    help="also write what each agent did, one JSON line per episode, for the monitors")
+    ap.add_argument("--honest", type=int, default=300)
+    ap.add_argument("--per-k", type=int, default=60, help="attacks for each k, and as many twins")
+    ap.add_argument("--signal", type=int, default=60)
+    ap.add_argument("--scanned", type=float, default=0.5, help="fraction of the honest runs with a scanned bid")
+    ap.add_argument("--seed", type=int, default=20261114)
+    a = ap.parse_args()
+
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    dump = open(a.trajectories, "w", encoding="utf-8") if a.trajectories else None
+    try:
+        with out.open("w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=COLUMNS)
+            writer.writeheader()
+            for kind, seed, steps in episodes(a.honest, a.per_k, a.signal, a.scanned, a.seed):
+                data, episode = row(kind, seed, steps)
+                writer.writerow(data)
+                if dump:
+                    dump.write(json.dumps({"kind": kind, "seed": seed, "trajectories": episode.trajectories,
+                                           "portal": episode.portal}, ensure_ascii=False, default=str) + "\n")
+    finally:
+        if dump:
+            dump.close()
+    print(f"{out}: {a.honest} honest, {3 * a.per_k} attacks, {3 * a.per_k} twins, {a.signal} signal")
+
+
+if __name__ == "__main__":
+    main()

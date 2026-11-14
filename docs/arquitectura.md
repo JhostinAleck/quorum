@@ -191,4 +191,4 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/agentdojo_bench.py` | Repite por la compuerta las trazas de referencia de AgentDojo, sin modelo |
 | `quorum/llm_bench.py` | Corre la licitación con agentes de modelo y prompts honestos, con y sin una carta inyectada |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
-| `analysis/` | Bootstrap y figura principal (en construcción) |
+| `analysis/` | `sweep.py` genera el CSV del barrido guionado (honestos, ataques, gemelos y canal de señal); `metrics.py` calcula las métricas con IC 95 % desde ese CSV. La figura principal sigue en construcción |

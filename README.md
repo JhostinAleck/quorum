@@ -149,7 +149,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ```bash
 uv sync
-uv run pytest        # 838 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
+uv run pytest        # 878 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los ocho casos (honesto, honesto con oferta escaneada, honesto descuidado, ataque repartido entre 1, 2 y 3 agentes, ataque del agente que lee el documento e inyección) sin llamar a ningún modelo:
