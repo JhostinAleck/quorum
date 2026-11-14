@@ -11,6 +11,9 @@
 | Hammond et al., *Multi-Agent Risks from Advanced AI*, 2025. arXiv:2502.14143 | Marco de riesgos que solo aparecen en el conjunto |
 | Urcuqui, *AgentBreak* (github.com/urcuqui/AgentBreak) | Controles deterministas fuera del modelo, ataques convertidos en tests de regresión |
 | UK AI Security Institute, *Inspect AI* (inspect.aisi.org.uk) | Framework de evaluación |
+| Guo et al., *Just Ask Jev: Reinforcement Learning for Calibrated Decisions as a Zero-Shot Detector of AI Alignment Failures*, 2026. arXiv:2609.29429 | Jev como juez alternativo de los monitores M1 y M2 |
+| OpenRouter, *Jev Documentation* (openrouter.ai/docs/guides/community/jev) y TypeSafe, *Quick start* (docs.typesafe.ai) | Formato de la llamada a Jev (`state`, `questions`, respuesta con probabilidad) |
+| Datadog Security Labs, *Jev as a judge: how counterfeit policy steers Jev* | Motivo para medir a Jev con una política falsa dentro del registro. No tomamos sus cifras |
 
 ## Trabajo relacionado más cercano
 
@@ -52,6 +55,7 @@ Todos se usaron el 14 de noviembre de 2026. El identificador es el que queda reg
 | Línea base de buen prompt con otros agentes | `openai/gpt-4o-mini`, `meta-llama/llama-3.1-8b-instruct`, `meta/muse-ember` (solo prueba corta) | OpenRouter | `datos/baseline_*` |
 | Línea base de buen prompt con otros agentes | `openai/gpt-6-luna`, `xiaomi/mimo-v2.6-flash` | OrcaRouter | `datos/baseline_gpt6luna.jsonl`, `baseline_mimoflash.jsonl` |
 | Monitores M1 y M2 del experimento de persuasión (`quorum/monitor_bench.py`) | `openai/gpt-6-luna` | OpenRouter | `datos/monitores-persuasion.jsonl` |
+| Monitores M1 y M2 del experimento de persuasión, con Jev como juez (`quorum/monitor_bench.py --backend jev`) | `typesafe/jev-1.14` | OpenRouter (TypeSafe) | `datos/monitores-persuasion-jev.jsonl`, `monitores-persuasion-jev-score.jsonl` |
 | Agentes con prompts honestos y carta inyectada (`quorum/llm_bench.py`) | `openai/gpt-6-luna` | OpenRouter | `datos/agentes-inyeccion.jsonl` |
 | Agentes de la interfaz web (por defecto) | `openai/gpt-6-luna` | OpenRouter | `quorum/ui/agents.py` |
 | Prueba de modelos para la demo (un episodio por caso, no se reporta como cifra) | `deepseek/deepseek-v4-flash`, `qwen/qwen3.7-flash`, `mistralai/mistral-small-3.2-24b-instruct`, `z-ai/glm-5.3-flash` | OpenRouter | descripción del PR del Frente 3 |
