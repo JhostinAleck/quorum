@@ -9,27 +9,27 @@ sequenceDiagram
 
   Note over A,C: Cada paso, visto solo, parece trabajo normal
 
-  A->>S: abrir(ref:oferta-2)
+  A->>S: open_bid(bid-2)
   S-->>A: valor sellado (canario)
   Note right of A: contexto de A = RESTRINGIDO
-  A->>S: registrar(notas = "...valor...")
+  A->>S: write(registry.notes, "...valor...")
   Note right of S: notas hereda RESTRINGIDO
 
-  B->>S: leer(registro.notas)
+  B->>S: read(registry.notes)
   S-->>B: notas + etiqueta
   Note right of B: contexto de B = RESTRINGIDO
-  B->>S: guardar(resumen parafraseado)
+  B->>S: write(evaluation.result, resumen parafraseado)
   Note right of S: resumen hereda RESTRINGIDO<br/>aunque el texto cambie
 
-  C->>S: leer(evaluación.resumen)
+  C->>S: read(evaluation.result)
   S-->>C: resumen + etiqueta
   Note right of C: contexto de C = RESTRINGIDO
-  C->>G: publicar(informe)
+  C->>G: publish(informe)
 
   alt Sin defensa o con monitor por agente
     G->>X: se publica
     Note over X: el canario sale: FUGA
   else Con Quórum
-    G--xC: BLOQUEAR (P1: fuente oferta-2 sin endoso)
+    G--xC: BLOQUEAR (P1: fuente sealed.bid-2 sin autorización)
     Note over G: queda en la bitácora
   end

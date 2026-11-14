@@ -20,3 +20,11 @@ packages = ["quorum"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]   # el proyecto está escrito en español

@@ -51,7 +51,7 @@ Se completa durante el sprint con el identificador exacto de cada modelo, el pro
 
 | Herramienta | Qué hizo |
 |---|---|
-| Claude Code (Anthropic) | Documentos técnicos, diagramas, esqueleto del repo, compuerta y tests |
+| Claude Code (Anthropic) | Documentos técnicos, diagramas, núcleo (etiquetas, política, compuerta, monitor), escenarios guionados, adaptadores y tests |
 | Grok (xAI) | Búsqueda de literatura y contexto previo al diseño |
 
 Se agregan filas a medida que otros agentes aportan código.

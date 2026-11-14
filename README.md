@@ -56,6 +56,16 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 
 ![Diseño experimental](docs/diagramas/evaluacion.png)
 
+## Estructura del código
+
+| Capa | Ruta | Contenido |
+|---|---|---|
+| Núcleo | `quorum/core/` | Etiquetas, política, compuerta, monitor, almacén y bitácora. Solo usa la biblioteca estándar y no conoce ningún dominio |
+| Escenarios | `quorum/scenarios/` | `tender` (la licitación) y `helpdesk` (una mesa de ayuda). Cada uno es un `policy.toml` más sus herramientas |
+| Adaptadores | `quorum/adapters/` | Inspect AI y function calling genérico |
+
+El código está en inglés. Lo que leen los modelos y el jurado está en español.
+
 ## Documentos
 
 - [Arquitectura](docs/arquitectura.md)
@@ -64,15 +74,26 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 - [Límites, riesgo dual y uso responsable](docs/uso-responsable.md)
 - [Referencias y atribución](docs/referencias.md)
 - [Tareas del equipo](docs/tareas.md)
+- [Interfaz del laboratorio](docs/interfaz.md)
 
 ## Cómo correrlo
 
 ```bash
 uv sync
-uv run pytest        # 20 tests de etiquetas, compuerta y laboratorio, sin modelos ni costo
+uv run pytest        # 108 tests del núcleo, los escenarios y los adaptadores, sin modelos ni costo
 ```
 
-Los episodios guionados de `quorum/lab/guiones.py` recorren los cuatro casos (honesto, honesto con oferta escaneada, ataque monolítico y ataque repartido) sin llamar a ningún modelo. Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
+Los episodios guionados recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo:
+
+```python
+from quorum.scenarios.tender import run
+
+ep = run("attack_k3", seed=1, defense=False)   # modo auditoría: nada se bloquea
+ep.leak, ep.quorum_blocks                       # (True, True): hubo fuga y la compuerta la habría bloqueado
+run("attack_k3", seed=1, defense=True).leak     # False
+```
+
+Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
 
 Las corridas con modelos reales usan una key de OpenRouter en `.env` (ver `.env.example`).
 

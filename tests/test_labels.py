@@ -1,35 +1,54 @@
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
-from quorum.defense.labels import PUBLICA, Conf, Etiqueta, Integ, no_confiable, restringida
+from quorum.core import PUBLIC, Conf, Integ, Label, restricted, untrusted
 
-ids = st.frozensets(st.sampled_from(["oferta-1", "oferta-2", "anexo-1", "anexo-2"]))
-etiquetas = st.builds(Etiqueta, ids, ids)
-
-
-@given(etiquetas, etiquetas, etiquetas)
-def test_unir_es_asociativa(a, b, c):
-    assert a.unir(b).unir(c) == a.unir(b.unir(c))
+ids = st.frozensets(st.sampled_from(["a", "b", "c", "d"]))
+labels = st.builds(Label, ids, ids)
 
 
-@given(etiquetas, etiquetas)
-def test_unir_es_conmutativa(a, b):
-    assert a.unir(b) == b.unir(a)
+@given(labels, labels, labels)
+def test_join_is_associative(a, b, c):
+    assert a.join(b).join(c) == a.join(b.join(c)) == a.join(b, c)
 
 
-@given(etiquetas)
-def test_unir_es_idempotente_y_tiene_neutro(a):
-    assert a.unir(a) == a
-    assert a.unir(PUBLICA) == a
+@given(labels, labels)
+def test_join_is_commutative(a, b):
+    assert a | b == b | a
 
 
-@given(etiquetas, etiquetas)
-def test_unir_nunca_baja_confidencialidad_ni_sube_integridad(a, b):
-    u = a.unir(b)
-    assert u.conf >= max(a.conf, b.conf)
-    assert u.integ <= min(a.integ, b.integ)
+@given(labels)
+def test_join_is_idempotent_and_public_is_the_identity(a):
+    assert a | a == a and a | PUBLIC == a and PUBLIC.flows_to(a)
 
 
-def test_niveles():
-    assert restringida("oferta-1").conf is Conf.RESTRINGIDO
-    assert no_confiable("anexo-1").integ is Integ.NO_CONFIABLE
-    assert PUBLICA.conf is Conf.PUBLICO and PUBLICA.integ is Integ.CONFIABLE
+@given(labels, labels, labels)
+def test_join_is_the_least_upper_bound(a, b, c):
+    assert a.flows_to(a | b) and b.flows_to(a | b)
+    if a.flows_to(c) and b.flows_to(c):
+        assert (a | b).flows_to(c)
+
+
+@given(labels, labels, labels)
+def test_flows_to_is_a_partial_order(a, b, c):
+    assert a.flows_to(a)
+    if a.flows_to(b) and b.flows_to(a):
+        assert a == b
+    if a.flows_to(b) and b.flows_to(c):
+        assert a.flows_to(c)
+
+
+@given(labels, labels)
+def test_join_never_lowers_confidentiality_nor_raises_integrity(a, b):
+    assert (a | b).conf >= max(a.conf, b.conf) and (a | b).integ <= min(a.integ, b.integ)
+
+
+@given(labels)
+def test_dict_round_trip(a):
+    assert Label.from_dict(a.to_dict()) == a
+
+
+def test_levels():
+    assert restricted("x").conf is Conf.RESTRICTED and restricted("x").integ is Integ.TRUSTED
+    assert untrusted("y").integ is Integ.UNTRUSTED and untrusted("y").conf is Conf.PUBLIC
+    assert (restricted("x") | untrusted("y")).sources == {"x", "y"}
