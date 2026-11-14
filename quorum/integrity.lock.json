@@ -1,40 +1,47 @@
 {
-  "kernel": "3e0e682c65293b9e5f6a86f03885a81ad2c49fde8102f48e0f5b548ca8f403a4",
+  "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
   "scenarios": {
     "bank": {
-      "kernel": "3e0e682c65293b9e5f6a86f03885a81ad2c49fde8102f48e0f5b548ca8f403a4",
-      "pipeline": "b2840e97195eb44c9dedf63b7aa9df473eb525ed3e0ca2a7b31347e832ae7e51",
+      "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
+      "pipeline": "c2eb8b4f5f4393f84d0f155634cd2f67e401034c51ec1e37801d660afad6b914",
       "policy": "67197a9a3a002f48e3dfa4de21dea69b21e68b9705862d624c01570b2b7bdb7b",
       "scenario": "99667d5ab95a1e09c4178a58f60e99ee23a08f4b241a7626534a0b675cbe0f26",
       "tools": "e1bf45be8ebecb88434b86870d22d19d6f4e5b55ae4b76abface36ecbdca7455"
     },
     "clinic": {
-      "kernel": "3e0e682c65293b9e5f6a86f03885a81ad2c49fde8102f48e0f5b548ca8f403a4",
-      "pipeline": "5e10ffb77f3fdfbe40a791fcd26e80beeaa369e5f1cdc2fd1cf80052f8026a79",
+      "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
+      "pipeline": "81deaa2c4b42cb2f4fc888e4f0cfa694b24ed5b347a985797193a8252c9582a2",
       "policy": "42bfce298cb5a5c68d55a73f9a9a8d3b4eaaa48f46c2022e93897be0fd7cc371",
       "scenario": "9b222d0fbaae069a3c3e182e519424f43ce8ba0c07d8adb3dbad4e301b12af93",
       "tools": "bd1a33b88eee65e4152c832c1f149a5398e465d7dcf47f6606ebc65a6dbcf2ae"
     },
     "helpdesk": {
-      "kernel": "3e0e682c65293b9e5f6a86f03885a81ad2c49fde8102f48e0f5b548ca8f403a4",
-      "pipeline": "b0b4fd41336d37e33991f91b8aab63b23b2ef8e23715851d8a084abc4662c65b",
+      "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
+      "pipeline": "1e9b24c0db9f553bb0361bdc590db90c8bbcfc5ce977c7bb32228639001b13bf",
       "policy": "1dcf58d6e05c81706d27fe7e180e7c27423b4b50370c18294c4a2525cfdea0e0",
       "scenario": "1afa88a745fa52bb4e71d6ac864c7d745695dc54e82399fc241e9d68bf27f24f",
       "tools": "e269406bf53ecdd630ecce48f6c73051241a68681e085af7b32bc6f8bfb0b3b9"
     },
     "lawfirm": {
-      "kernel": "3e0e682c65293b9e5f6a86f03885a81ad2c49fde8102f48e0f5b548ca8f403a4",
-      "pipeline": "74098b63c0fe0b3280536847416496621056bfde3836d2474a6643232d64940a",
+      "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
+      "pipeline": "8e937af0055aaa112e69b689c3c9c97005999d69387cc9e5bd2d2b66bf11aac2",
       "policy": "e2a634a1c6351edbd4014102688c26d50a01803316c342be10dc37923d04ff6e",
       "scenario": "d8fe20e6d630b9a74d564440441dc1fab24f307545f1b377c208bffcdb9dfe24",
       "tools": "f4920b4cb894f29b1677c6de69607dd081e3740a7c96f9191b814c15774aa290"
     },
     "tender": {
-      "kernel": "3e0e682c65293b9e5f6a86f03885a81ad2c49fde8102f48e0f5b548ca8f403a4",
-      "pipeline": "a6d2bd7a2df6bc9dbcb8c8457c16349353a7454251fc2ffeaa925d7e6e14ce25",
+      "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
+      "pipeline": "f3912480cd0acfe64ee96ae673bed2333c4acebfd634ea7afb0055093213cd37",
       "policy": "1db3788bb65cbb38efc09723de2c4de8cda6cfcc5319fcb0f18e63bdcf44a057",
       "scenario": "768f9a51cda88470dfb8db9353e955e0eace383cabcbfba965054c7740e81c50",
       "tools": "1ec2a0255d28fbd50fa047376b55d9f1a408030c2ed2b7311d082b47ab25860c"
+    },
+    "tender_rubric": {
+      "kernel": "9b682da427282bf2f5e566f00870c8ca249e18c3c89e205ff85d01f7be13bdae",
+      "pipeline": "f86f3eeacbad42367e45ac9bd0ac38bcd0593b5cb4099631feffd00b99f78a2e",
+      "policy": "6e0fab8eefc2f5e87b86ab350e8a3d458d6702e35dff45e20d3e817315440de2",
+      "scenario": "edb9e7754f4c0908d0c39e591ab0f2fc4f472324e1da1d2127bb649cb6dea665",
+      "tools": "a4de281da2d7b82f6d5cbf3e22063ff2a3928a89ce300854a4daebae0942a417"
     }
   }
 }

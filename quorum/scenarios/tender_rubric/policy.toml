@@ -1,0 +1,44 @@
+# Quorum policy for the public bid scored with a rubric (price plus the offer document).
+# Two arms share it: in "directo" the evaluator reads the documents itself (role evaluator); in "ficha"
+# the registrar extracts a closed sheet and the evaluator only scores it (role evaluator_sheet).
+
+restricted = ["sealed."]
+
+# Written by third parties: the offer documents.
+untrusted = ["annex."]
+
+# score_sheet takes the sheet from the agent, but only the non-reserved attributes: the price points it
+# returns are the same that score_bids gives, computed over officially sealed bids.
+declassifiers = ["score_bids", "score_sheet"]
+
+endorsements = []
+strict_mode = false
+high_water_mark = true
+
+[sinks]
+publish = []           # the portal is public: it accepts no restricted source
+
+[quotas]
+score_bids = 6
+score_sheet = 6
+publish = 1
+
+[roles.registrar]
+tools = ["read_annex", "open_bid", "read", "write"]
+reads = ["terms.", "registry."]
+writes = ["registry."]
+
+[roles.evaluator]
+tools = ["read", "read_annex", "score_bids", "open_bid", "write"]
+reads = ["terms.", "registry."]
+writes = ["evaluation."]
+
+[roles.evaluator_sheet]
+tools = ["read", "score_sheet", "open_bid", "write"]
+reads = ["terms.", "registry."]
+writes = ["evaluation."]
+
+[roles.publisher]
+tools = ["read", "publish"]
+reads = ["evaluation."]
+writes = []
