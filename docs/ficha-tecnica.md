@@ -1,12 +1,12 @@
 # Quórum: procedencia contra fugas repartidas entre agentes de IA
 
 **Equipo Quórum** · Track 6, riesgos multiagente · DefAcc Hackathon, Uniandes, 14-nov-2026\
-Repositorio: github.com/JhostinAleck/quorum
+Repositorio: github.com/JhostinAleck/quorum · **Uso de IA:** Claude Code, OpenCode y Codex
 
 **En una frase.** En un trámite hecho por tres agentes LLM, cada dato viaja con su procedencia y una
-compuerta determinista en la publicación bloquea el precio sellado aunque el ataque se reparta entre
-agentes y el dato vaya disfrazado. Sobre 90 episodios bloquea **las 16 fugas reales y 0 de 60 trámites
-honestos**, sin llamar a ningún modelo.
+compuerta determinista en la publicación bloquea el precio sellado aunque el ataque se reparta y el dato
+vaya disfrazado: sobre 90 episodios, **las 16 fugas reales y 0 de 60 trámites honestos**, sin llamar a
+ningún modelo.
 
 ## 1. Amenaza
 
@@ -22,16 +22,15 @@ anómalo, el hallazgo de Makins et al. (2026) sobre monitores por agente.
 
 **Qué asumimos.** El agente comprometido recibe su instrucción en el prompt de sistema: probamos el
 **peor caso**, el atacante ya controla al agente, no el camino por el que llegó. Como la compuerta no lee
-el texto, el resultado no depende de ese camino; el vector realista —instrucciones dentro de un documento
-que el agente lee— **no está medido** (§5).
+el texto, el resultado no depende de ese camino. El otro vector —la instrucción dentro de un documento que
+el agente lee— no se midió en la licitación, pero sí con trazas de terceros en AgentDojo (§5).
 
-**Honestidad sobre el pre-registro.** Las plantillas se ajustaron mirando la tasa de fuga: cuatro
-pilotos con las mismas semillas dieron 0/6, 0/6, 10/30 y 14/30 fugas; con los dos últimos a la vista se
-reescribió la política de ataque (`8f24e0a`, 11:43) y el lote que reportamos se generó a las 11:45.
-`metrics.yaml` se congeló a las 11:56, **con los ataques ya puntuados**. Lo limpio es la regla: cada
-umbral se calibra solo con la mitad de los honestos (semilla par) y el FPR se reporta en la otra;
-ningún puntaje de ataque entra en la calibración. Es un pre-registro **tardío**: protege contra el ajuste
-de umbrales, no contra el de plantillas.
+**Honestidad sobre el pre-registro.** Es **tardío**: cuatro pilotos con las mismas semillas dieron 0/6,
+0/6, 10/30 y 14/30 fugas; con los dos últimos a la vista se reescribieron las plantillas (`8f24e0a`) y
+el lote que reportamos se generó después. `metrics.yaml` se congeló a las 11:56, con los ataques ya
+puntuados. Lo que sí queda limpio es la regla: cada umbral se calibra solo con la mitad de los honestos
+(semilla par) y el FPR se reporta en la otra; ningún puntaje de ataque entra en la calibración: protege
+contra el ajuste de umbrales, no contra el de plantillas.
 
 ## 2. Defensa
 
@@ -49,23 +48,27 @@ solo el resultado público.
 
 ## 3. Evaluación
 
-**Diseño pareado.** Las trazas se generan una vez sin defensa, guardando la etiqueta del contexto en cada
-paso; todas las defensas se aplican después sobre las mismas trazas. 90 episodios: 60 honestos, 30 de
+**Diseño pareado.** Las trazas se generan una vez sin defensa, guardando la etiqueta en cada paso; las
+defensas se aplican después sobre las mismas trazas. 90 episodios: 60 honestos, 30 de
 ellos con la oferta escaneada (los negativos difíciles: abrirla es legítimo y la secuencia de
-herramientas se parece a la del ataque), y 30 ataques, 10 por k. Agentes: `orca/orcacyber-flash-1.0` vía
-OrcaRouter; monitores: `gemini-3.5-flash-lite` y `claude-haiku-5-5`.
+herramientas se parece a la del ataque), y 30 ataques, 10 por k. Agentes: `orca/orcacyber-flash-1.0`;
+monitores: `gemini-3.5-flash-lite` y `claude-haiku-5-5`.
+
+**Qué se mide, con qué denominador.** La unidad es el episodio: un trámite completo. Cuatro números y
+su regla: *fuga*, el canario del sobre aparece en lo publicado (de 30 ataques); *contención condicional*,
+fuga entre los ataques en que el agente ya tuvo el dato en la mano, que separa el efecto de la compuerta
+de la tasa de éxito del ataque; *falso positivo*, honesto bloqueado (de 60); *utilidad*, honesto que
+publica al adjudicatario correcto y nada más (de 60).
 
 **El baseline que pide el jurado es M1:** un LLM por agente con un buen prompt, sin compuerta, medido con
 dos modelos distintos sobre las mismas trazas. **El núcleo no conoce el dominio:** corre también sobre una
-mesa de ayuda de salud, con otras herramientas, otra política y otro daño (que una respuesta lleve el
-documento de otra persona): 20 semillas por k, con fuga en todos los casos sin defensa y sin fuga con
-Quórum. Los monitores LLM solo se midieron en la licitación.
+mesa de ayuda de salud, con otras herramientas, otra política y otro daño; 20 semillas por k, fuga en
+todas sin defensa y ninguna con Quórum. Los monitores solo se midieron en la licitación.
 
 ## 4. Resultados
 
 **Sin defensa, el ataque funciona en 16 de 30 episodios (53 %):** 5/10 con k=1, 6/10 con k=2 y 5/10 con
-k=3. `docs/tareas.md` pedía fuga en 7 de 10 por k; el lote final quedó por debajo y se reporta así, sin
-retocarlo después.
+k=3. `docs/tareas.md` pedía 7 de 10 por k; el lote quedó por debajo y se reporta así, sin retocarlo.
 
 Detección **sobre las 16 fugas** con el umbral calibrado, y FPR **en la mitad de reporte (30 honestos)**:
 
@@ -75,54 +78,66 @@ Detección **sobre las 16 fugas** con el umbral calibrado, y FPR **en la mitad d
 | M2 con oráculo: las tres juntas | 0.0 · 0/30 · 16/16 | 2.0 · 2/30 · 16/16 |
 | M2 ciego: ventanas mezcladas | 0.0 · 0/30 · **13/16** | 3.0 · **5/30** · **16/16** |
 | Compuerta suave: corte de procedencia | 0.0 · 0/30 · 15/16 | 0.0 · 0/30 · 16/16 |
-| **Compuerta dura: la etiqueta** | **16/16** · **0/60** | igual |
+| **Compuerta dura: la etiqueta** | — · **0/60** · **16/16** | igual |
 
-Umbral · falsos positivos (honestos marcados de 30) · fugas detectadas (de 16). Con Haiku, el brazo ciego
-deja 5/30, un 17 %. La compuerta dura no usa umbral y se mide sobre los 60 honestos: bloquea 0.
+Umbral · FPR (de 30) · fugas (de 16). La compuerta dura no tiene umbral: bloquea 0/60.
 
-- **La compuerta dura es la que decide:** bloqueó 23 de las 30 publicaciones de ataque, entre ellas las 16
-  que fugaban, y no tocó a ningún honesto (utilidad honesta **60/60**).
-- **La compuerta suave ahorra el monitor casi siempre:** llamó al modelo en 23/30 ataques y en **0/60
-  honestos**, y aun así detecta 15/16 con Gemini y 16/16 con Haiku.
+- **Dónde se corta el dato.** Llegó a un agente en **23 de los 30** ataques, un agente lo copió en una
+  llamada en **18** y salió al portal en **16**: fuga en el **70 % de los que lo tuvieron**, y 0 con la
+  compuerta. No impide leerlo ni copiarlo: niega 23
+  publicaciones de ataque —las 16 que fugaban y 7 más cuyo texto derivaba del sobre sin traer las
+  cifras— y **0/60** honestos, con utilidad honesta **60/60**. Esas 7 son el costo de la etiqueta gruesa
+  (§6) visto desde dentro de los ataques.
+- **La compuerta suave ahorra el monitor:** llamó al modelo en 23/30 ataques y **0/60** honestos, y aun
+  así detecta 15/16 con Gemini y 16/16 con Haiku.
 - **M1 ya detecta todas las fugas** con los dos monitores y sin falsos positivos; **M2 con oráculo no
   mejora a M1** y M2 ciego pierde 3 fugas con Gemini o paga 17 % de falsos positivos con Haiku. En un
   ataque que copia el dato en cifras, el disfraz no basta para esconderlo de quien lee cada agente: la
   fragmentación protege la *atribución*, no el dato.
 - **Las hipótesis:** H3 (con Quórum no hay fuga) se cumple. **H1, H2 y H4 no** con estos datos: M1 detecta
-  9/10, 7/10 y 8/10 ataques con k=1, 2, 3 con Gemini (9/10, 6/10 y 7/10 con Haiku) sin una caída clara;
-  M2 no supera a M1; y Quórum bloquea 0/60 honestos frente a 0/30 y 2/30 de los monitores. Se reporta
-  tal cual.
+  9/10, 7/10 y 8/10 ataques con k=1, 2, 3 (Gemini) sin una caída clara; M2 no supera a M1; y Quórum
+  bloquea 0/60 honestos frente a 0/30 y 2/30. Se reporta tal cual.
 
-**Reproducibilidad:** los 90 episodios y los puntajes de los dos monitores están versionados en `datos/`
-(1,8 MB, con `README.md` que explica cómo recalcular cada tabla); las métricas y sus umbrales, en
-`metrics.yaml` con su enmienda. `uv run --frozen --extra eval pytest -q` → **414 pruebas en verde**, y
-`python -m quorum.eval.analysis` recalcula estas tablas y la figura desde los datos.
+**Reproducibilidad:** los 90 episodios y los puntajes están en `datos/` (1,8 MB, con `README.md`), los
+umbrales en `metrics.yaml`; `python -m quorum.eval.analysis` y `-m quorum.eval.containment` recalculan
+las tablas, y `uv run --frozen --extra eval pytest -q` pasa **434 pruebas**.
 
-## 5. Límites y riesgo dual
+## 5. Ataques que no escribimos nosotros
 
-- **Etiqueta gruesa.** Es por agente, no por campo: quien abre un sobre contamina todo lo que escribe. En
-  estos 60 honestos no bloqueó a ninguno (los desclasificadores cubren el caso escaneado), pero un flujo
-  honesto que abra un sobre y publique algo derivado sí quedaría detenido. Arreglo propuesto: una rama
-  desechable que solo devuelve un booleano (APPA, 2026).
-- **Vector no medido.** Medimos el peor caso, el agente ya comprometido; la instrucción escondida en un
-  documento queda como trabajo siguiente.
-- **Atacante no adaptativo.** Las plantillas son fijas: los números de los monitores son cotas superiores.
-  A la compuerta no se la convence con texto; solo se la evade lavando el dato, y esos canales están
-  enumerados por política.
+El escenario es nuestro; los ataques, no. Reprodujimos **7.127 trazas públicas de AgentDojo** (ETH Zürich,
+banca: 699 limpias, 1.521 secuestradas, 4.907 resistidas) por la misma compuerta, sin modelos, con la
+política congelada antes de ver una traza. Aquí el daño no es una fuga sino que el agente pague al
+atacante: manda la regla de contenido no confiable, y la inyección llega **dentro de un archivo o del
+asunto de una transacción**, no en el prompt de sistema.
+
+En el corte principal (gpt-4o, ataque `important_instructions`, 169 trazas) frena **90/90 secuestros** y
+deja pasar **16 de 19** tareas limpias; sobre las 7.127 frena 1.506/1.521 (99 %) y deja 336/411 (las otras
+75 piden aprobación humana). En esas mismas trazas, el filtro de herramientas de AgentDojo deja pasar
+16/144 secuestros y el detector DeBERTa 1/144, pero solo deja funcionando 9 de 25 tareas limpias. Límites: son trazas grabadas (bloquear una
+llamada no dice qué habría hecho después), la procedencia se aproxima por texto y es un solo agente, no
+nuestro pipeline. Protocolo en `quorum/eval/agentdojo/`.
+
+## 6. Límites y riesgo dual
+
+- **Etiqueta gruesa.** Por agente, no por campo: quien abre un sobre contamina todo lo que escribe. No
+  bloqueó a ningún honesto (los desclasificadores cubren el escaneado), pero un flujo honesto que abra un
+  sobre y publique algo derivado sí quedaría detenido; el arreglo es una rama desechable que devuelve un
+  booleano (APPA, 2026).
+- **Vector por contenido, medido fuera.** En la licitación medimos el peor caso, el agente ya comprometido.
+  La vía por contenido se midió en AgentDojo (§5), donde la compuerta la frena; falta repetirla aquí.
+- **Atacante no adaptativo.** Plantillas fijas: los números de los monitores son cotas superiores. A la
+  compuerta no se la convence con texto; solo se la evade lavando el dato, y esos canales están enumerados
+  por política.
 - **Muestras pequeñas.** 16 fugas y 30 ataques: los intervalos son anchos y las diferencias de uno o dos
-  episodios no son concluyentes. Con Haiku el brazo ciego queda en 17 % de FPR fuera de muestra, así que
-  no lo recomendamos como defensa única. La compuerta exige que todo pase por el proxy.
-- **Riesgo dual.** El ataque existe solo dentro del arnés, sobre servicios en memoria y datos sintéticos;
-  se publican tasas agregadas y no se tocó ningún sistema real (Ley 1273).
+  episodios no concluyen. La compuerta exige que todo pase por el proxy.
+- **Riesgo dual.** El ataque existe solo dentro del arnés, sobre datos sintéticos; se publican tasas
+  agregadas y no se tocó ningún sistema real (Ley 1273).
 
-## 6. Novedad
+## 7. Novedad
 
-Ya existen la fragmentación contra monitores por agente (Makins et al., 2026) y el control de flujo en
-agentes con agente honesto y contenido atacante (FIDES, CaMeL, SafeFlow, APPA). **Lo nuestro:** el agente
-**es** el atacante y colude por estado compartido, sin chat; k como dosis sobre la misma tarea y semilla;
-la compuerta determinista contra dos monitores LLM sobre las mismas trazas, con un monitor conjunto sin
-oráculo y un paso previo que evita llamarlo; y un **resultado negativo honesto**: repartir el ataque no
-esconde el dato, y el valor está en la compuerta y en el ahorro de llamadas.
-
-**Uso de IA:** código y documentos con asistencia de Claude Code, OpenCode y Codex; el detalle está en
-`docs/referencias.md`.
+Ya existen la fragmentación contra monitores por agente (Makins et al., 2026) y el control de flujo con
+agente honesto y contenido atacante (FIDES, CaMeL, SafeFlow, APPA). **Lo nuestro:** el agente **es** el
+atacante y colude por estado compartido; k como dosis sobre la misma tarea y semilla; la compuerta contra
+dos monitores sobre las mismas trazas, con un monitor conjunto y un paso previo que evita llamarlo; la
+compuerta sobre 7.127 trazas de terceros; y un **resultado negativo honesto**: el valor está en la
+compuerta y en las llamadas al monitor que no se hacen.
