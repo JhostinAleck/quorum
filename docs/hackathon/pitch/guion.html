@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Guion Quórum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f5f1; --fg:#17171a; --mut:#5d6370; --acc:#c25a12; --card:#ffffff; --line:#e3ded5;
+  --warn:#b42318; --ok:#1d7a3e; --hl:#fff1e4; --chip:#efe9df;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b0b0e; --fg:#f1f2f4; --mut:#a6acb7; --acc:#ff8a3d; --card:#16161b; --line:#2a2a31;
+    --warn:#ff8f87; --ok:#86efac; --hl:#2a1a0e; --chip:#22222a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0b0e; --fg:#f1f2f4; --mut:#a6acb7; --acc:#ff8a3d; --card:#16161b; --line:#2a2a31;
+  --warn:#ff8f87; --ok:#86efac; --hl:#2a1a0e; --chip:#22222a;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 Inter,system-ui,sans-serif;}
+.wrap{max-width:760px;margin:0 auto;padding-block:24px 96px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));}
+h1{font-size:30px;line-height:1.15;margin:8px 0 4px;letter-spacing:-.01em}
+h1 span{color:var(--acc)}
+.sub{color:var(--mut);margin:0 0 20px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:36px 0 12px;font-weight:600}
+.timer{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  margin:0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));padding:10px max(16px, env(safe-area-inset-left, 0px));
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.clock{font:600 28px/1 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;min-width:84px}
+.clock.over{color:var(--warn)}
+.now{flex:1;min-width:140px;color:var(--mut);font-size:14px}
+.now b{color:var(--fg)}
+button{font:600 14px Inter,system-ui,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--fg);
+  border-radius:8px;padding:8px 14px;cursor:pointer;min-height:40px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.turn{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:16px 18px;margin:16px 0}
+.turn-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.turn-h h3{margin:0;font-size:20px}
+.span{font-variant-numeric:tabular-nums;color:var(--acc);font-weight:600;font-size:14px}
+.turn-meta{color:var(--mut);font-size:13px;margin:0 0 6px}
+.blk{border-top:1px solid var(--line);padding:14px 0 4px;scroll-margin-top:70px}
+.blk:first-of-type{border-top:0}
+.blk.live{background:var(--hl);margin:0 -18px;padding-left:18px;padding-right:18px;border-radius:8px}
+.blk-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mut)}
+.blk-h .slide{font-weight:600;color:var(--fg)}
+.say{font-family:"Source Serif 4",Georgia,serif;font-size:19px;line-height:1.6;margin:8px 0 6px}
+.cue{display:inline-block;background:var(--chip);border-radius:6px;padding:1px 8px;font:500 13px Inter,system-ui,sans-serif;color:var(--mut);margin-top:2px}
+.fit{font-variant-numeric:tabular-nums}
+.fit.bad{color:var(--warn);font-weight:600}
+.fit.good{color:var(--ok)}
+.note{font-size:14px;color:var(--mut);margin:4px 0 8px}
+.note b{color:var(--warn)}
+details{margin:4px 0 8px;font-size:14px;color:var(--mut)}
+summary{cursor:pointer}
+.total{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--mut);margin:8px 0 0}
+.total b{color:var(--fg);font-variant-numeric:tabular-nums}
+.qa{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 16px;margin:10px 0}
+.qa .q{font-weight:600;margin:0 0 4px}
+.qa .who{float:right;font-size:12px;color:var(--acc);font-weight:600;margin-left:8px}
+.qa p{margin:0;font-size:15px}
+ul.check{list-style:none;padding:0;margin:0}
+ul.check li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+ul.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--acc);flex:none}
+.warnbox{border:1px solid var(--warn);border-radius:12px;padding:12px 16px;margin:12px 0;font-size:15px}
+.warnbox b{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub" style="margin:0">DefAcc Hackathon · Track 6 · pitch de 3 minutos</p>
+  <h1>Guion <span>Quórum</span></h1>
+  <p class="sub">Tres turnos, dos relevos. Cada bloque narra su diapositiva en el mismo orden y con las mismas palabras de la pantalla, sin leer los títulos ni repetir cifras. Es el mismo texto de las notas del deck.</p>
+
+  <div class="timer" role="region" aria-label="Cronómetro de ensayo">
+    <div class="clock" id="clock">0:00</div>
+    <div class="now" id="now">Toca <b>Iniciar</b> para ensayar con tiempo.</div>
+    <button class="pri" id="go">Iniciar</button>
+    <button id="reset">Reiniciar</button>
+  </div>
+
+  <div id="turns"></div>
+  <div class="total" id="total"></div>
+
+  <h2>Relevos</h2>
+  <div class="turn">
+    <p style="margin:0 0 8px"><b>Turno 1 → Turno 2.</b> Al pasar a la diapositiva 1, el turno 2 entra con «En una licitación…».</p>
+    <p style="margin:0"><b>Turno 2 → Turno 3.</b> Tras «…antes de que el dato se publique», el turno 3 entra sin pausa con el título de su diapositiva: «Fuera de nuestro laboratorio también funciona».</p>
+  </div>
+
+  <h2>Preguntas probables de los jurados</h2>
+  <div id="qa"></div>
+
+  <h2>Antes de las 17:00</h2>
+    <ul class="check" id="check"></ul>
+</div>
+
+<script>
+const PPM = 150;
+const TURNS = [
+ {
+  "name": "Turno 1 · inicio",
+  "blocks": [
+   {
+    "id": "cover",
+    "slide": "Portada",
+    "say": "Imaginen que la fórmula de la Coca-Cola está guardada en una empresa donde trabajan tres agentes de IA. Si se ponen de acuerdo, cada uno puede sacar un pedacito sin que ninguno parezca culpable. Quórum es una puerta que no deja salir nada confidencial sin permiso, y no necesita preguntarle a ninguna IA para hacerlo."
+   }
+  ]
+ },
+ {
+  "name": "Turno 2",
+  "blocks": [
+   {
+    "id": "riesgo",
+    "slide": "1 · Vector de riesgo",
+    "say": "En una licitación, el Radicador abre el sobre sellado; el Evaluador copia el valor; el Publicador publica el informe. Cada paso parece normal, y el valor llega al portal disfrazado de número de radicado. Sin defensa y con agentes de IA reales, pasó en 16 de 30 ataques. Y suponemos lo peor: uno, dos o los tres agentes ya están comprometidos."
+   },
+   {
+    "id": "mecanismo",
+    "slide": "2 · Mecanismo defensivo",
+    "say": "Quórum no juzga lo que dice cada agente: sigue de dónde viene cada dato. Lo confidencial nace marcado. La marca se contagia: lo que un agente escribe hereda lo que leyó, aunque cambie las palabras. Y antes de publicar, una regla fija mira las marcas: con marca y sin permiso, no sale. Por eso disfrazar el valor no sirve. Y como vive en las herramientas, no en el prompt, funciona con cualquier modelo y ninguna IA la puede convencer."
+   },
+   {
+    "id": "validacion",
+    "slide": "3 · Validación empírica",
+    "say": "¿Funciona? Lo probamos con agentes reales en 90 trámites. Frenó las 16 fugas, no frenó ninguno de los 60 honestos y decide en un microsegundo. ¿Y si ponemos una IA a vigilar? También detectó las 16; no lo escondemos. La diferencia está en cómo: le pregunta a una IA en cada trámite, necesita un umbral y revisa al final. Quórum decide en cada salida, antes de que el dato se publique."
+   }
+  ]
+ },
+ {
+  "name": "Turno 3",
+  "blocks": [
+   {
+    "id": "externa",
+    "slide": "3 · Ataques que no escribimos",
+    "say": "Fuera de nuestro laboratorio también funciona. Llevamos el mismo núcleo a otros cuatro dominios cambiando solo un archivo de reglas de unas veinte líneas. De 7.600 trámites con ataque, buscar el valor exacto o dar mínimo privilegio deja daño en 3.200; Quórum, en cero. Y en AgentDojo, con ataques que no escribimos, es la única defensa que frena los 90 secuestros y conserva 16 de las 19 tareas útiles."
+   },
+   {
+    "id": "limites",
+    "slide": "4 · Límites y riesgo dual",
+    "say": "Lo que no cubre, medido. Bloquea de más: frena al honesto que abre un sobre de más. Lo que se declara público, sale. No ve el tiempo ni el orden de las llamadas. Y son solo 30 ataques. Lo que sigue: etiquetas por campo, un atacante que se adapta en vivo y un proxy MCP delante de agentes que ya existen. El ataque solo existe en nuestro laboratorio, con datos inventados."
+   },
+   {
+    "id": "cierre",
+    "slide": "Cierre",
+    "say": "¿Sus agentes de IA manejan información confidencial? La IA vigilante avisa; Quórum frena. El código está en el repositorio y se prueba sin claves ni costo. Gracias."
+   }
+  ]
+ }
+];
+
+const QA = [
+  {q:"¿Un monitor de IA no hace lo mismo?", who:"Turno 2",
+   a:"En detección empatamos: los dos ven las 16 fugas. La diferencia es que el monitor llama a un modelo, depende de un umbral y califica al final; la compuerta decide antes de que el dato salga, en 0,5 a 1 µs, sin IA, y ningún texto la convence."},
+  {q:"¿Por qué no un filtro que busque el valor secreto en el texto?", who:"Turno 2",
+   a:"Porque el valor se disfraza (en palabras, en base64, como radicado). En los cinco dominios, un filtro que conoce todos los secretos deja daño en 3.200 de 7.600 trámites; Quórum, en cero, porque sigue el origen y no lee el texto."},
+  {q:"¿Cuánto les cuesta a los agentes honestos?", who:"Turno 2",
+   a:"Los 1.200 trámites honestos de los cinco dominios terminan. El honesto descuidado que abre un sobre que no necesitaba sí queda frenado: 0 de 1.000 terminan. Quórum contiene, no recupera; por eso lo siguiente son etiquetas por campo."},
+  {q:"¿Funciona contra inyección de prompts real?", who:"Turno 3",
+   a:"En AgentDojo, con ataques que no escribimos: sin defensa, 90 de 144 secuestran al agente; con Quórum, 0 de 144, y se conservan 16 de las 19 tareas útiles. DeBERTa deja 1 secuestro pero solo conserva 9; el filtro de herramientas deja 16."},
+  {q:"¿Y un atacante que se adapta?", who:"Turno 3",
+   a:"No lo medimos, y lo decimos. Nuestros 30 ataques son plantillas. Un atacante adaptativo iría por los canales que no llevan marca: tiempo, orden y número de llamadas. Es lo siguiente que vamos a probar."},
+  {q:"¿Qué pasa con lo que sí es público, como los puntajes?", who:"Turno 3",
+   a:"La política declara qué es público, y eso sale. Con los puntajes publicados, un rival deduce el monto sellado en 50 de 50 casos. Quórum no frena la explotación estratégica de lo público; eso es diseño de la política."},
+  {q:"¿Se puede reproducir y conectar a un sistema real?", who:"Turno 3",
+   a:"Sí: «uv run pytest -q» corre sin claves ni costo. Cada dominio es una política de 18 a 24 líneas, y los resultados están sellados con integrity.lock. Para sistemas existentes, el siguiente paso es empaquetarlo como proxy MCP."},
+  {q:"¿No basta con un buen prompt?", who:"Turno 2",
+   a:"Con un buen prompt medimos 0 fugas en 600, pero eso depende del modelo y de quien escribe el prompt. La compuerta no depende de ninguno de los dos: vive en la capa de herramientas."}
+];
+
+const CHECK = [
+  "Decidir el QR: apuntarlo al repositorio (hoy lleva a una demo con login).",
+  "Tabla de validación: si preguntan por 0/30, el vigilante se midió con 30 honestos y Quórum con los 60.",
+  "Una sola persona comparte pantalla y pasa las diapositivas.",
+  "Dos ensayos cronometrados con este cronómetro antes de las 16:45.",
+  "Tener la ficha técnica abierta en otra pestaña: la regla oficial es presentar la ficha en pantalla.",
+  "Entregar el link del repo y la ficha antes de las 17:00."
+];
+
+const words = s => s.trim().split(/\s+/).filter(Boolean).length;
+const secs = s => Math.round(words(s) * 60 / PPM);
+const fmt = t => Math.floor(t/60) + ":" + String(Math.floor(t%60)).padStart(2,"0");
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+const host = document.getElementById("turns");
+const ALL = TURNS.flatMap(T => T.blocks);
+const TOTW = ALL.reduce((a,b)=>a+words(b.say),0);
+let cum = 0;
+ALL.forEach(B => { B.t0 = Math.round(cum*180/TOTW); cum += words(B.say); B.t1 = Math.round(cum*180/TOTW); });
+TURNS.forEach(T => {
+  const card = el("section","turn");
+  const tw = T.blocks.reduce((a,b)=>a+words(b.say),0);
+  const t0 = T.blocks[0].t0, t1 = T.blocks[T.blocks.length-1].t1;
+  const h = el("div","turn-h");
+  h.append(el("h3",null,T.name), el("span","span",`${fmt(t0)}–${fmt(t1)}`));
+  card.append(h);
+  card.append(el("p","turn-meta", `${tw} palabras · ${t1-t0} s`));
+  T.blocks.forEach(B => {
+    const b = el("div","blk"); b.id = "b-"+B.id;
+    const bh = el("div","blk-h");
+    bh.append(el("span","slide",B.slide), el("span","fit", `${fmt(B.t0)}–${fmt(B.t1)} · ${words(B.say)} palabras`));
+    b.append(bh, el("p","say",B.say));
+    if (B.note) b.append(el("p","note",B.note));
+    card.append(b);
+  });
+  host.append(card);
+});
+document.getElementById("total").innerHTML =
+  `<span>Total: <b>${TOTW} palabras</b></span><span>Ritmo para llenar 3:00: <b>≈ ${Math.round(TOTW/3)} palabras/min</b></span><span>Leído a ${PPM}/min: <b>≈ ${fmt(TOTW*60/PPM)}</b></span>`;
+
+const qa = document.getElementById("qa");
+QA.forEach(x => {
+  const c = el("div","qa");
+  c.append(el("span","who",x.who), el("p","q",x.q), el("p",null,x.a));
+  qa.append(c);
+});
+const ck = document.getElementById("check");
+CHECK.forEach((t,i) => {
+  const li = el("li"); const id = "c"+i;
+  const inp = el("input"); inp.type = "checkbox"; inp.id = id;
+  try { inp.checked = localStorage.getItem("guion-"+id) === "1"; } catch(e) {}
+  inp.addEventListener("change", () => { try { localStorage.setItem("guion-"+id, inp.checked ? "1" : "0"); } catch(e) {} });
+  const lab = el("label",null,t); lab.htmlFor = id;
+  li.append(inp, lab); ck.append(li);
+});
+
+// Cronómetro de ensayo
+let start = null, acc = 0, raf = null, lastLive = null;
+const clock = document.getElementById("clock"), now = document.getElementById("now"), go = document.getElementById("go");
+function tick(){
+  const t = acc + (start ? (performance.now() - start)/1000 : 0);
+  clock.textContent = fmt(t);
+  clock.classList.toggle("over", t >= 180);
+  const B = ALL.find(b => t >= b.t0 && t < b.t1) || (t >= 180 ? null : ALL[0]);
+  const turn = B ? TURNS.find(T => T.blocks.includes(B)).name : "Tiempo cumplido";
+  now.innerHTML = B ? `<b>${turn}</b> · ${B.slide}` : "<b>Tiempo cumplido</b>";
+  if (B && B.id !== lastLive) {
+    document.querySelectorAll(".blk.live").forEach(x=>x.classList.remove("live"));
+    const node = document.getElementById("b-"+B.id); node.classList.add("live");
+    if (start) node.scrollIntoView({behavior:"smooth", block:"start"});
+    lastLive = B.id;
+  }
+  if (start) raf = requestAnimationFrame(tick);
+}
+go.addEventListener("click", () => {
+  if (start) { acc += (performance.now()-start)/1000; start = null; go.textContent = "Seguir"; cancelAnimationFrame(raf); }
+  else { start = performance.now(); go.textContent = "Pausar"; tick(); }
+});
+document.getElementById("reset").addEventListener("click", () => {
+  start = null; acc = 0; lastLive = null; cancelAnimationFrame(raf); go.textContent = "Iniciar";
+  document.querySelectorAll(".blk.live").forEach(x=>x.classList.remove("live"));
+  clock.textContent = "0:00"; clock.classList.remove("over");
+  now.innerHTML = "Toca <b>Iniciar</b> para ensayar con tiempo.";
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<section id="resultados" class="alt">
+<p class="ceja">3 · VALIDACIÓN EMPÍRICA · 90 TRÁMITES CON AGENTES DE IA: 60 HONESTOS Y 30 ATAQUES</p>
+<h2>Frena las 16 fugas y no frena a ningún honesto</h2>
+<div class="fila" style="gap:64px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:32px;width:520px">
+<div class="entra" style="--i:0"><p class="cifra verde">16/16</p><p class="guia">fugas frenadas</p></div>
+<div class="entra" style="--i:1"><p class="cifra verde">0/60</p><p class="guia">trámites honestos frenados</p></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px;flex:1">
+<p class="guia">La línea base, un vigilante de IA que revisa a cada agente (M1), también detecta las 16. La diferencia es cómo:</p>
+<table class="tabla">
+<tr><th style="width:40%"></th><th style="width:30%">Vigilante de IA (M1)</th><th style="width:30%;color:#F28C28">Quórum</th></tr>
+<tr><td>Fugas detectadas</td><td>16/16</td><td>16/16</td></tr>
+<tr><td>Falsas alarmas</td><td>0/30</td><td>0/30</td></tr>
+<tr><td>Llama a un modelo</td><td>3 veces por trámite</td><td>nunca</td></tr>
+<tr><td>Umbral que calibrar</td><td>sí</td><td>no</td></tr>
+<tr><td>Cuándo actúa</td><td>al final: avisa</td><td>en cada salida: frena</td></tr>
+</table>
+</div>
+</div>
+<p class="pie">M1 con Gemini 3.5 Flash Lite y con Claude Haiku 5.5. Quórum decide en 0,5–1 µs. Intervalo del 95 % para 16/16: de 81 a 100 %.</p>
+<aside>(1:15–1:47) Lo medimos con agentes de IA reales: 60 trámites honestos y 30 ataques. La compuerta frenó las 16 fugas y no detuvo a ningún honesto. La línea base, un monitor de IA que lee a cada agente, también detecta las 16. Esperábamos que perdiera fugas; no pasó. Empatamos. (pausa) La diferencia: el monitor llama a un modelo, depende de un umbral y califica al final. La compuerta decide antes de que el dato salga, en un microsegundo, y ningún texto la convence.</aside>
+</section>
