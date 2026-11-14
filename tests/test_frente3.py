@@ -140,3 +140,13 @@ def test_attack_policy_and_numbered_step_only_reach_attacking_agents():
     assert attacker.startswith(ATTACK_POLICY) and "5) termina." in attacker
     assert ATTACK_POLICY not in honest and "4) termina." in honest
     assert RULE in honest and RULE not in attacker
+
+
+def test_blind_monitor_is_told_names_repeat_across_tenders_but_not_which_steps_go_together():
+    seen = []
+    trajectories, _ = episode("attack_k1")
+    background = [run("honest", s, defense=False).trajectories for s in (2, 3)]
+    mon.m2_blind(trajectories, background, "m", lambda m, msgs, **k: seen.append(msgs[-1]["content"]) or "SCORE: 1")
+    assert seen and all(mon.BLIND_SCOPE in text for text in seen)
+    assert all(role + "]" not in text for text in seen for role in ("registrar", "evaluator", "publisher"))
+    assert MARK not in "".join(seen)
