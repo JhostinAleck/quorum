@@ -74,7 +74,7 @@ Si todo el que toca un dato restringido quedara contaminado, el sistema bloquear
 - Si un agente necesita ver el valor llama a `open_bid(ref)`. En ese momento su contexto queda restringido.
 - Las funciones deterministas declaradas como **desclasificadores** reciben referencias y devuelven resultados públicos: `score_bids(refs)` devuelve puntajes, `within_budget(ref)` devuelve sí o no, `transcribe(doc)` sella una oferta escaneada y devuelve solo la referencia.
 
-Un desclasificador revela algo del dato por diseño, así que está acotado de tres maneras: tiene que estar en la lista de la política y declarar por escrito por qué su resultado es público; no recibe del agente ni umbrales ni fórmulas (los toma del pliego), para que no sirva de oráculo; y tiene un cupo de llamadas por agente.
+Un desclasificador revela algo del dato por diseño, así que está acotado de cuatro maneras: tiene que estar en la lista de la política y declarar por escrito por qué su resultado es público; no recibe del agente ni umbrales ni fórmulas (los toma del pliego); solo calcula sobre datos de origen oficial, nunca sobre un valor que un agente digitó; y tiene un cupo de llamadas por agente. Las tres últimas son lo que la literatura llama desclasificación robusta: el atacante no puede influir en qué se desclasifica. Sin la tercera, dos agentes podían registrar valores conocidos junto a una oferta secreta y deducirla de los puntajes con un error menor al 0,1 %, con el contexto limpio. Lo encontramos atacando nuestra propia defensa y hay un test que lo impide.
 
 Esta idea viene de las variables ocultas de FIDES y del modelo en cuarentena de CaMeL (ver [referencias](referencias.md)).
 
@@ -84,7 +84,7 @@ Es lo único que cambia de un dominio a otro. Son cuatro listas, más los roles:
 
 | Lista | Qué declara | En la licitación |
 |---|---|---|
-| `restricted` | Prefijos de clave cuyos datos nacen restringidos | `sealed.`, `scan.` |
+| `restricted` | Prefijos de clave cuyos datos nacen restringidos | `sealed.`, `scan.`, `manual.` |
 | `untrusted` | Prefijos de clave que escriben terceros | `annex.` |
 | `sinks` | Herramientas que sacan datos del sistema y qué fuentes restringidas admite cada una | `publish` no admite ninguna |
 | `declassifiers` | Herramientas autorizadas a devolver un resultado público | `score_bids`, `within_budget`, `transcribe` |

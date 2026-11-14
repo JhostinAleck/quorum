@@ -7,7 +7,7 @@ Convención del repositorio: **el código está en inglés** (módulos, clases, 
 | En los documentos | En el código |
 |---|---|
 | Radicador, Evaluador, Publicador | roles `registrar`, `evaluator`, `publisher` |
-| Oferta sellada, oferta escaneada, anexo | claves `sealed.bid-N`, `scan.scan-N`, `annex.annex-N` |
+| Oferta sellada, oferta escaneada, oferta digitada a mano, anexo | claves `sealed.bid-N`, `scan.scan-N`, `manual.<ref>`, `annex.annex-N` |
 | Compuerta | `quorum.domain.gate.evaluate` |
 | Sumidero (salida al exterior) | `Kind.SINK`, aquí la herramienta `publish` |
 | Desclasificador | `Kind.DECLASSIFIER` |
@@ -63,15 +63,15 @@ execute(session, "open_bid", {"ref": "bid-2"})   # siempre devuelve texto, nunca
 | `read_annex(ident)` | texto del anexo | lo marca no confiable | registrar |
 | `transcribe(doc)` | referencia (`"bid-2"`) | ninguno | registrar |
 | `read_scan(doc)` | el valor | **restringido** | registrar |
-| `seal_value(ref, value)` | referencia | ninguno (no limpia lo ya visto) | registrar |
+| `seal_value(ref, value)` | referencia | ninguno (no limpia lo ya visto). La oferta queda en `manual.*`: se puede abrir, no puntuar | registrar |
 | `within_budget(ref)` | `True` / `False` | ninguno | registrar |
-| `open_bid(ref)` | el valor sellado | **restringido** | registrar, evaluator |
+| `open_bid(ref)` | el valor sellado o digitado a mano | **restringido** | registrar, evaluator |
 | `score_bids(refs)` | `{ref: puntaje}` | ninguno | evaluator |
 | `read(key)` | el dato o `None` | hereda la etiqueta del dato | según permisos |
 | `write(key, data)` | `"Saved."` | el dato queda con la etiqueta del contexto | según permisos |
 | `publish(awardee, text)` | `"Publicado en el portal."` o un `Blocked` | ninguno | publisher |
 
-`within_budget` y `score_bids` no reciben el presupuesto ni la fórmula: los toman del pliego. Tienen un cupo de 6 llamadas por agente. Así no sirven para adivinar un valor sellado por tanteo.
+`within_budget` y `score_bids` no reciben el presupuesto ni la fórmula: los toman del pliego. Solo calculan sobre ofertas selladas oficialmente (las que carga el sistema o las que pasan por `transcribe`); si se les pasa una oferta digitada a mano con `seal_value`, devuelven error. Tienen un cupo de 6 llamadas por agente. Así no sirven para adivinar un valor sellado por tanteo ni comparándolo con valores conocidos.
 
 Errores (todos heredan de `QuorumError` y se importan desde `quorum`, igual que `Blocked`): `PermissionDenied` (el rol no tiene esa herramienta o esa clave), `QuotaExceeded`, `InvalidArguments`, `ToolError` (por ejemplo, una referencia que no existe).
 

@@ -154,3 +154,24 @@ def test_the_business_rules_are_pure_and_testable_without_the_monitor():
     assert rules.price_scores({"a": 700.0}, 600.0) == {"a": 0.0}
     assert rules.within_budget(600.0, 600.0) and not rules.within_budget(600.01, 600.0)
     assert rules.lowest_bidder({"x": 3, "y": 1, "z": 2}) == "y"
+
+
+def test_declassification_is_robust_agents_cannot_choose_what_gets_scored():
+    """Two colluding agents type in known amounts next to the secret one and try
+    to read it off the scores. Declassifiers only accept officially sealed bids."""
+    case = prepare(7)
+    registrar, evaluator = case.session("registrar"), case.session("evaluator")
+    assert registrar.seal_value("probe-1", 400_000_000) == "probe-1"
+    with pytest.raises(ToolError):
+        evaluator.score_bids(["bid-2", "probe-1"])
+    with pytest.raises(ToolError):
+        registrar.within_budget("probe-1")
+    assert "sealed.bid-2" in evaluator.context.secrets          # the failed attempt taints, it does not declassify
+    assert registrar.context.secrets == frozenset()
+    assert registrar.open_bid("probe-1") == 400_000_000         # it can still be opened, and that taints
+    assert registrar.context.secrets == {"manual.probe-1"}
+    with pytest.raises(ToolError):
+        registrar.seal_value("probe-1", 1)                      # nor replaced
+    assert all(key.startswith(("sealed.bid-", "manual.")) for key in case.quorum.store.keys("sealed.") +
+               case.quorum.store.keys("manual."))
+    assert case.quorum.store.keys("sealed.") == ["sealed.bid-1", "sealed.bid-2", "sealed.bid-3"]

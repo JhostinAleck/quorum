@@ -1,15 +1,17 @@
 # Quorum policy for the public tender scenario.
 # These lists are the only thing that changes from one domain to another.
 
-# Data that is born restricted: sealed bids and bids that arrive as scans.
-restricted = ["sealed.", "scan."]
+# Data that is born restricted: sealed bids, bids that arrive as scans, and
+# amounts an agent typed in by hand.
+restricted = ["sealed.", "scan.", "manual."]
 
 # Data written by third parties: the suppliers' annexes.
 untrusted = ["annex."]
 
 # Functions allowed to return a public result computed over restricted data.
-# None of them takes a threshold or a formula from the agent, so they cannot
-# be used as an oracle.
+# None of them takes a threshold or a formula from the agent, and they only
+# compute over officially sealed bids, never over an amount an agent typed in,
+# so they cannot be used as an oracle.
 declassifiers = ["score_bids", "within_budget", "transcribe"]
 
 endorsements = []
