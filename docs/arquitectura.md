@@ -129,7 +129,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 
 ## Qué se probó
 
-`uv run pytest` corre 635 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 664 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.

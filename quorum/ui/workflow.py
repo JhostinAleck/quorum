@@ -57,17 +57,28 @@ _AMOUNT = re.compile(
     r"(\d{1,3}(?:(?P<sep>[.,' ])\d{3}(?!\d))(?:(?P=sep)\d{3}(?!\d))*|\d+)"   # the pesos
     r"(?:(?!(?P=sep))[.,]\d{1,2}(?!\d))?"                                    # cents, dropped
     r"(?![.,']?\d)")                                                         # nothing glued to it
-# The label and the rest of its own line: it never reaches into the next one.
-_SUPPLIER = re.compile(r"^[^\n\w]*proveedor[ \t]*[:=;.]?[ \t]*([^\r\n]*)", re.I | re.M)
+# What may not follow the amount on its line, because it reads as the rest of a number that OCR split
+# or misread: a separator (spaces around it or not) and then digits or a letter-digit mix, one space
+# and a digit, or a letter glued to the amount. Sealing the part before it would seal a wrong, smaller
+# value, so the document is rejected. Two or more spaces, or a word, start something else.
+_AMOUNT_CONTINUES = re.compile(r"[ \t]*[.,'’][ \t]*\w*\d|[ \t]\d|[^\W\d_]")
+# The label, alone on its side of the separator (so "Proveedores invitados: ..." is not it), with or
+# without markdown decoration, and the rest of its own line: it never reaches into the next one.
+_SUPPLIER = re.compile(r"^(?:[^\n\w]|_)*proveedor[ \t*_`]*[:;=][ \t]*([^\r\n]*)", re.I | re.M)
 # The supplier name is written by whoever uploads the document, yet it ends up as a
 # key of terms.bids, which is trusted public tender data that every agent reads with
 # no `untrusted` label. So it is not accepted as free text: only a short company
 # name on one line, in a closed alphabet with no quotes, colons or brackets, and
 # with too few digits to carry a sealed amount (five or more are rejected, counted
 # across the whole name so that separators cannot hide them).
-_NAME = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,&-]{1,60}")
+_NAME = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,&'’-]{1,60}")
 _LETTER = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]")
 _NAME_MAX_DIGITS = 4
+# What ordinary documents put around the name and is not part of it: markdown decoration, a trailing
+# group in parentheses and a trailing tax id ("NIT 900.123.456-7"). It is dropped before validating.
+_DECORATION = "*_#`| \t"
+_TRAILING_GROUP = re.compile(r"\s*\([^()]*\)$")
+_TAX_ID = re.compile(r"\s*[,;-]?\s*\bnit\b[\s.:#]*\d[\d.,\s-]*$", re.I)
 
 
 def k_of(kind: str) -> int:
@@ -88,26 +99,45 @@ class Bid:
 
 def supplier_name(raw: str, filename: str = "") -> str:
     """The name as it will reach terms.bids, or ValueError if it is not a plain company name."""
-    name = " ".join(unicodedata.normalize("NFC", raw).split()).strip("| ")
+    name = " ".join(unicodedata.normalize("NFC", raw).split()).strip(_DECORATION)
+    name = _TAX_ID.sub("", _TRAILING_GROUP.sub("", name)).strip(_DECORATION)
     where = filename or "documento"
     if not name:
         raise ValueError(f"{where}: la línea 'Proveedor:' está vacía; escribe el nombre en esa misma línea")
     digits = sum(ch.isdigit() for ch in name)
     if not _NAME.fullmatch(name) or not _LETTER.search(name) or digits > _NAME_MAX_DIGITS:
         raise ValueError(f"{where}: el nombre del proveedor no es válido. Debe ser un nombre corto de empresa: "
-                         "letras, dígitos, espacios y . , & -, máximo 60 caracteres y menos de cinco dígitos")
+                         "letras, dígitos, espacios y . , & - ', máximo 60 caracteres y menos de cinco dígitos")
     return name
 
 
-def parse_bid(text: str, filename: str = "", scanned: bool = False) -> Bid:
+def _name_from_file(filename: str, position: int | None) -> str:
+    """A supplier name for a document with no 'Proveedor:' line: its file name, cleaned and validated.
+    If the file name has no letters to offer, a neutral name with the position of the document."""
+    stem = re.sub(r"\.\w+$", "", filename).replace("_", " ").replace("-", " ")
+    stem = re.sub(r"\(\s*\d+\s*\)|\d{5,}", " ", stem)             # a counter "(1)", a date or a serial
+    if sum(ch.isdigit() for ch in stem) > _NAME_MAX_DIGITS:
+        stem = re.sub(r"\d+", " ", stem)
+    stem = " ".join(stem.split())
+    if not _LETTER.search(stem):
+        return "Proveedor" if position is None else f"Proveedor {position}"
+    return supplier_name(stem, filename)
+
+
+def parse_bid(text: str, filename: str = "", scanned: bool = False, *, position: int | None = None) -> Bid:
     """A document with a line 'Valor: N' and, optionally, 'Proveedor: X'.
     The value gets sealed; the rest of the text becomes the untrusted annex.
-    Tolerant with punctuation, because the text may come from OCR."""
+    Tolerant with punctuation, because the text may come from OCR.
+    `position` (1, 2, ...) only names a document that offers no supplier name at all."""
     where = filename or "documento"
     label = _VALUE.search(text)
     if not label:
         raise ValueError(f"{where}: falta una línea 'Valor: <número>'")
     amount = _AMOUNT.match(text, label.end())
+    line_end = text.find("\n", label.end())
+    if amount and (text[label.end() - 1].isalpha()                      # a letter glued in front of it
+                   or _AMOUNT_CONTINUES.match(text[amount.end():line_end if line_end != -1 else len(text)])):
+        amount = None
     if not amount:
         raise ValueError(f"{where}: no se entiende el valor. Escríbelo en pesos enteros, por ejemplo "
                          "'Valor: 468.915.720'")
@@ -117,11 +147,10 @@ def parse_bid(text: str, filename: str = "", scanned: bool = False) -> Bid:
         name = supplier_name(supplier.group(1), filename)
     else:                                  # the file name is as untrusted as the text
         try:
-            name = supplier_name(re.sub(r"\.\w+$", "", filename) or "Proveedor", filename)
+            name = _name_from_file(filename, position)
         except ValueError:
             raise ValueError(f"{where}: falta una línea 'Proveedor: <nombre>' y el nombre del archivo no sirve "
                              "como nombre de proveedor") from None
-    line_end = text.find("\n", amount.end())
     annex = text[:label.start()] + (text[line_end:] if line_end != -1 else "")
     return Bid(name, value, annex.strip(), scanned)
 
@@ -150,8 +179,14 @@ def build_case(bids: list[Bid], *, defense: bool = True) -> Case:
         else:
             quorum.ingest(f"sealed.bid-{i}", bid.value)
     # The supplier names come from the uploaded documents, so the list of bids is third-party content
-    # too. Validation narrows what a name can say; the label is what tells the gate where it came from:
-    # whoever reads the list derives from those documents, exactly as if it had read the annexes.
+    # too and is stored with an `untrusted` label. Quorum.ingest takes the label from the policy and has
+    # no way to receive one, so these are its same two steps (store, then audit log) written by hand.
+    # They run without the monitor's lock, which is private (_lock): this monitor was created a few
+    # lines above and no session or thread can reach it before build_case returns.
+    # What the label does today: the tender policy has strict_mode = false, so it changes no gate
+    # decision in the demo. It records the provenance in the audit log and travels with the data, and it
+    # would make rule P2 apply if strict mode were turned on. The protection that actually acts today is
+    # the name validation in supplier_name().
     origin = untrusted(*(f"annex.annex-{i}" for i in range(1, len(bids) + 1)))
     quorum.store.put("terms.bids", Value(dict(refs), origin))
     quorum.audit_log.record(kind="ingest", key="terms.bids", label=origin.to_dict())
@@ -294,7 +329,8 @@ def run(documents: list[tuple[Any, ...]], kind: str = INITIAL, *, defense: bool 
     `chat` replaces the model (tests); with it the agents always run in this process.
     """
     k, side_tasks = k_of(kind), dict(side_tasks or {})
-    bids = [parse_bid(d[1], d[0], bool(d[2]) if len(d) > 2 else False) for d in documents]
+    bids = [parse_bid(d[1], d[0], bool(d[2]) if len(d) > 2 else False, position=i)
+            for i, d in enumerate(documents, start=1)]
     case = build_case(bids, defense=defense)
     if k and TARGET not in case.refs:
         raise ValueError(f"los guiones de ataque apuntan a la oferta de «{TARGET}»: incluye una oferta de ese "
