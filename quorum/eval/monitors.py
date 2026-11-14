@@ -41,6 +41,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
+from ..application.monitor import _ACCESS_CONTROL
 from ..domain import Kind
 from ..llm import llamar
 
@@ -200,16 +201,44 @@ def _secrets(label: Mapping[str, Any] | None) -> set[str]:
     return set((label or {}).get("secrets", ()))
 
 
+def _gate_denied(event: Mapping[str, Any]) -> bool:
+    """A sink call the hard gate refused, enforced or only audited: the same test as Quorum.blocks()."""
+    decision = event.get("decision")
+    return bool(event.get("tool_kind") == Kind.SINK.value and decision and not decision.get("allow")
+                and decision.get("policy") not in _ACCESS_CONTROL)
+
+
+def _cited(events: Iterable[Mapping[str, Any]], denied: Iterable[Mapping[str, Any]]) -> set[str]:
+    """The restricted sources the hard gate named when it refused those sinks.
+
+    With high_water_mark the gate judges a sink with what every agent has seen, so it can name a
+    source that is in no label of the caller. The names are read off the refusal and kept only if
+    some label in the log holds them as a restricted source.
+    """
+    known = set().union(*(_secrets(e.get(k)) for e in events for k in ("label", "label_before", "label_after")))
+    named = {name for e in denied for name in re.split(r"[\s,]+", e["decision"].get("reason") or "")}
+    return known & named
+
+
 def provenance_cut(audit_log: Iterable[Mapping[str, Any]], trajectories: Trajectories) -> list[Step]:
     """The steps the labels connect to the restricted sources that reached a sink, from any agent.
 
+    A source reached a sink if it is in the caller's label or if the hard gate named it when it
+    refused the call, which under high_water_mark covers what another agent saw even though its
+    label never travelled to the caller.
+
     It includes the whole trajectory of the agent that first brought a source in (so the monitor
     can judge whether it had a reason, such as a scanned bid) and, from the others, the steps
-    taken with a context that already derives from it. Empty if no sink saw a restricted source.
+    taken with a context that already derives from it. A sink the hard gate refused is always in
+    the cut, so the cut is never empty when the hard gate said no. Empty if no sink saw a
+    restricted source and the hard gate refused none.
     """
-    calls = [e for e in audit_log if e.get("kind") == "call"]
+    events = list(audit_log)
+    calls = [e for e in events if e.get("kind") == "call"]
+    denied = [e for e in calls if _gate_denied(e)]
     reached = set().union(*(_secrets(e.get("label_before")) for e in calls if e.get("tool_kind") == Kind.SINK.value))
-    if not reached:
+    reached |= _cited(events, denied)
+    if not reached and not denied:
         return []
     origin = {e["principal"] for e in calls
               if _secrets(e.get("label_after")) & reached and not _secrets(e.get("label_before")) & reached}
@@ -221,7 +250,7 @@ def provenance_cut(audit_log: Iterable[Mapping[str, Any]], trajectories: Traject
         i = position[who]
         position[who] += 1
         tainted = (_secrets(e.get("label_before")) | _secrets(e.get("label_after"))) & reached
-        if who in origin or tainted:
+        if who in origin or tainted or _gate_denied(e):
             step = steps[i] if i < len(steps) else {"tool": e["tool"], "args": e.get("args", {})}
             cut.append({**step, "agent": who})
     return cut
