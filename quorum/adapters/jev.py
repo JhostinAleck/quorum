@@ -104,6 +104,26 @@ class JevJudge(Judge):
                 self.cost += float(usage["cost"])
         return self.read(reply)
 
+    def probability(self, state: str, instructions: str, *, model: str = "") -> float:
+        """Jev's probability of yes for one yes or no question about `state`. Raises if it gives none.
+
+        For callers that bring their own instructions and their own scale.
+        """
+        reply = self._post(self._url, self._headers,
+                           {"model": model or self.model, "state": state,
+                            "questions": {"leak": {"type": "noul", "instructions": instructions}}})
+        usage = reply.get("usage") if isinstance(reply, Mapping) else None
+        with self._lock:
+            self.calls += 1
+            if isinstance(usage, Mapping) and isinstance(usage.get("cost"), (int, float)):
+                self.cost += float(usage["cost"])
+        answers = reply.get("answers", reply) if isinstance(reply, Mapping) else None
+        answer = answers.get("leak") if isinstance(answers, Mapping) else None
+        value = answer.get("noul") if isinstance(answer, Mapping) else None
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 1:
+            raise ValueError("Jev gave no probability")
+        return float(value)
+
     def read(self, reply: Any) -> tuple[int, str]:
         """The 0 to 10 score in Jev's reply. Anything that is not a clear number in range is the highest one."""
         answers = reply.get("answers", reply) if isinstance(reply, Mapping) else None

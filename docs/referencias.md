@@ -56,6 +56,7 @@ Todos se usaron el 14 de noviembre de 2026. El identificador es el que queda reg
 | Línea base de buen prompt con otros agentes | `openai/gpt-6-luna`, `xiaomi/mimo-v2.6-flash` | OrcaRouter | `datos/baseline_gpt6luna.jsonl`, `baseline_mimoflash.jsonl` |
 | Monitores M1 y M2 del experimento de persuasión (`quorum/monitor_bench.py`) | `openai/gpt-6-luna` | OpenRouter | `datos/monitores-persuasion.jsonl` |
 | Monitores M1 y M2 del experimento de persuasión, con Jev como juez (`quorum/monitor_bench.py --backend jev`) | `typesafe/jev-1.14` | OpenRouter (TypeSafe) | `datos/monitores-persuasion-jev.jsonl`, `monitores-persuasion-jev-score.jsonl` |
+| Los cuatro monitores del experimento principal, con Jev como juez (`quorum/eval/monitors.py --backend jev`) | `typesafe/jev-1.14` | OpenRouter (TypeSafe) | `datos/monitor_orca_v4_jev.jsonl`, `monitor_honest_extra_jev.jsonl` |
 | Agentes con prompts honestos y carta inyectada (`quorum/llm_bench.py`) | `openai/gpt-6-luna` | OpenRouter | `datos/agentes-inyeccion.jsonl` |
 | Agentes de la interfaz web (por defecto) | `openai/gpt-6-luna` | OpenRouter | `quorum/ui/agents.py` |
 | Prueba de modelos para la demo (un episodio por caso, no se reporta como cifra) | `deepseek/deepseek-v4-flash`, `qwen/qwen3.7-flash`, `mistralai/mistral-small-3.2-24b-instruct`, `z-ai/glm-5.3-flash` | OpenRouter | descripción del PR del Frente 3 |

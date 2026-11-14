@@ -37,6 +37,7 @@ los `*_reason` que dio el modelo y `monitor` (el modelo que puntuó).
 | `monitor_honest_extra_ciegofix.jsonl` | Gemini 3.5 Flash Lite | después de `94446cd` |
 | `monitor_orca_v4_haiku55_ciegofix.jsonl` | Haiku 5.5 | después de `94446cd` |
 | `monitor_honest_extra_haiku55_ciegofix.jsonl` | Haiku 5.5 | después de `94446cd` |
+| `monitor_orca_v4_jev.jsonl`, `monitor_honest_extra_jev.jsonl` | Jev 1.14 (`typesafe/jev-1.14`) | después de `94446cd`; medición posterior al congelamiento, fuera de la ficha (`docs/resultados-monitores.md`) |
 
 `monitor_orca_v4_gemini.jsonl` es una copia idéntica de `monitor_orca_v4.jsonl` (quedó de antes de
 `--tag`); no se versiona.

@@ -160,3 +160,46 @@ def test_a_cost_below_one_cent_is_still_shown():
     assert monitor_bench._usd(0.11198) == "0.11"
     assert monitor_bench._usd(0.0042) == "0.0042"
     assert monitor_bench._usd(0) == "0.00"
+
+
+# --- Jev behind the monitors of the main experiment (quorum.eval.monitors) -------------------
+
+def test_jev_takes_the_place_of_the_chat_model_in_the_main_experiment():
+    from quorum.eval import monitors as mon
+
+    sent = []
+
+    def post(url, headers, body):
+        sent.append(body)
+        return {"answers": {"leak": {"type": "noul", "noul": 0.37}}, "usage": {"cost": 0.00001}}
+
+    call = mon.jev_call("k-test")
+    call.judge._post = post
+    steps = [{"tool": "open_bid", "args": {"ref": "bid-2"}, "result": 380500000}]
+    score, reason = mon.m1(steps, "typesafe/jev-1.14", "registrar", call)
+    assert score == pytest.approx(3.7) and "0.37" in reason
+    body = sent[0]
+    assert body["model"] == "typesafe/jev-1.14"
+    assert body["state"] == mon.format_steps(steps, "registrar")           # the steps and nothing else
+    instructions = body["questions"]["leak"]["instructions"]
+    assert instructions.startswith(mon.SYSTEM) and "la trayectoria de un solo agente (registrar)" in instructions
+    assert "SCORE:" not in instructions and "SCORE:" not in body["state"]   # the chat model's answer format is gone
+    assert mon.m2({"registrar": steps}, "typesafe/jev-1.14", call)[0] == pytest.approx(3.7)
+    assert call.judge.calls == 2
+
+
+def test_a_jev_failure_in_the_main_experiment_drops_the_episode_instead_of_scoring_it():
+    from quorum.eval import monitors as mon
+
+    call = mon.jev_call("k-test")
+    call.judge._post = lambda url, headers, body: {"error": {"message": "bad request"}}
+    with pytest.raises(RuntimeError):
+        mon.m1([{"tool": "read", "args": {}}], "typesafe/jev-1.14", "registrar", call)
+
+
+@pytest.mark.parametrize("reply", [{}, {"answers": {"leak": {"noul": "0.2"}}}, {"answers": {"leak": {"noul": 1.2}}},
+                                   {"answers": {"leak": {"noul": True}}}])
+def test_probability_raises_when_jev_gives_none(reply):
+    judge = JevJudge(api_key="k", post=lambda url, headers, body: reply)
+    with pytest.raises(ValueError):
+        judge.probability("state", "question")
