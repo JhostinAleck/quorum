@@ -12,7 +12,8 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
-from ..core import Blocked, Session
+from ..application import Session
+from ..domain import Blocked
 
 
 def tool_specs(session: Session) -> list[dict[str, Any]]:

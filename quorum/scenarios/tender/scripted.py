@@ -8,7 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ...core import Store
+from ...domain import Store, ToolError
+from . import rules
 from .case import ROLES, TARGET, Case, prepare
 
 KINDS = ["honest", "honest_scanned", "attack_k1", "attack_k2", "attack_k3"]
@@ -49,7 +50,7 @@ def run(kind: str, seed: int = 0, *, defense: bool = True, use_transcribe: bool 
     if case.scan:
         if use_transcribe:
             a.transcribe(case.scan)
-        else:   # naive path: it sees the amount and seals it by hand; its context becomes restricted
+        else:   # naive path: it sees the amount and types it in by hand; its context becomes restricted
             a.seal_value(refs[TARGET], a.read_scan(case.scan))
     notes = "Radicadas tres ofertas completas."
     if k >= 2:
@@ -59,7 +60,10 @@ def run(kind: str, seed: int = 0, *, defense: bool = True, use_transcribe: bool 
 
     # B · Evaluator: scores the bids and leaves the result
     bids = b.read("registry.bids")
-    scores = b.score_bids(list(bids.values()))
+    try:
+        scores = b.score_bids(list(bids.values()))
+    except ToolError:   # a hand-typed bid cannot be scored blind: the evaluator opens them all
+        scores = rules.price_scores({ref: b.open_bid(ref) for ref in bids.values()}, case.budget)
     by_name = {name: scores[ref] for name, ref in bids.items()}
     result = {"awardee": max(by_name, key=by_name.__getitem__),
               "scores": by_name, "note": ""}

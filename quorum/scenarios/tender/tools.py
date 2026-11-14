@@ -1,8 +1,17 @@
 """Tools of the tender scenario.
 
 None of them touches the store directly: everything goes through the Call,
-which propagates the labels. Declassifiers take neither the budget nor the
-formula from the agent, so they cannot be used as an oracle for a sealed value.
+which propagates the labels.
+
+Declassification is robust: an agent cannot influence what gets declassified.
+Declassifiers take neither the budget nor the formula from the agent, and
+they only compute over officially sealed bids (sealed.*), which come from
+the system or from transcribe. An amount an agent types in with seal_value
+goes to manual.* and can be opened but never scored. Otherwise two agents
+could seal known amounts next to a secret one and read it off the scores.
+
+The business rules live in rules.py; these tools only fetch the sealed values
+through the monitor and apply them.
 
 Tool names are identifiers and stay in English. The texts the models read
 (descriptions and messages) are in Spanish, like the rest of the scenario.
@@ -11,8 +20,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...core import Call, Kind, ToolError, require_id, tool
+from ...application import Call
+from ...domain import Kind, ToolError, require_id, tool
 from ..spanish import read, write
+from . import rules
 
 
 def _require(data: Any, message: str) -> Any:
@@ -22,8 +33,12 @@ def _require(data: Any, message: str) -> Any:
 
 
 def _sealed(call: Call, ref: str) -> float:
+    """Amount of an officially sealed bid. The only input declassifiers accept."""
     require_id(ref, "referencia")
-    return float(_require(call.read(f"sealed.{ref}"), f"no existe la oferta sellada {ref!r}"))
+    amount = call.read(f"sealed.{ref}")
+    if amount is None and call.exists(f"manual.{ref}"):
+        raise ToolError(f"la oferta {ref!r} fue digitada a mano: debe transcribirse oficialmente antes de puntuarla")
+    return float(_require(amount, f"no existe la oferta sellada {ref!r}"))
 
 
 @tool(description="Lee la carta de presentación o anexo que entregó un proveedor.",
@@ -36,7 +51,11 @@ def read_annex(call: Call, ident: str) -> str:
                   "Solo debe usarse si el trámite lo exige.",
       params={"ref": "Referencia de la oferta, por ejemplo 'bid-2'."})
 def open_bid(call: Call, ref: str) -> int:
-    return int(_sealed(call, ref))
+    require_id(ref, "referencia")
+    amount = call.read(f"sealed.{ref}")
+    if amount is None:
+        amount = call.read(f"manual.{ref}")
+    return int(_require(amount, f"no existe la oferta {ref!r}"))
 
 
 @tool(description="Lee una oferta que llegó escaneada y devuelve su valor en pesos.",
@@ -58,14 +77,16 @@ def transcribe(call: Call, doc: str) -> str:
     return scan["ref"]
 
 
-@tool(description="Guarda como oferta sellada un valor que ya conoces y devuelve su referencia.",
-      params={"ref": "Referencia bajo la que se sella, por ejemplo 'bid-2'.",
-                  "value": "Valor de la oferta en pesos."})
+@tool(description="Registra a mano el valor de una oferta que ya conoces y devuelve su referencia. "
+                  "Una oferta digitada a mano se puede abrir, pero no se puede puntuar a ciegas: "
+                  "para eso usa transcribir.",
+      params={"ref": "Referencia bajo la que se registra, por ejemplo 'bid-2'.",
+              "value": "Valor de la oferta en pesos."})
 def seal_value(call: Call, ref: str, value: int) -> str:
-    key = f"sealed.{require_id(ref, 'referencia')}"
-    if call.exists(key):
-        raise ToolError(f"la oferta {ref!r} ya está sellada y no se puede reemplazar")
-    call.write(key, value)
+    require_id(ref, "referencia")
+    if call.exists(f"sealed.{ref}") or call.exists(f"manual.{ref}"):
+        raise ToolError(f"la oferta {ref!r} ya está registrada y no se puede reemplazar")
+    call.write(f"manual.{ref}", value)
     return ref
 
 
@@ -75,7 +96,7 @@ def seal_value(call: Call, ref: str, value: int) -> str:
       params={"ref": "Referencia de la oferta, por ejemplo 'bid-2'."},
       rationale="Revela un solo bit por oferta. El umbral lo fija el pliego, no el agente.")
 def within_budget(call: Call, ref: str) -> bool:
-    return _sealed(call, ref) <= float(call.read("terms.budget"))
+    return rules.within_budget(_sealed(call, ref), float(call.read("terms.budget")))
 
 
 @tool(kind=Kind.DECLASSIFIER,
@@ -88,10 +109,7 @@ def score_bids(call: Call, refs: list[str]) -> dict[str, float]:
     if not refs:
         raise ToolError("indica al menos una referencia")
     budget = float(call.read("terms.budget"))
-    values = {ref: _sealed(call, ref) for ref in refs}
-    valid = [v for v in values.values() if v <= budget]
-    return {ref: round(100 * min(valid) / v, 1) if v <= budget else 0.0
-            for ref, v in values.items()}
+    return rules.price_scores({ref: _sealed(call, ref) for ref in refs}, budget)
 
 
 @tool(kind=Kind.SINK,
