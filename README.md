@@ -6,6 +6,10 @@ Proyecto del Defensive Acceleration Hackathon (AI Safety Colombia x IEEE CS Unia
 
 > Estado: los resultados se midieron durante el sprint del 14 de noviembre de 2026 y están en el [documento técnico](docs/documento-tecnico/quorum.pdf), en [correcciones de la mentoría](docs/correcciones-mentoria.md) y en los documentos `docs/resultados-*.md`. Nada en este repo afirma un número que no salga de los logs.
 
+## Demo en vivo
+
+**[http://129.213.161.5:8765/](http://129.213.161.5:8765/)**: la interfaz web con la licitación sintética. Se suben ofertas (texto, PDF o escaneos), se corre un trámite honesto o un ataque y se ve decidir a la compuerta. Está abierta durante el hackathon y no usa TLS; para levantarla en local, ver [interfaz web](docs/interfaz-web.md).
+
 ## Video de dos minutos
 
 [![Video de Quórum: una compuerta determinista de procedencia](docs/video/portada.jpg)](docs/video/quorum-video.mp4)
