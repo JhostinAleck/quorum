@@ -27,7 +27,7 @@ Tres cosas cambian lo que hace la compuerta sin tocar código ni política: si b
 
 ## Archivos plantados
 
-Python importa un enlace simbólico o un módulo compilado sin mirar el código fuente que aquí se resume. Por eso, si dentro del núcleo o de un escenario aparece un enlace o un archivo compilado (`.pyc`, `.so`, `.pyd`) fuera de `__pycache__`, el cálculo falla y el monitor no arranca.
+Python importa un enlace simbólico o un módulo compilado sin mirar el código fuente que aquí se resume. Por eso, si dentro del núcleo o de un escenario aparece un enlace o un archivo compilado (`.pyc`, `.so`, `.pyd`) fuera de `__pycache__`, el cálculo falla y el monitor no arranca. Lo mismo si junto a un módulo suelto del camino de confianza (por ejemplo `adapters/http_server.py`) aparece una carpeta o un compilado con su mismo nombre.
 
 ## Cómo se usa
 

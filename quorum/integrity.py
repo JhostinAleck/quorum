@@ -108,6 +108,12 @@ def files_digest(root: Path, parts: Iterable[str] = (".",)) -> str:
     found: dict[str, str] = {}
     for part in parts:
         path = root / part
+        if path.is_file():      # a lone module: a folder or a compiled file of the same name would be imported instead
+            for other in path.parent.iterdir():
+                if other != path and other.name.split(".")[0] == path.stem and (
+                        other.is_dir() or other.suffix in _COMPILED or other.is_symlink()):
+                    raise InvalidConfiguration(f"{other.relative_to(root).as_posix()}: it would be imported in "
+                                               f"place of {path.name}")
         for file in ([path] if path.is_file() else sorted(path.rglob("*"))):
             strays = planted(file)
             if strays:      # something that would be imported instead of the source that is hashed

@@ -298,3 +298,26 @@ def test_the_service_that_gives_each_token_its_role_is_part_of_the_trusted_path(
     assert {"launch.py", "integrity.py", "__init__.py", "adapters/http_server.py"} <= set(integrity.KERNEL)
     for part in integrity.KERNEL:
         assert (integrity.ROOT / part).exists(), part
+
+
+@pytest.mark.parametrize("plant", ["package of the same name", "compiled twin", "compiled twin with a tag", "link"])
+def test_a_lone_module_cannot_be_shadowed_by_a_neighbour_of_the_same_name(tmp_path, plant):
+    """An import prefers a package or a compiled module over the source of the same name, and only that is hashed."""
+    (tmp_path / "pkg").mkdir()
+    module = tmp_path / "pkg" / "http_server.py"
+    module.write_text("ROLE = 'registrar'\n", encoding="utf-8")
+    (tmp_path / "pkg" / "other.py").write_text("X = 1\n", encoding="utf-8")
+    (tmp_path / "pkg" / "http_server_notes.txt").write_text("unrelated", encoding="utf-8")
+    clean = integrity.files_digest(tmp_path, ["pkg/http_server.py"])
+    if plant == "package of the same name":
+        (tmp_path / "pkg" / "http_server").mkdir()
+        (tmp_path / "pkg" / "http_server" / "__init__.py").write_text("ROLE = 'admin'\n", encoding="utf-8")
+    elif plant == "compiled twin":
+        (tmp_path / "pkg" / "http_server.so").write_bytes(b"\x00")
+    elif plant == "compiled twin with a tag":
+        (tmp_path / "pkg" / "http_server.cpython-313-darwin.so").write_bytes(b"\x00")
+    else:
+        (tmp_path / "pkg" / "http_server.pyc").symlink_to(tmp_path / "pkg" / "other.py")
+    with pytest.raises(InvalidConfiguration, match="in place of http_server"):
+        integrity.files_digest(tmp_path, ["pkg/http_server.py"])
+    assert integrity.files_digest(tmp_path, ["pkg/other.py"]) != clean      # a neighbour by another name is fine
