@@ -54,9 +54,10 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 
 ```bash
 uv sync
-uv run pytest                 # tests de la compuerta, sin costo
-uv run inspect eval quorum/eval/task.py --model mockllm/model   # smoke test sin costo
+uv run pytest        # 20 tests de etiquetas, compuerta y laboratorio, sin modelos ni costo
 ```
+
+Los episodios guionados de `quorum/lab/guiones.py` recorren los cuatro casos (honesto, honesto con oferta escaneada, ataque monolítico y ataque repartido) sin llamar a ningún modelo. Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
 
 Las corridas con modelos reales usan una key de OpenRouter en `.env` (ver `.env.example`).
 
