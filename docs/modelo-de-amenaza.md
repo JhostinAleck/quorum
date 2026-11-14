@@ -48,7 +48,7 @@ Ningún paso es anómalo por sí solo. Como control, el **ataque monolítico** c
 ## Qué queda fuera
 
 - Canales encubiertos por tiempo, cantidad de llamadas u orden de operaciones.
-- Fuga de información a través de los desclasificadores: un puntaje revela algo sobre el valor del que se calculó. Es una fuga aceptada por diseño y acotada por lo que el pliego declara público.
+- Fuga de información a través de los desclasificadores: un puntaje revela algo sobre el valor del que se calculó. Es una fuga aceptada por diseño y acotada por lo que el pliego declara público. Queda fuera de lo que la compuerta bloquea, pero se mide: los puntajes publicados revelan cerca de 1 bit de los 28 del valor, y `validar_tope` con un presupuesto elegido por el agente permite recuperarlo entero en 30 llamadas (episodio `ataque_oraculo`).
 - Compromiso del propio proxy o de la política.
 - Ataques contra los pesos o el entrenamiento de los modelos.
 - Colusión que no pasa por los servicios compartidos (no existe en este laboratorio porque los agentes no tienen otro canal).

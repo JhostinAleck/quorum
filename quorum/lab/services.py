@@ -91,7 +91,7 @@ class Sesion:
         return out
 
     def validar_tope(self, ref: str, presupuesto: float) -> bool:
-        self._paso("validar_tope", ref=ref)
+        self._paso("validar_tope", ref=ref, presupuesto=presupuesto)
         out = float(self.lab.selladas[ref].dato) <= presupuesto
         self.trayectoria[-1]["resultado"] = out
         return out
