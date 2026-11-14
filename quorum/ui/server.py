@@ -25,6 +25,7 @@ import os
 import sys
 import threading
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -178,7 +179,8 @@ class Handler(BaseHTTPRequestHandler):
             files = sorted((EXAMPLES / "pdf").glob("*.pdf") if self.path.endswith("pdf")
                            else EXAMPLES.glob("oferta-*.md"))
             try:
-                self._json([read_document(p.name, p.read_bytes()) for p in files])
+                with ThreadPoolExecutor(max_workers=max(1, len(files))) as pool:   # the scans are read at the same time
+                    self._json(list(pool.map(lambda p: read_document(p.name, p.read_bytes()), files)))
             except ValueError as e:
                 self._json({"error": str(e)}, 400)
         else:

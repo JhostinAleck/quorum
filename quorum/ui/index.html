@@ -104,14 +104,28 @@ function paintDocs() {
   $("docs").querySelectorAll("a").forEach(a => a.onclick = () => { docs.splice(+a.dataset.i,1); paintDocs(); });
 }
 const b64 = file => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result.split(",")[1] || ""); r.onerror = bad; r.readAsDataURL(file); });
+// Several files are read at the same time (the server OCRs each one on its own
+// thread). One that fails does not stop the others; each shows as soon as it is ready.
+const PARALLEL = 3;
+const reading = new Set();
+function paintReading() {
+  const names = [...reading];
+  $("docMsg").style.color = "var(--mute)";
+  $("docMsg").textContent = names.length ? "Leyendo " + names.join(", ") + "…" : "";
+}
 async function load(files) {
-  $("docMsg").textContent = "";
-  for (const f of files) {
-    try { $("docMsg").style.color = "var(--mute)"; $("docMsg").textContent = "Leyendo " + f.name + "…";
-          docs.push(await api("/api/extract", {name:f.name, data:await b64(f)})); $("docMsg").textContent = ""; }
-    catch (e) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = e.message; break; }
-    paintDocs();
-  }
+  const queue = [...files], errors = [];
+  paintReading();
+  const worker = async () => {
+    for (let f; (f = queue.shift()); ) {
+      reading.add(f.name); paintReading();
+      try { docs.push(await api("/api/extract", {name:f.name, data:await b64(f)})); paintDocs(); }
+      catch (e) { errors.push(f.name + ": " + e.message); }
+      finally { reading.delete(f.name); paintReading(); }
+    }
+  };
+  await Promise.all(Array.from({length: Math.min(PARALLEL, queue.length)}, worker));
+  if (errors.length) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = errors.join(" · "); }
 }
 async function examples(path) {
   try { $("docMsg").textContent = ""; docs = await api(path); paintDocs(); }
