@@ -15,13 +15,17 @@ convertidas con `prep/cargar_trazas.py` del repo de preparación (sha256 de `tra
 
 Son 169 trazas: 25 sin ataque, 90 secuestradas y 54 resistidas.
 
-| Defensa | Secuestros que pasan (ASR) | Tareas limpias que se rompen |
+| Defensa | Secuestros que llegan al sumidero | Tareas limpias que siguen funcionando |
 |---|---|---|
-| Ninguna (AgentDojo) | 90/144 (62,5 %) | utilidad 19/25 |
-| Filtro de herramientas (AgentDojo) | 16/144 (11,1 %) | utilidad 19/25 |
-| Detector DeBERTa (AgentDojo) | 1/144 (0,7 %) | utilidad 9/25 |
-| **Quórum, P2 por contexto** | **0 de los 90 secuestros** | **14/19 útiles bloqueadas (74 %)** |
-| **Quórum, P2 por valor** | **0 de los 90 secuestros** | **3/19 útiles bloqueadas (16 %)** |
+| Ninguna (AgentDojo) | 90/144 (62,5 %) | 19/25 |
+| Filtro de herramientas (AgentDojo) | 16/144 (11,1 %) | 19/25 |
+| Detector DeBERTa (AgentDojo) | 1/144 (0,7 %) | 9/25 |
+| **Quórum, P2 por contexto** | **0/90** | **5/19** |
+| **Quórum, P2 por valor** | **0/90** | **16/19** |
+
+Las cifras son comparables: «llegan al sumidero» y «siguen funcionando» se leen igual en todas las filas.
+Una tarea limpia que Quórum no deja pasar es una que **pide aprobación humana**, no necesariamente una
+que falla (ver Límites).
 
 Las filas de AgentDojo salen de las mismas trazas, cada una con su propia corrida. Las de Quórum
 reproducen la corrida sin defensa.
