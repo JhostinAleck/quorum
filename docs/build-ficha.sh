@@ -16,7 +16,7 @@ TEX
 
 pandoc docs/ficha-tecnica.md -o docs/ficha-tecnica.pdf \
   --pdf-engine=tectonic \
-  -V geometry:margin=1.5cm \
+  -V geometry:margin=1.45cm \
   -V papersize=letter \
   -V colorlinks=true \
   -V parskip=3pt \
