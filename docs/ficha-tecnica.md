@@ -59,8 +59,8 @@ de la tasa de éxito del ataque; *falso positivo*, honesto bloqueado (de 60); *u
 publica al adjudicatario correcto y nada más (de 60).
 
 **El baseline que pide el jurado, medido.** Tres agentes honestos y el ataque por contenido dentro de un anexo,
-5 modelos y 3 prompts (nada, regla, defensa): **0 fugas en 600 con inyección**. Un buen prompt basta y la
-compuerta solo cuesta: gpt-4o-mini abre el sobre sin copiarlo y frenaría **50/120** actas correctas. Donde
+5 modelos y 3 prompts (nada, regla, defensa): **0 fugas en 600 con inyección** (480 sin llama-8b), ni sin la regla:
+no es el prompt, la inyección no alcanza, y la compuerta solo cuesta: gpt-4o-mini abre el sobre sin copiarlo y frenaría **50/120** actas correctas. Donde
 el prompt no llega es en los otros dos: el
 agente ya comprometido (16/30 sin compuerta) y el agente único que sí obedece la inyección (§5). El
 baseline de **monitoreo** es M1, un LLM por agente que lee su episodio: detecta las 16 fugas y paga una

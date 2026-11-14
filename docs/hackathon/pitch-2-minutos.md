@@ -22,8 +22,8 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 > ningún modelo.
 >
 > **(1:12) Y medimos el baseline que importa:** tres agentes honestos y una inyección dentro de un anexo.
-> Con buen prompt, con la regla del pliego y sin regla: cero fugas en 120 episodios. Ahí un buen prompt
-> basta, y lo decimos. El valor está donde el prompt no llega: el agente ya comprometido, y el agente único
+> Con buen prompt, con la regla del pliego y hasta sin regla: cero fugas en 120 episodios. Ahí la
+> inyección no alcanza, con o sin prompt, y lo decimos. El valor está donde el prompt no llega: el agente ya comprometido, y el agente único
 > que sí obedece, en AgentDojo: 90 de 90 secuestros frenados en el corte principal y 1.506 de 1.521 en
 > total. Un monitor por agente también detecta las 16, pero paga una llamada por episodio y deja 5 de 30
 > falsos positivos.
@@ -45,7 +45,7 @@ pasa de 2:00, se corta la última frase del bloque de 1:12 (la del monitor por a
 ## Qué no decir
 
 - No abrir con «tenemos tres agentes». El mentor: «tú me hablas de agentes y la compuerta no la mencionaste».
-- No decir que el baseline «falla». El baseline de prompt **gana** en su escenario (0 fugas en 120): en
+- No decir que el baseline «falla». El baseline de prompt **no pierde** en su escenario (0 fugas en 120, también sin regla): en
   esa frase hay que decir que ahí la compuerta no aporta, y pasar a donde el prompt no llega.
 - No decir que medimos inyección por contenido en nuestra licitación: no la medimos ahí, la medimos fuera.
 - No presumir de pre-registro sin decir que fue tardío.
