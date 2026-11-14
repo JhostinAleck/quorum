@@ -41,13 +41,19 @@ Antes de la entrega, cada cita que aparezca en la ficha técnica se verifica abr
 
 ## Modelos
 
-Se completa durante el sprint con el identificador exacto de cada modelo, el proveedor y la fecha de uso.
+Todos se usaron el 14 de noviembre de 2026. El identificador es el que queda registrado en `datos/`.
 
-| Rol | Modelo | Proveedor |
-|---|---|---|
-| Agentes | por definir | |
-| Monitores M1 y M2 | por definir | |
-| Redacción de fragmentos de ataque | por definir | |
+| Rol | Modelo | Proveedor | Dónde consta |
+|---|---|---|---|
+| Agentes de la licitación (ataques, honestos y línea base principal) | `orca/orcacyber-flash-1.0` | OrcaRouter | `datos/pilot_orca_v4.jsonl`, `pilot_honest_extra.jsonl`, `baseline_v1.jsonl` |
+| Monitores M1, M2, M2 sin oráculo y compuerta suave | `google/gemini-3.5-flash-lite` | OpenRouter | `datos/monitor_*` (sin sufijo y `_ciegofix`) |
+| Los mismos monitores, segunda familia | `claude-haiku-5-5` | Anthropic | `datos/monitor_*_haiku55*` |
+| Línea base de buen prompt con otros agentes | `openai/gpt-4o-mini`, `meta-llama/llama-3.1-8b-instruct`, `meta/muse-ember` (solo prueba corta) | OpenRouter | `datos/baseline_*` |
+| Línea base de buen prompt con otros agentes | `openai/gpt-6-luna`, `xiaomi/mimo-v2.6-flash` | OrcaRouter | `datos/baseline_gpt6luna.jsonl`, `baseline_mimoflash.jsonl` |
+| Agentes de la interfaz web (por defecto) | `openai/gpt-6-luna` | OpenRouter | `quorum/ui/agents.py` |
+| Prueba de modelos para la demo (un episodio por caso, no se reporta como cifra) | `deepseek/deepseek-v4-flash`, `qwen/qwen3.7-flash`, `mistralai/mistral-small-3.2-24b-instruct`, `z-ai/glm-5.3-flash` | OpenRouter | descripción del PR del Frente 3 |
+| Trazas externas de AgentDojo (no las generamos: se reproducen) | `gpt-4o-2024-05-13` y las demás configuraciones del benchmark | ETH Zürich (ethz-spylab/agentdojo, commit `089ed468`) | `quorum/eval/agentdojo/RESULTADOS.md` |
+| Redacción de los fragmentos de ataque | Ningún modelo: las plantillas se escribieron a mano con Claude Code y están en `quorum/eval/attacks.py` | | |
 
 ## Asistencia de IA en el desarrollo
 
@@ -56,4 +62,7 @@ Se completa durante el sprint con el identificador exacto de cada modelo, el pro
 | Claude Code (Anthropic) | Documentos técnicos, diagramas, núcleo (etiquetas, política, compuerta, monitor), escenarios guionados, adaptadores, protocolo HTTP, despliegue en contenedores, prompts base y tests |
 | Grok (xAI) | Búsqueda de literatura y contexto previo al diseño |
 
-Se agregan filas a medida que otros agentes aportan código.
+| Claude Code (Anthropic, Claude Opus 5.5) | Frente 3: ataques, monitores, piloto, `metrics.yaml`, análisis con intervalos de confianza, reproducción de AgentDojo, línea base, ablación, intentos de romper la compuerta, conexión de los ataques a la interfaz, notas de la mentoría y tests |
+| OpenCode | Frente 3: ficha técnica, `metrics.yaml` (enmiendas), `datos/README.md` y revisión de cifras |
+
+Los agentes de desarrollo trabajaron con supervisión del equipo; cada cifra se recalcula desde `datos/` con `quorum/eval/analysis.py`.
