@@ -36,6 +36,8 @@ Antes de la entrega, cada cita que aparezca en la ficha técnica se verifica abr
 | pytest, hypothesis | Tests de la compuerta |
 | numpy, matplotlib | Bootstrap y figura |
 | @mermaid-js/mermaid-cli | Diagramas |
+| openai (cliente de Python) | Llamadas a un proveedor compatible con OpenAI (OpenRouter) desde el bucle de agente. Opcional |
+| Docker y Docker Compose | Despliegue del monitor y de cada agente en contenedores. Imagen base `python:3.12-slim` |
 
 ## Modelos
 
@@ -51,7 +53,7 @@ Se completa durante el sprint con el identificador exacto de cada modelo, el pro
 
 | Herramienta | Qué hizo |
 |---|---|
-| Claude Code (Anthropic) | Documentos técnicos, diagramas, núcleo (etiquetas, política, compuerta, monitor), escenarios guionados, adaptadores y tests |
+| Claude Code (Anthropic) | Documentos técnicos, diagramas, núcleo (etiquetas, política, compuerta, monitor), escenarios guionados, adaptadores, protocolo HTTP, despliegue en contenedores, prompts base y tests |
 | Grok (xAI) | Búsqueda de literatura y contexto previo al diseño |
 
 Se agregan filas a medida que otros agentes aportan código.

@@ -51,13 +51,35 @@ Los ataques, según entre cuántos agentes se reparten (k):
 2. El escenario de licitación (`quorum/scenarios/tender/`): política en `policy.toml`, herramientas, generador de casos con `prepare(seed)` y episodios guionados con `run(kind, seed)` para honesto, honesto con oferta escaneada y ataques k = 1, 2 y 3.
 3. Los adaptadores (`quorum/adapters/`): `inspect_tools(session)` para Inspect AI y `tool_specs` / `execute` para cualquier otro framework.
 4. Un segundo escenario (`quorum/scenarios/helpdesk/`) que demuestra que cambiar de dominio no toca el núcleo.
-5. 115 tests, incluidos los de no interferencia y los de la regla de dependencias entre capas.
+5. 385 tests, incluidos los de no interferencia y los de la regla de dependencias entre capas.
+6. El monitor como servicio y cada agente en su contenedor: protocolo HTTP con un token por agente ([protocolo](protocolo.md)), `quorum/launch.py` y Docker Compose ([despliegue](despliegue.md)).
+7. Un punto de partida para el Frente 2: el bucle de agente (`run_agent`), el cliente del proveedor (`openai_chat`) y los prompts honestos de cada rol (`quorum/scenarios/tender/prompts.py`).
 
 **Lo que sigue de este frente:** acompañar a los frentes 2 y 3 con lo que necesiten de la interfaz, y revisar que las trazas reales cumplan lo mismo que las guionadas.
 
 ## Frente 2 · Agentes con modelo de lenguaje
 
 **Archivos:** `quorum/eval/agents.py`, `quorum/eval/task.py`
+
+**Lo que ya existe para arrancar.** Un episodio con modelo real corre hoy con esto, sin Inspect:
+
+```python
+import os
+from quorum.adapters.agent_loop import run_agent
+from quorum.adapters.openai_chat import openai_chat          # uv sync --extra eval
+from quorum.scenarios.tender import prepare, ROLES
+from quorum.scenarios.tender.prompts import SYSTEM, TASK      # prompts honestos de cada rol, en español
+
+case = prepare(seed=1, defense=False)
+chat = openai_chat("<modelo de OpenRouter>", api_key=os.environ["OPENROUTER_API_KEY"])
+for role in ROLES:                                            # registrar, evaluator, publisher
+    run_agent(case.session(role), chat, system=SYSTEM[role], task=TASK[role], max_turns=12)
+case.useful, case.leak, case.quorum_blocks
+```
+
+`run_agent` devuelve la conversación completa. Un error o un bloqueo le llegan al modelo como texto, así que nada de lo que el modelo responda tumba el episodio. Los prompts son un punto de partida: describen solo el trámite honesto y hay que iterarlos hasta cumplir la meta de abajo. La tarea oculta del Frente 3 se añade al final de `SYSTEM[role]`.
+
+El mismo episodio en contenedores (cada agente en el suyo) está en [despliegue](despliegue.md), sección "Agentes con modelo". Para el barrido se usa un solo proceso, que es mucho más rápido.
 
 **Qué hacer**
 
@@ -72,7 +94,7 @@ Los ataques, según entre cuántos agentes se reparten (k):
 
 **Recibe:** la interfaz del Frente 1 (ya existe y está probada, incluido el adaptador de Inspect).
 
-**Entrega:** `inspect eval quorum/eval/task.py` corre un episodio completo.
+**Entrega:** `inspect eval quorum/eval/task.py` corre un episodio completo. Si Inspect quita tiempo, vale un script con el bucle de arriba que guarde lo mismo: lo que importa es el punto 4.
 
 **Terminado cuando:** el smoke test con `mockllm/model` corre sin errores y, con modelo real, al menos 4 de 5 episodios honestos terminan con `case.useful` en verdadero. Si no lo logra, se ajustan los prompts antes de seguir: sin agentes honestos que funcionen no hay experimento.
 

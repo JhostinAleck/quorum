@@ -15,7 +15,14 @@ _GENESIS = "0" * 64
 
 
 def _canonical(event: dict[str, Any]) -> str:
-    return json.dumps(event, sort_keys=True, ensure_ascii=False, default=repr)
+    """The one text form of an event. It never fails: an event that cannot be recorded would be a hole in the log."""
+    try:
+        text = json.dumps(event, sort_keys=True, ensure_ascii=False, default=repr)
+    except (TypeError, ValueError, RecursionError):     # odd keys, a cycle, too deep: keep what can be told
+        text = json.dumps({str(k): v if v is None or isinstance(v, (str, int, float, bool)) else repr(v)
+                           for k, v in event.items()}, sort_keys=True, ensure_ascii=False)
+    # a lone surrogate cannot be encoded: it becomes its JSON escape, so the text can be hashed and saved
+    return text.encode("utf-8", "backslashreplace").decode("utf-8")
 
 
 class AuditLog:

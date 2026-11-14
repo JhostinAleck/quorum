@@ -86,5 +86,8 @@ def prepare(seed: int, *, defense: bool = True, scanned: bool = False,
             quorum.ingest(f"scan.scan-{i}", {"ref": refs[name], "value": values[name]})
         else:
             quorum.ingest(f"sealed.{refs[name]}", values[name])
-    return Case(quorum, refs, BUDGET, str(values[TARGET]),
-                lowest_bidder(values), "scan-2" if scanned else None)
+    scan = "scan-2" if scanned else None
+    # public facts of the tender: an agent in its own process has no Case, so it finds them through its tools
+    quorum.ingest("terms.bids", dict(refs))
+    quorum.ingest("terms.scan", scan)
+    return Case(quorum, refs, BUDGET, str(values[TARGET]), lowest_bidder(values), scan)
