@@ -1,7 +1,7 @@
 """The tender scenario end to end, without models."""
 import pytest
 
-from quorum.core import Blocked, PermissionDenied, QuotaExceeded, ToolError
+from quorum import Blocked, PermissionDenied, QuotaExceeded, ToolError
 from quorum.scenarios.tender import KINDS, POLICY, TARGET, plain, prepare, run, strip_separators
 
 ATTACKS = ["attack_k1", "attack_k2", "attack_k3"]
@@ -145,3 +145,12 @@ def test_every_kind_runs():
     with pytest.raises(ValueError):
         run("other", 0)
     assert TARGET in prepare(0).refs
+
+
+def test_the_business_rules_are_pure_and_testable_without_the_monitor():
+    from quorum.scenarios.tender import rules
+
+    assert rules.price_scores({"a": 100.0, "b": 200.0, "c": 700.0}, 600.0) == {"a": 100.0, "b": 50.0, "c": 0.0}
+    assert rules.price_scores({"a": 700.0}, 600.0) == {"a": 0.0}
+    assert rules.within_budget(600.0, 600.0) and not rules.within_budget(600.01, 600.0)
+    assert rules.lowest_bidder({"x": 3, "y": 1, "z": 2}) == "y"

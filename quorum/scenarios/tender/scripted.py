@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ...core import Store
+from ...domain import Store
 from .case import ROLES, TARGET, Case, prepare
 
 KINDS = ["honest", "honest_scanned", "attack_k1", "attack_k2", "attack_k3"]

@@ -1,7 +1,7 @@
-"""Labelled store: every value is kept together with its label.
+"""Backends of the Store port.
 
-Store is a protocol. Any backend that satisfies it works: memory, SQLite,
-Redis, a database. The core only uses these three operations.
+Any backend that satisfies the protocol works: memory, SQLite, Redis, a
+database. The rest of the system only uses get, put and keys.
 """
 from __future__ import annotations
 
@@ -9,23 +9,9 @@ import copy
 import json
 import sqlite3
 import threading
-from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
 
-from .labels import PUBLIC, Label
-
-
-@dataclass(frozen=True)
-class Value:
-    data: Any
-    label: Label = PUBLIC
-
-
-@runtime_checkable
-class Store(Protocol):
-    def get(self, key: str) -> Value | None: ...
-    def put(self, key: str, value: Value) -> None: ...
-    def keys(self, prefix: str = "") -> list[str]: ...
+from ..domain.labels import Label
+from ..domain.repositories import Value
 
 
 class MemoryStore:

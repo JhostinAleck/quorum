@@ -1,5 +1,5 @@
 """A minimal, abstract scenario to test the core without any domain."""
-from quorum.core import BASE_TOOLS, Kind, Policy, Quorum, ToolError, tool
+from quorum import BASE_TOOLS, Kind, Policy, Quorum, ToolError, new_monitor, tool
 
 POLICY = Policy.from_dict({
     "restricted": ["secret."],
@@ -47,7 +47,7 @@ SECRETS = ("ALFA-7731", "BETA-4402", "GAMA-9958")
 
 
 def new(*, enforce=True, policy=None, store=None, secrets=SECRETS, **options) -> Quorum:
-    q = Quorum(policy or POLICY, TOOLS, enforce=enforce, store=store, **options)
+    q = new_monitor(policy or POLICY, TOOLS, enforce=enforce, store=store, **options)
     for i, secret in enumerate(secrets):
         q.ingest(f"secret.{i}", secret)
         q.ingest(f"external.{i}", f"external text {i}")

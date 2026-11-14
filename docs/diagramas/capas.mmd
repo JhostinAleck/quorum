@@ -1,0 +1,33 @@
+flowchart TB
+  classDef d fill:#e8f1ff,stroke:#2f6fd0,color:#12305f;
+  classDef a fill:#eaf7ee,stroke:#2e8b57,color:#16432b;
+  classDef i fill:#fff4e0,stroke:#c9861a,color:#5b3c05;
+  classDef x fill:#f3ecff,stroke:#7a4fd0,color:#33206b;
+
+  subgraph EXT["Fuera del núcleo"]
+    AD["adapters<br/>Inspect AI · function calling"]:::x
+    SC["scenarios (contextos)<br/>tender · helpdesk<br/>policy.toml + herramientas + reglas"]:::x
+  end
+
+  subgraph APP["application · caso de uso"]
+    MON["monitor de referencia<br/>Quorum · Session · Call"]:::a
+    BT["herramientas genéricas<br/>read · write · mensajes"]:::a
+  end
+
+  subgraph DOM["domain · modelo puro, sin entrada ni salida"]
+    VO["objetos de valor<br/>Label · Policy · Role · Request · Decision"]:::d
+    EN["entidad<br/>Agent: su contexto solo crece"]:::d
+    SV["servicio de dominio<br/>la compuerta: evaluate()"]:::d
+    AG["agregado<br/>AuditLog encadenado"]:::d
+    PO["puerto<br/>Store"]:::d
+  end
+
+  subgraph INF["infrastructure"]
+    ST["MemoryStore · SQLiteStore"]:::i
+    PF["load_policy (TOML)"]:::i
+  end
+
+  EXT -->|"usa"| APP
+  SC -->|"carga su política"| PF
+  APP -->|"orquesta"| DOM
+  INF -. "implementa el puerto" .-> DOM

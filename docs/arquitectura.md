@@ -11,17 +11,38 @@ Quórum es una capa que se ubica entre los agentes y los servicios que comparten
 
 El código está en inglés. Lo que leen los modelos y el jurado (descripciones de herramientas, documentos del caso, esta documentación) está en español. La tabla de equivalencias está en [interfaz](interfaz.md).
 
-## Tres capas
+## Diseño guiado por el dominio (DDD)
 
-| Capa | Ruta | Qué contiene | De qué depende |
+El código está organizado en capas, y las dependencias apuntan siempre hacia adentro: todo conoce al dominio y el dominio no conoce a nadie.
+
+![Capas](diagramas/capas.png)
+
+| Capa | Ruta | Qué contiene | Puede importar |
 |---|---|---|---|
-| Núcleo | `quorum/core/` | Etiquetas, política, compuerta, monitor, almacén y bitácora | Solo de la biblioteca estándar de Python |
-| Escenarios | `quorum/scenarios/<dominio>/` | Un `policy.toml`, las herramientas del dominio y el generador de casos | Del núcleo |
-| Adaptadores | `quorum/adapters/` | Puentes hacia frameworks de agentes (Inspect AI, function calling genérico) | Del núcleo y del framework |
+| Dominio | `quorum/domain/` | El modelo de la defensa: etiquetas, política, compuerta, agente, bitácora y el puerto del almacén. Sin entrada ni salida | Solo la biblioteca estándar |
+| Aplicación | `quorum/application/` | El caso de uso "un agente llama a una herramienta": el monitor de referencia y las herramientas genéricas | El dominio |
+| Infraestructura | `quorum/infrastructure/` | Almacenes (memoria, SQLite) y lectura de políticas en TOML | El dominio |
+| Adaptadores | `quorum/adapters/` | Puentes hacia frameworks de agentes (Inspect AI, function calling genérico) | Aplicación y dominio |
+| Contextos | `quorum/scenarios/<contexto>/` | Cada dominio de uso: su `policy.toml`, sus herramientas y sus reglas de negocio | Todas las capas, pero no otro contexto |
 
-El núcleo no conoce licitaciones, ni modelos de lenguaje, ni Inspect. Un test (`tests/test_architecture.py`) falla si el núcleo importa algo fuera de la biblioteca estándar o menciona una palabra de algún dominio. Para comprobar que la separación es real hay un segundo escenario, una mesa de ayuda (`quorum/scenarios/helpdesk/`), que usa el mismo núcleo sin cambiarle una línea.
+`quorum/bootstrap.py` es la raíz de composición: el único lugar que une la aplicación con una infraestructura concreta (`new_monitor`). Todo lo público se importa desde `quorum` (`from quorum import Policy, new_monitor, Blocked`).
 
-**Cambiar de dominio es escribir un `policy.toml` y unas herramientas.** No se toca la compuerta.
+Las piezas, con el nombre que les da DDD:
+
+| Pieza | Tipo | Regla que protege |
+|---|---|---|
+| `Label`, `Policy`, `Role`, `Request`, `Decision`, `Value` | Objetos de valor | Inmutables. Una política se valida al construirse |
+| `Agent` | Entidad | **Su etiqueta de contexto solo crece.** No existe operación que le quite una fuente, ni que le cambie el rol o el nombre |
+| `evaluate` (la compuerta) | Servicio de dominio | Función pura de (solicitud, política). Si una regla falla, niega |
+| `AuditLog` | Agregado | Solo se anexa. Cada evento encadena el hash del anterior |
+| `Store` | Puerto (repositorio) | El dominio define qué necesita; la infraestructura lo implementa |
+| `Quorum` (el monitor) | Servicio de aplicación | Toda llamada pasa por él; las herramientas nunca tocan el almacén |
+
+**Contextos delimitados.** El dominio de Quórum es el control de flujo de información, no las licitaciones. La licitación (`tender`) y la mesa de ayuda (`helpdesk`) son contextos aparte que usan ese núcleo. Las reglas de negocio de la licitación (cómo se puntúa, qué es estar dentro del presupuesto, quién gana) viven en `quorum/scenarios/tender/rules.py` como funciones puras, separadas de las herramientas que las exponen a los agentes. Cambiar de dominio es escribir un `policy.toml`, unas herramientas y sus reglas. No se toca la compuerta.
+
+**La regla de dependencias se prueba.** `tests/test_architecture.py` falla si el dominio importa algo fuera de la biblioteca estándar o hace entrada y salida, si la aplicación importa infraestructura, si alguna capa del núcleo menciona una palabra de un contexto, o si un contexto conoce a otro.
+
+**Lenguaje ubicuo.** Los mismos términos se usan en el código, en los tests y en estos documentos. La tabla de equivalencias entre español e inglés está en [interfaz](interfaz.md).
 
 ## Etiquetas
 
@@ -92,11 +113,13 @@ El monitor tiene dos modos. Con `enforce=True` bloquea. Con `enforce=False` solo
 
 ## Qué se probó
 
-`uv run pytest` corre 108 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 115 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
 - **Los tests detectan fallos reales**: si se quita la propagación al leer, la herencia al escribir o la decisión de la compuerta, la batería falla.
+- **La invariante del agente**: su contexto nunca pierde una fuente y no se puede reasignar.
+- **La regla de dependencias** entre capas.
 - **Los dos escenarios** de punta a punta, con almacén en memoria y con SQLite.
 
 ## Por qué no un monitor LLM
@@ -117,15 +140,20 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 
 | Ruta | Contenido |
 |---|---|
-| `quorum/core/labels.py` | Etiquetas y operación `join` |
-| `quorum/core/policy.py` | Política, roles y reglas P1 y P2 de la compuerta |
-| `quorum/core/engine.py` | El monitor: sesiones, permisos, cupos, propagación y registro |
-| `quorum/core/tools.py` | Declaración de herramientas y su JSON Schema |
-| `quorum/core/store.py` | Almacén etiquetado (memoria y SQLite) |
-| `quorum/core/audit_log.py` | Bitácora encadenada con hashes |
-| `quorum/core/base.py` | Herramientas genéricas: `read`, `write` y mensajes directos |
+| `quorum/domain/labels.py` | Etiquetas y operación `join` |
+| `quorum/domain/policy.py` | Política y roles |
+| `quorum/domain/gate.py` | La compuerta: reglas P1 y P2, decisión y resultados de una salida |
+| `quorum/domain/agent.py` | El agente y la invariante de su contexto |
+| `quorum/domain/tools.py` | Declaración de herramientas y su JSON Schema |
+| `quorum/domain/audit_log.py` | Bitácora encadenada con hashes |
+| `quorum/domain/repositories.py` | Puerto del almacén etiquetado |
+| `quorum/application/monitor.py` | El monitor: sesiones, permisos, cupos, propagación y registro |
+| `quorum/application/base_tools.py` | Herramientas genéricas: `read`, `write` y mensajes directos |
+| `quorum/infrastructure/stores.py` | Almacén en memoria y en SQLite |
+| `quorum/infrastructure/policy_files.py` | Lectura de políticas en TOML |
+| `quorum/bootstrap.py` | Raíz de composición |
 | `quorum/adapters/` | Inspect AI y function calling genérico |
-| `quorum/scenarios/tender/` | La licitación: política, herramientas, casos y episodios guionados |
-| `quorum/scenarios/helpdesk/` | La mesa de ayuda, segundo dominio |
+| `quorum/scenarios/tender/` | La licitación: política, reglas, herramientas, casos y episodios guionados |
+| `quorum/scenarios/helpdesk/` | La mesa de ayuda, segundo contexto |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
 | `analysis/` | Bootstrap y figura principal (en construcción) |

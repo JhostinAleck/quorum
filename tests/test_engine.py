@@ -4,7 +4,7 @@ import threading
 import pytest
 from mini import POLICY, TOOLS, emit, new
 
-from quorum.core import (
+from quorum import (
     PUBLIC,
     Blocked,
     Decision,
@@ -13,10 +13,10 @@ from quorum.core import (
     Kind,
     PermissionDenied,
     Policy,
-    Quorum,
     QuotaExceeded,
     ToolError,
     UnknownTool,
+    new_monitor,
     restricted,
     tool,
     untrusted,
@@ -84,7 +84,7 @@ def test_what_is_stored_under_a_restricted_prefix_is_born_restricted():
 
     policy = Policy.from_dict({"restricted": ["secret."], "sinks": {"emit": []},
                                "roles": {"r": {"tools": ["store_secret", "read_secret", "emit"]}}})
-    q = Quorum(policy, (store_secret, read_secret, emit))
+    q = new_monitor(policy, (store_secret, read_secret, emit))
     a, b = q.session("a", "r"), q.session("b", "r")
     a.store_secret("xyz")
     assert a.context == PUBLIC and b.read_secret() == "xyz" and b.context == restricted("secret.new")
@@ -213,14 +213,14 @@ def test_arguments_are_validated_against_the_signature(args, kwargs):
 ])
 def test_policy_and_tools_must_match(changes):
     with pytest.raises(InvalidConfiguration):
-        Quorum(POLICY.evolve(**changes), TOOLS)
+        new_monitor(POLICY.evolve(**changes), TOOLS)
 
 
 def test_other_configuration_errors():
     with pytest.raises(InvalidConfiguration):
-        Quorum(POLICY, (*TOOLS, emit))                     # duplicated tool
+        new_monitor(POLICY, (*TOOLS, emit))                     # duplicated tool
     with pytest.raises(InvalidConfiguration):
-        Quorum(Policy.from_dict({"roles": {"r": {"tools": ["ghost"]}}}), ())
+        new_monitor(Policy.from_dict({"roles": {"r": {"tools": ["ghost"]}}}), ())
     with pytest.raises(InvalidConfiguration):              # a declassifier must give a rationale
         tool(kind=Kind.DECLASSIFIER, description="x")(lambda call: 1)
     with pytest.raises(InvalidConfiguration):              # every parameter needs a description

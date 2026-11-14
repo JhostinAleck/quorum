@@ -5,7 +5,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 import quorum.scenarios as scenarios
-from quorum.core import (
+from quorum import (
     PUBLIC,
     Decision,
     InvalidConfiguration,
@@ -14,6 +14,7 @@ from quorum.core import (
     Request,
     authorized,
     evaluate,
+    load_policy,
     restricted,
     untrusted,
 )
@@ -113,5 +114,5 @@ def test_scenario_policies_load_from_toml():
     paths = sorted(Path(scenarios.__file__).parent.glob("*/policy.toml"))
     assert len(paths) >= 2
     for path in paths:
-        policy = Policy.from_toml(path)
+        policy = load_policy(path)
         assert policy.sinks and policy.roles
