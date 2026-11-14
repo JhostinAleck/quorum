@@ -43,20 +43,48 @@ from pathlib import Path
 from typing import Any
 
 from ..eval.attacks import side_tasks
-from . import agents, documents, workflow
+from . import agents, documents, presets, workflow
 
 ROOT = Path(__file__).parent
-EXAMPLES = ROOT / "examples"
 MAX_BODY = 12_000_000
-IMAGES = {"/logo.png": "logo.png", "/favicon.png": "favicon.png"}   # the only files served besides the page
+IMAGES = {"/logo.png": "logo.png", "/favicon.png": "favicon.png"}   # with presets.SERVED, the only files served
+_TYPES = {".pdf": "application/pdf", ".jpg": "image/jpeg", ".png": "image/png"}
+
+
+def _described(name: str, text: str, method: str, **extra: Any) -> dict[str, Any]:
+    bid = workflow.parse_bid(text, name, method == documents.OCR)
+    return {"name": name, "text": text, "preview": workflow.mask_value(text), "method": method,
+            "scanned": bid.scanned, "supplier": bid.supplier, "digits": len(str(bid.value)), **extra}
 
 
 def read_document(name: str, data: bytes) -> dict[str, Any]:
     """Extract the text of an uploaded bid and say how it was read. The value is not returned apart."""
     text, method = documents.extract(name, data)
-    bid = workflow.parse_bid(text, name, method == documents.OCR)
-    return {"name": name, "text": text, "preview": workflow.mask_value(text), "method": method,
-            "scanned": bid.scanned, "supplier": bid.supplier, "digits": len(str(bid.value))}
+    return _described(name, text, method)
+
+
+def read_example(name: str) -> dict[str, Any]:
+    """A file of a test case: read like an upload where there is OCR, else from the text the OCR read once."""
+    path = presets.FOLDER / name
+    if documents.available()["scanned_pdf"]:
+        return read_document(name, path.read_bytes())
+    return _described(name, path.with_suffix(".txt").read_text(encoding="utf-8"), documents.OCR, precomputed=True)
+
+
+def read_preset(preset: str) -> list[dict[str, Any]]:
+    files = presets.by_id(preset)
+    with ThreadPoolExecutor(max_workers=len(files)) as pool:   # the scans are read at the same time
+        return list(pool.map(read_example, files))
+
+
+def warm_up() -> None:
+    """Read every test file once at start-up, so the first click on a case is immediate (extract caches)."""
+    if documents.available()["scanned_pdf"]:
+        for preset in presets.PRESETS:
+            try:
+                read_preset(preset["id"])
+            except Exception as e:   # the page still works: the case is read on demand and shows the error
+                print(f"quorum interface: could not pre-read {preset['id']}: {e}", file=sys.stderr, flush=True)
 
 
 COOKIE = "quorum_sid"
@@ -264,16 +292,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ("/", "/index.html"):
             self._state()                  # the cookie arrives with the page, before any call
             self._send((ROOT / "index.html").read_bytes(), "text/html; charset=utf-8")
-        elif self.path in IMAGES:
-            self._send((ROOT / IMAGES[self.path]).read_bytes(), "image/png")
+        elif self.path in IMAGES or self.path in presets.SERVED:
+            path = presets.SERVED.get(self.path) or ROOT / IMAGES[self.path]
+            self._send(path.read_bytes(), _TYPES[path.suffix])
         elif self.path == "/api/state":
             self._json(self._state().view())
-        elif self.path in ("/api/examples", "/api/examples/pdf"):
-            files = sorted((EXAMPLES / "pdf").glob("*.pdf") if self.path.endswith("pdf")
-                           else EXAMPLES.glob("oferta-*.md"))
+        elif self.path == "/api/presets":
+            self._json(presets.public())
+        elif self.path.startswith("/api/examples/"):
             try:
-                with ThreadPoolExecutor(max_workers=max(1, len(files))) as pool:   # the scans are read at the same time
-                    self._json(list(pool.map(lambda p: read_document(p.name, p.read_bytes()), files)))
+                self._json(read_preset(self.path.removeprefix("/api/examples/")))
             except ValueError as e:
                 self._json({"error": str(e)}, 400)
         else:
@@ -310,6 +338,7 @@ def main() -> None:
     host = os.environ.get("QUORUM_UI_HOST") or "127.0.0.1"
     PASSWORD = access_key(host, os.environ)      # exits here rather than serve without a key beyond loopback
     server = ThreadingHTTPServer((host, port), Handler)
+    threading.Thread(target=warm_up, daemon=True).start()
     print(f"quorum interface at http://{host}:{port}", flush=True)
     if PASSWORD:
         print(f"access with user '{USER}' and the key in QUORUM_UI_PASSWORD", flush=True)

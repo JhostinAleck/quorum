@@ -19,12 +19,12 @@ from pathlib import Path
 import pytest
 from test_agent_loop import HONEST, model
 
-from quorum.scenarios.tender import ROLES, SYSTEM
-from quorum.ui import agents, documents, server, workflow
+from quorum.scenarios.tender import ROLES, SYSTEM, strip_separators
+from quorum.ui import agents, documents, presets, redact, server, workflow
 
 REPO = Path(__file__).parent.parent
-EXAMPLES = REPO / "quorum" / "ui" / "examples"
-DOCS = [(p.name, p.read_text(encoding="utf-8")) for p in sorted(EXAMPLES.glob("oferta-*.md"))]
+FIXTURES = REPO / "tests" / "fixtures" / "ofertas"     # the short text bids the page used to offer
+DOCS = [(p.name, p.read_text(encoding="utf-8")) for p in sorted(FIXTURES.glob("oferta-*.md"))]
 WINNER = "Ferrelectro del Sur Ltda"
 
 
@@ -203,13 +203,89 @@ def test_plain_text_needs_no_tools_and_binaries_are_rejected():
         documents.extract("a.txt", b"x" * (documents.MAX_BYTES + 1))
 
 
-def test_example_pdfs_are_read_with_text_layer_and_with_ocr():
+SUPPLIERS = {presets.ANDINA: "Andina de Suministros SAS", presets.ANDINA_INJECTION: "Andina de Suministros SAS",
+             presets.FERRELECTRO: WINNER, presets.PARAMO: "Logística Páramo SA"}
+
+
+def test_the_test_pdfs_are_read_with_ocr_like_any_upload():
     if not documents.available()["scanned_pdf"]:
         pytest.skip("needs poppler-utils and tesseract (they come in the image built with WITH_OCR=1)")
-    read = {p.name: server.read_document(p.name, p.read_bytes()) for p in sorted((EXAMPLES / "pdf").glob("*.pdf"))}
-    assert read["oferta-1.pdf"]["method"] == documents.PDF and not read["oferta-1.pdf"]["scanned"]
-    scan = read["oferta-2-escaneada.pdf"]
-    assert scan["method"] == documents.OCR and scan["scanned"] and scan["supplier"] == WINNER and scan["digits"] == 9
+    for name, supplier in SUPPLIERS.items():
+        doc = server.read_document(name, (presets.FOLDER / name).read_bytes())
+        assert doc["method"] == documents.OCR and doc["scanned"] and doc["supplier"] == supplier and doc["digits"] == 9
+        # what the OCR reads today is what the cases fall back to without OCR
+        assert doc["text"] == (presets.FOLDER / name).with_suffix(".txt").read_text(encoding="utf-8")
+
+
+def test_every_case_has_its_pdf_thumbnail_and_text():
+    names = {f for p in presets.PRESETS for f in p["files"]}
+    assert names == set(presets.FILES) == set(SUPPLIERS)
+    for name in names:
+        for suffix in (".pdf", ".jpg", ".txt"):
+            assert (presets.FOLDER / name).with_suffix(suffix).is_file(), (name, suffix)
+    assert {f"/examples/{n}" for n in names} <= set(presets.SERVED)
+    assert all(path.suffix in (".pdf", ".jpg") for path in presets.SERVED.values())   # never the .txt
+
+
+def test_the_cases_load_without_ocr_from_the_text_read_once(monkeypatch):
+    monkeypatch.setattr(documents, "available", lambda: {"pdf": False, "scanned_pdf": False, "image": False})
+    normal, injection = server.read_preset("normal"), server.read_preset("inyeccion")
+    assert [d["supplier"] for d in normal] == [SUPPLIERS[f] for f in presets.by_id("normal")]
+    assert all(d["precomputed"] and d["scanned"] and d["method"] == documents.OCR for d in normal + injection)
+    assert "open_bid" in injection[0]["text"] and "open_bid" not in normal[0]["text"]
+    with pytest.raises(ValueError):
+        server.read_preset("../server")
+
+
+@pytest.mark.parametrize(("value", "words"), [
+    (468915720, "cuatrocientos sesenta y ocho millones novecientos quince mil setecientos veinte"),
+    (512480300, "quinientos doce millones cuatrocientos ochenta mil trescientos"),
+    (1_000_000, "un millón"), (21_000_000, "veintiún millones"), (101_001, "ciento un mil uno"),
+    (100, "cien"), (1_500_000_000, "mil quinientos millones"), (31, "treinta y uno"),
+])
+def test_amounts_in_spanish_words(value, words):
+    assert " ".join(redact.in_words(value)) == words
+
+
+def test_every_copy_of_the_amount_is_sealed_and_nothing_else():
+    text = ("Total $468.915.720 COP\n(CUATROCIENTOS SESENTA Y OCHO MILLONES NOVECIENTOS QUINCE MIL\n"
+            "SETECIENTOS VEINTE PESOS M/CTE) o $468 915 720,00, o 468.915. 720 por OCR.\n"
+            "No son el valor: 4689157201, 1468915720, 468.915.721 ni el presupuesto de 600.000.000.")
+    out = redact.redact(text, 468915720)
+    assert out.count(redact.SEALED) == 4 and "MILLONES" not in out
+    assert all(n in out for n in ("4689157201", "1468915720", "468.915.721", "600.000.000"))
+    assert redact.redact("cuatrocientos sesenta y ocho millones novecientos quince mil setecientos veinte",
+                         468915720) == redact.SEALED
+    assert redact.redact("doce y trece", 12) == "doce y trece"     # short amounts are not looked for in words
+
+
+def test_a_bidder_line_names_the_supplier_only_when_there_is_no_supplier_line():
+    assert workflow.parse_bid("Proponente  Uno SAS - NIT 900.000.000-1\nValor: 5", "x.pdf").supplier == "Uno SAS"
+    assert workflow.parse_bid("Proponente: Uno SAS\nValor: 5", "x.pdf").supplier == "Uno SAS"
+    assert workflow.parse_bid("Proveedor: Dos SAS\nProponente Uno SAS\nValor: 5", "x.pdf").supplier == "Dos SAS"
+    # a bidder line that is not a plain name falls back to the file name, as before
+    assert workflow.parse_bid('Proponente {"x": 1}\nValor: 5', "tres.pdf").supplier == "tres"
+    assert workflow.parse_bid("El proponente se obliga\nValor: 5", "tres.pdf").supplier == "tres"
+
+
+def test_ferrelectro_is_found_by_its_bidder_line_and_every_copy_of_its_value_is_sealed():
+    text = (presets.FOLDER / presets.FERRELECTRO).with_suffix(".txt").read_text(encoding="utf-8")
+    assert "Proveedor" not in text and "CUATROCIENTOS SESENTA Y OCHO MILLONES" in text
+    bid = workflow.parse_bid(text, presets.FERRELECTRO, True)
+    assert bid.supplier == WINNER and bid.value == 468915720
+    assert "468915720" not in strip_separators(bid.annex) and "MILLONES" not in bid.annex.upper()
+    preview = workflow.mask_value(text)
+    assert "468915720" not in strip_separators(preview) and preview.count(workflow.SEALED) == 4
+
+
+def test_the_test_cases_run_end_to_end_and_the_gate_stops_the_split_attack():
+    for preset in ("normal", "inyeccion"):
+        docs = [(d["name"], d["text"], d["scanned"]) for d in server.read_preset(preset)]
+        honest = workflow.run(docs, "honest")
+        assert honest["useful"] and not honest["blocks"] and honest["scan"]
+        attack = workflow.run(docs, "attack_k3")
+        assert not attack["leak"] and attack["blocks"]
+        assert workflow.run(docs, "attack_k3", defense=False)["leak"]
 
 
 # --- the episode ------------------------------------------------------------------
@@ -393,7 +469,7 @@ def test_the_page_runs_an_episode_end_to_end(monkeypatch):
     srv, url = serve(server.Handler)
     call = browser(url)
     try:
-        docs = call("/api/examples")
+        docs = call("/api/examples/normal")
         assert [d["supplier"] for d in docs][1] == WINNER and all("value" not in d for d in docs)
         view = finished(call, call("/api/run", {"documents": docs, "kind": "attack_k3", "defense": True}))
         assert view["error"] is None and not view["result"]["leak"] and view["result"]["blocks"]
@@ -409,7 +485,7 @@ def test_two_browsers_at_the_same_time_do_not_step_on_each_other(monkeypatch):
     srv, url = serve(server.Handler)
     ana, beto = browser(url), browser(url)
     try:
-        docs = ana("/api/examples")
+        docs = ana("/api/examples/normal")
         a = ana("/api/run", {"documents": docs, "kind": "attack_k3", "defense": True})
         b = beto("/api/run", {"documents": docs, "kind": "honest", "defense": True})
         a, b = finished(ana, a), finished(beto, b)

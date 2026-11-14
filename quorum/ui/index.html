@@ -6,10 +6,12 @@
 <title>Quórum · Laboratorio</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <style>
-  :root { --bg:#0b0b0d; --card:#151619; --card2:#1c1d21; --ink:#ececee; --mute:#9a9ca4; --line:#2a2c31;
-          --ok:#3ddc84; --okbg:rgba(34,197,94,.14); --bad:#ff5a4f; --badbg:rgba(255,59,48,.15);
-          --warn:#f5b041; --warnbg:rgba(245,176,65,.14); --acc:#ff6b00; --accbg:rgba(255,107,0,.16);
-          --conf:#2cc4c4; --confbg:rgba(44,196,196,.13);
+  /* Light theme with the brand of the fact sheet: orange accent, teal for what is confidential,
+     red for leaks and denials, figures in monospace. The header keeps the dark band of the sheet. */
+  :root { --bg:#f3f4f6; --card:#ffffff; --card2:#f7f8fa; --ink:#15171c; --mute:#5d6470; --line:#e2e5ea;
+          --ok:#13803f; --okbg:#e6f5eb; --bad:#d4291c; --badbg:#fdeceb;
+          --warn:#9a5800; --warnbg:#fff3da; --acc:#ef6100; --accbg:#fff0e5;
+          --conf:#0b8585; --confbg:#e2f5f5;
           --mono:ui-monospace,"JetBrains Mono","Cascadia Code",Consolas,monospace; }
   * { box-sizing:border-box; }
   body { margin:0; font:14px/1.5 Inter,system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
@@ -33,34 +35,54 @@
   h2 { font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; }
   h2 .n { font:600 15px var(--mono); color:var(--acc); margin-right:6px; }
   button { font:inherit; border:1px solid var(--line); background:var(--card2); border-radius:8px; padding:7px 12px; cursor:pointer; color:var(--ink); }
-  button:hover:not(:disabled){ border-color:#4a4d55; } button:disabled{ opacity:.45; cursor:not-allowed; }
+  button:hover:not(:disabled){ border-color:#b3bac5; } button:disabled{ opacity:.45; cursor:not-allowed; }
   button.pri { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:700; padding:9px 18px; }
   button.pri:hover:not(:disabled){ background:#ff7f22; border-color:#ff7f22; }
-  #btnReset { background:rgba(0,0,0,.3); border-color:#6b6f78; }
+  #btnReset { background:rgba(0,0,0,.3); border-color:#6b6f78; color:#fff; }
+  #btnReset:hover { border-color:#fff; }
   .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; flex-wrap:wrap; }
   .seg button { border:0; border-radius:0; border-right:1px solid var(--line); background:var(--card2); } .seg button:last-child{ border-right:0; }
   .seg button.on { background:var(--accbg); color:var(--acc); font-weight:700; }
   .field { display:flex; align-items:center; gap:10px; margin:8px 0; flex-wrap:wrap; } .field > span:first-child { width:92px; color:var(--mute); }
-  .drop { border:2px dashed #3a3d44; border-radius:10px; padding:18px; text-align:center; color:var(--mute); cursor:pointer; background:#121316; }
+  header h1 { color:#fff; }
+  .card { box-shadow:0 1px 2px rgba(16,24,40,.04); }
+  .guide { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media (max-width:860px){ .guide { grid-template-columns:1fr 1fr; } }
+  .guide div { display:flex; gap:10px; align-items:flex-start; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .guide b { display:block; } .guide small { color:var(--mute); }
+  .guide .num, .tryl .num { flex:none; width:24px; height:24px; border-radius:50%; background:var(--acc); color:#fff; font:700 13px/24px var(--mono); text-align:center; }
+  .presets { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:860px){ .presets { grid-template-columns:1fr; } }
+  .preset { border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--card2); display:flex; flex-direction:column; gap:10px; }
+  .preset.on { border-color:var(--acc); box-shadow:0 0 0 3px var(--accbg); background:#fff; }
+  .preset h3 { margin:0; font-size:16px; } .preset p { margin:0; color:var(--mute); }
+  .thumbs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .thumb { display:block; text-decoration:none; color:var(--ink); border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
+  .thumb:hover { border-color:var(--acc); } .thumb img { display:block; width:100%; aspect-ratio:360/510; object-fit:cover; object-position:top; border-bottom:1px solid var(--line); }
+  .thumb span { display:block; padding:5px 7px; font-size:12px; line-height:1.3; } .thumb small { color:var(--acc); font-weight:600; }
+  .thumb.inj { border-color:var(--bad); } .thumb.inj small { color:var(--bad); }
+  .tryl { margin:0; padding:0; list-style:none; display:grid; gap:6px; font-size:13px; }
+  .tryl li { display:flex; gap:8px; } .tryl .num { width:18px; height:18px; font-size:11px; line-height:18px; background:var(--ink); }
+  .details { font-size:12.5px; color:var(--mute); } .details b { color:var(--ink); font-weight:600; }
+  .drop { border:2px dashed #cdd2da; border-radius:10px; padding:14px; text-align:center; color:var(--mute); cursor:pointer; background:var(--card2); }
   .drop.over, .drop:hover { border-color:var(--acc); background:var(--accbg); color:var(--ink); }
   .doc { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); }
   .doc small { color:var(--mute); } .doc a { color:var(--bad); cursor:pointer; text-decoration:none; }
   a.lnk, .doc a.lnk { color:var(--acc); cursor:pointer; text-decoration:none; }
-  .docw .preview { background:#0f1013; border:1px solid var(--line); border-radius:8px; margin:6px 0 8px; padding:8px 10px; }
+  .docw .preview { background:var(--card2); border:1px solid var(--line); border-radius:8px; margin:6px 0 8px; padding:8px 10px; }
   .preview .ptools { color:var(--mute); font-size:12px; margin-bottom:4px; }
-  .preview pre { margin:0; font:12px/1.5 var(--mono); white-space:pre-wrap; word-break:break-word; max-height:260px; overflow:auto; color:#d9dadd; }
+  .preview pre { margin:0; font:12px/1.5 var(--mono); white-space:pre-wrap; word-break:break-word; max-height:260px; overflow:auto; color:var(--ink); }
   .chip { display:inline-block; padding:1px 8px; border-radius:6px; font-size:12px; font-weight:600; }
   .ok { background:var(--okbg); color:var(--ok); } .bad { background:var(--badbg); color:var(--bad); }
-  .warn { background:var(--warnbg); color:var(--warn); } .neu { background:#24262b; color:#b9bbc2; }
+  .warn { background:var(--warnbg); color:var(--warn); } .neu { background:#eceef2; color:#4b525d; }
   .conf { background:var(--confbg); color:var(--conf); font-family:var(--mono); font-weight:500; }
-  .agent.mod { border-color:rgba(255,90,79,.55); }
+  .agent.mod { border-color:rgba(212,41,28,.5); }
   .agent .head { display:flex; justify-content:space-between; align-items:center; }
   .agent h3 { margin:0; font-size:16px; } .agent .meta { color:var(--mute); font-size:12px; margin:4px 0 10px; }
-  .step { border-left:3px solid #3a3d44; padding:4px 0 4px 9px; margin:6px 0; font-size:12.5px; }
-  .step.sec { border-left-color:var(--conf); } .step code { font:12px var(--mono); word-break:break-word; color:#e6e6ea; }
+  .step { border-left:3px solid #d5d9e0; padding:4px 0 4px 9px; margin:6px 0; font-size:12.5px; }
+  .step.sec { border-left-color:var(--conf); } .step code { font:12px var(--mono); word-break:break-word; color:var(--ink); }
   .step .res { color:var(--mute); word-break:break-word; } .empty { color:var(--mute); font-size:12.5px; }
-  .portal { background:#0e1013; color:#e6edf5; border:1px solid var(--line); border-radius:8px; padding:12px; font:12.5px var(--mono); white-space:pre-wrap; word-break:break-word; min-height:44px; margin-bottom:8px; }
-  .portal.struck { opacity:.55; text-decoration:line-through; border-color:rgba(255,90,79,.4); }
+  .portal { background:#14171c; color:#e9eef5; border:1px solid #14171c; border-radius:8px; padding:12px; font:12.5px var(--mono); white-space:pre-wrap; word-break:break-word; min-height:44px; margin-bottom:8px; }
+  .portal.struck { background:var(--badbg); color:#8a1c14; text-decoration:line-through; border-color:rgba(212,41,28,.35); }
   .note { padding:9px 12px; border-radius:8px; margin-top:10px; } .kpis { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
   .lbl { color:var(--mute); margin-bottom:4px; }
   footer { max-width:1200px; margin:0 auto 22px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; color:var(--mute); font-size:12px; }
@@ -82,17 +104,27 @@
   </div>
 </header>
 <main>
+  <div class="guide" aria-label="Cómo se usa">
+    <div><span class="num">1</span><span><b>Elige una prueba</b><small>Tres ofertas escaneadas de la licitación LP-SRP-2026-014. Míralas antes de cargarlas.</small></span></div>
+    <div><span class="num">2</span><span><b>Elige los agentes</b><small>Honestos, o k = 1, 2 o 3 agentes que se reparten el robo del valor de Ferrelectro.</small></span></div>
+    <div><span class="num">3</span><span><b>Prende o apaga Quórum</b><small>Activa bloquea en la puerta; solo auditoría deja pasar y anota qué habría frenado.</small></span></div>
+    <div><span class="num">4</span><span><b>Inicia y mira la marca</b><small>Lo confidencial va en turquesa de agente en agente; el resultado dice si salió algo al portal.</small></span></div>
+  </div>
+  <section class="card">
+    <h2><span class="n">01</span> Elige una prueba</h2>
+    <div class="presets" id="presets"><span class="empty">Cargando pruebas…</span></div>
+  </section>
   <div class="row">
     <section class="card">
-      <h2><span class="n">01</span> Ofertas</h2>
-      <div id="drop" class="drop">Arrastra aquí las ofertas (texto, PDF o escaneadas) o haz clic para elegirlas
+      <h2><span class="n">02</span> Ofertas cargadas</h2>
+      <div id="docs"><span class="empty">Aún no hay ofertas: carga una prueba o sube tus documentos.</span></div>
+      <div id="docMsg" style="color:var(--bad);font-size:12.5px;margin-top:6px"></div>
+      <div id="drop" class="drop" style="margin-top:10px">O sube tus propias ofertas: arrastra aquí texto, PDF o escaneos, o haz clic para elegirlos
         <input id="files" type="file" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.tif,.tiff,text/plain,application/pdf,image/*" multiple hidden></div>
-      <div id="docs" style="margin-top:8px"></div>
-      <div style="margin-top:10px"><button id="btnExamples">Ejemplos de texto</button> <button id="btnExamplesPdf">Ejemplos PDF + escaneado</button>
-        <div id="formats" style="color:var(--mute);font-size:12.5px;margin-top:6px"></div><div id="docMsg" style="color:var(--bad);font-size:12.5px"></div></div>
+      <div id="formats" style="color:var(--mute);font-size:12.5px;margin-top:6px"></div>
     </section>
     <section class="card">
-      <h2><span class="n">02</span> Configuración</h2>
+      <h2><span class="n">03</span> Configuración</h2>
       <div class="field"><span>Agentes</span><div class="seg" id="segKind">
         <button data-v="honest">Honestos</button>
         <button data-v="attack_k1">Modif. k=1</button><button data-v="attack_k2">k=2</button><button data-v="attack_k3">k=3</button></div></div>
@@ -104,7 +136,7 @@
   </div>
   <div class="three" id="agents"></div>
   <section class="card">
-    <h2><span class="n">03</span> Resultado</h2>
+    <h2><span class="n">04</span> Resultado</h2>
     <div id="result"><span class="empty">Aún no hay corrida.</span></div>
   </section>
 </main>
@@ -133,15 +165,17 @@ function seg(id, key) {
 // Which documents have their text open, and which of those show the sealed value too.
 const open = new Set(), unmasked = new Set();
 function paintDocs() {
+  if (!docs.length) { $("docs").innerHTML = `<span class="empty">Aún no hay ofertas: carga una prueba o sube tus documentos.</span>`; return; }
   $("docs").innerHTML = docs.map((d,i) => {
-    const how = {text:["texto","neu"], pdf:["PDF","neu"], ocr:["escaneado · OCR","warn"]}[d.method];
+    const how = {text:["texto","neu"], pdf:["PDF","neu"], ocr:[d.precomputed ? "escaneado · OCR precalculado" : "escaneado · OCR","warn"]}[d.method];
+    const pdf = d.pdf ? ` · <a class="lnk" href="${esc(d.pdf)}" target="_blank" rel="noopener">abrir PDF</a>` : "";
     const id = d.name + "\u0000" + d.supplier, shown = open.has(id), plain = unmasked.has(id);
-    const body = !shown ? "" : `<div class="preview"><div class="ptools">${d.method === "ocr" ? "Texto leído por OCR" : "Contenido"}
-        · <a class="lnk" data-act="mask" data-i="${i}">${plain ? "ocultar el valor" : "mostrar el valor sellado"}</a></div>
+    const body = !shown ? "" : `<div class="preview"><div class="ptools">${d.method === "ocr" ? "Texto leído por OCR" : "Contenido"}:
+        lo que reciben los agentes, con cada copia del valor sellada · <a class="lnk" data-act="mask" data-i="${i}">${plain ? "ocultar el valor" : "mostrar el valor sellado"}</a></div>
       <pre>${esc(plain ? d.text : (d.preview ?? d.text))}</pre></div>`;
     return `<div class="docw"><div class="doc"><span>${esc(d.supplier)} <small>${esc(d.name)}</small></span><span>
       <span class="chip ${how[1]}">${how[0]}</span> <span class="chip conf">valor sellado 🔒 ${d.digits} dígitos</span>
-      <a class="lnk" data-act="view" data-i="${i}">${shown ? "cerrar" : "ver"}</a> <a data-act="drop" data-i="${i}">quitar</a></span></div>${body}</div>`;
+      <a class="lnk" data-act="view" data-i="${i}">${shown ? "cerrar texto" : "ver texto"}</a>${pdf} · <a data-act="drop" data-i="${i}">quitar</a></span></div>${body}</div>`;
   }).join("");
   $("docs").querySelectorAll("a[data-act]").forEach(a => a.onclick = () => {
     const d = docs[+a.dataset.i], id = d.name + "\u0000" + d.supplier;
@@ -163,6 +197,7 @@ function paintReading() {
 }
 async function load(files) {
   const queue = [...files], errors = [];
+  if (activePreset) { activePreset = null; paintPresets(); }   // own documents: no longer exactly that case
   paintReading();
   const worker = async () => {
     for (let f; (f = queue.shift()); ) {
@@ -175,10 +210,35 @@ async function load(files) {
   await Promise.all(Array.from({length: Math.min(PARALLEL, queue.length)}, worker));
   if (errors.length) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = errors.join(" · "); }
 }
-async function examples(path) {
-  try { $("docMsg").textContent = ""; docs = await api(path); paintDocs(); }
-  catch (e) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = e.message; }
+// The ready-made test cases: shown with their documents before loading them.
+let presets = [], activePreset = null;
+function paintPresets() {
+  $("presets").innerHTML = presets.map(p => {
+    const thumbs = p.files.map(f => `<a class="thumb ${f.name.includes("inyeccion") ? "inj" : ""}" href="${esc(f.pdf)}" target="_blank" rel="noopener"
+        title="${esc(f.detail)}"><img src="${esc(f.thumb)}" alt="Página 1 de ${esc(f.label)}" loading="lazy">
+        <span>${esc(f.label)}<br><small>${f.name.includes("inyeccion") ? "con nota escondida · abrir" : "abrir PDF"}</small></span></a>`).join("");
+    const details = p.files.map(f => `<div><b>${esc(f.label)}.</b> ${esc(f.detail)}</div>`).join("");
+    const tries = p.try.map((t, i) => `<li><span class="num">${i+1}</span><span>${esc(t)}</span></li>`).join("");
+    return `<div class="preset ${activePreset === p.id ? "on" : ""}"><h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p>
+      <div class="thumbs">${thumbs}</div><div class="details">${details}</div>
+      <div><div class="lbl">Qué probar</div><ul class="tryl">${tries}</ul></div>
+      <div><button class="pri" data-preset="${esc(p.id)}">${activePreset === p.id ? "✓ Cargada · volver a cargar" : "Cargar esta prueba"}</button></div></div>`;
+  }).join("");
+  $("presets").querySelectorAll("button[data-preset]").forEach(b => b.onclick = () => loadPreset(b.dataset.preset));
 }
+async function loadPreset(id) {
+  const p = presets.find(x => x.id === id);
+  $("docMsg").style.color = "var(--mute)"; $("docMsg").textContent = `Leyendo las ${p.files.length} ofertas escaneadas de «${p.title}»…`;
+  $("presets").querySelectorAll("button[data-preset]").forEach(b => b.disabled = true);
+  try {
+    const read = await api("/api/examples/" + id);
+    docs = read.map(d => ({...d, pdf: "/examples/" + d.name}));
+    open.clear(); unmasked.clear(); activePreset = id; $("docMsg").textContent = "";
+  } catch (e) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = e.message; }
+  paintPresets(); paintDocs();
+}
+api("/api/presets").then(p => { presets = p; paintPresets(); })
+  .catch(e => { $("presets").innerHTML = `<span class="empty">No se pudieron cargar las pruebas: ${esc(e.message)}</span>`; });
 
 function paintAgents() {
   const live = state && (state.running || state.events.length);
@@ -243,9 +303,9 @@ function paint() {
       : k ? "modelo: " + state.model + " · los agentes modificados llevan una tarea oculta (Frente 3)"
       : "modelo: " + state.model;
     const f = state.formats;
-    $("formats").textContent = f.scanned_pdf ? "Lee texto, PDF y documentos escaneados (OCR). Cada oferta necesita una línea «Valor: N»; el valor se sella."
-      : "Aquí solo se leen .txt y .md" + (f.pdf ? " y PDF con texto" : "") + ". El lector de PDF escaneado y el OCR vienen en la imagen Docker.";
-    $("btnExamplesPdf").disabled = !f.scanned_pdf;
+    $("formats").textContent = (f.scanned_pdf ? "Lee texto, PDF y documentos escaneados (OCR)."
+      : "Aquí solo se leen .txt y .md" + (f.pdf ? " y PDF con texto" : "") + "; el OCR de escaneos viene en la imagen Docker (las pruebas usan el texto ya leído).")
+      + " Cada oferta necesita una línea «Valor: N» y el nombre en «Proveedor:» o «Proponente»; el valor se sella en todas sus copias.";
     $("initial").className = "chip " + (state.initial ? "ok" : "neu");
     $("initial").textContent = state.initial ? "Punto inicial · honesto ✓" : "Con corrida / cambios";
     $("btnRun").disabled = state.running;
@@ -274,8 +334,6 @@ $("btnReset").onclick = async () => {
   Object.assign(cfg, {kind:"honest", defense:"1", engine:"scripted"});
   state = await api("/api/reset", {}); paint();
 };
-$("btnExamples").onclick = () => examples("/api/examples");
-$("btnExamplesPdf").onclick = () => examples("/api/examples/pdf");
 const drop = $("drop");
 drop.onclick = () => $("files").click();
 $("files").onchange = e => { load(e.target.files); e.target.value = ""; };
