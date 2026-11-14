@@ -40,8 +40,8 @@ El guion tiene unas 440 palabras: a 155 por minuto, con pausas, da unos 2:55. En
 > al final y depende de un umbral; la compuerta decide en un microsegundo, antes de que el dato salga, y
 > ningún texto la convence.
 >
-> **(1:40) [Tabla 2]** El núcleo no es de la licitación. Probamos cinco dominios: licitación, atención
-> ciudadana, historias clínicas, banca y legal. En 7.600 ataques guionados, un filtro que conoce todos los
+> **(1:40) [Tabla 2]** El núcleo no es de la licitación. Probamos cinco dominios, de historias clínicas a
+> banca. En 7.600 ataques guionados, un filtro que conoce todos los
 > secretos deja pasar 42 %; Quórum, cero. Para adoptarlo, un equipo escribe un archivo de política de unas
 > 20 líneas por dominio.
 >
@@ -51,10 +51,48 @@ El guion tiene unas 440 palabras: a 155 por minuto, con pausas, da unos 2:55. En
 >
 > **(2:25) [Límites]** Dónde falla. Bloquea de más: quien abre un sobre sin necesitarlo queda retenido para
 > revisión humana. Y lo que la política declara público, sale: con los puntajes publicados un rival
-> despeja el precio. Eso no lo arregla la compuerta; lo arregla el pliego.
+> despeja el precio. Eso no lo arregla la compuerta; lo arregla el pliego. Y el uso dual: los ataques son
+> plantillas simples, contra nuestro propio arnés y con datos sintéticos.
 >
 > **(2:45) [Cierre]** Quórum: 16 de 16 fugas bloqueadas, 0 de 60 trámites honestos, cero llamadas a un
 > modelo. El repositorio corre sin llaves con `uv run pytest`. Gracias.
+
+## Por Zoom
+
+Según la investigación en `~/Documents/agent-reports/2026-11-14/pitch-hackathon/01-como-ganar-pitch-zoom.md`, en lo virtual el reloj
+corre desde que aparecemos, y con la pantalla compartida el orador se queda en una miniatura. Lo que más pesa:
+la ficha a página completa se ve ilegible en Zoom.
+
+**Roles**
+- **Voz:** una sola para los 3 minutos; el equipo entra en las preguntas. Si son dos voces, un solo relevo en
+  1:40: se dice el nombre en voz alta y se espera un segundo antes de hablar.
+- **Pantalla:** una persona. Comparte **la ventana del PDF**, no el escritorio, y hace zoom a cada tabla cuando
+  la voz dice la señal entre corchetes. Ensaya la secuencia con el guion:
+  - Título y Figura 1, a lo ancho.
+  - Tabla 1, Tabla 2 y Tabla 3, cada una ampliada hasta llenar la pantalla.
+  - Límites.
+  - Vuelta al título para el cierre.
+- **Respaldo:** otra persona, en otra red (datos del celular), con el PDF abierto. Si la pantalla falla más de
+  10 segundos, comparte ella. La voz sigue hablando: el guion se entiende sin la pantalla.
+- **Reloj y chat:** pega en el chat de Zoom el enlace del repositorio y el del PDF en el segundo 0. Lleva el
+  tiempo y, durante las preguntas, le pasa una cifra a quien responde por WhatsApp. Nunca a quien comparte:
+  la notificación saldría en pantalla.
+
+**Antes (a más tardar 16:45)**
+- Preguntar a los organizadores si los participantes pueden compartir pantalla, y entrar temprano al enlace.
+- Renombrarse en Zoom como «Nombre · Quórum».
+- Hacer un ensayo cronometrado en un Zoom propio, con la misma persona compartiendo, y 3 preguntas de la lista.
+- Quien comparte: «No molestar» activado, Slack, WhatsApp y correo cerrados, el portátil enchufado y, si se
+  puede, conexión por cable.
+- Quien habla: audífonos con micrófono probados, cuarto silencioso, cámara encendida, cara iluminada y fondo
+  simple.
+
+**Durante**
+- La pantalla ya está compartida antes de la primera palabra. Nada de «¿se ve?, ¿me escuchan?»: si hace falta,
+  se confirma por el chat.
+- Todos en silencio menos quien habla. Con la latencia de Zoom no se pisa a nadie: se espera un segundo.
+- En las preguntas, quien responde repite la pregunta en voz alta, activa el micrófono, da una frase, una cifra
+  y el límite, y lo vuelve a silenciar.
 
 ## Si cortan a 1 minuto
 
