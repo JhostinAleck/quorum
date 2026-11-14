@@ -127,6 +127,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 ## Documentos
 
 - [Ficha técnica](docs/ficha-tecnica.md)
+- [Documento técnico de dos páginas, en LaTeX](docs/documento-tecnico/quorum.pdf) (fuente en `docs/documento-tecnico/quorum.tex`, se compila con `docs/documento-tecnico/build.sh`)
 - [Correcciones de la mentoría: lo medido](docs/correcciones-mentoria.md)
 - [Arquitectura](docs/arquitectura.md)
 - [Modelo de amenaza](docs/modelo-de-amenaza.md)
