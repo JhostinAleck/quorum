@@ -1,0 +1,24 @@
+flowchart TB
+  LEG["Etiqueta = conf · integ · fuentes<br/>Al unir: conf sube al máximo (PUBLICO &lt; RESTRINGIDO),<br/>integ baja al mínimo (CONFIABLE &gt; NO_CONFIABLE), fuentes se unen"]:::leg
+
+  V1["valor leído 1<br/>PUBLICO · CONFIABLE"]:::p
+  V2["valor leído 2<br/>RESTRINGIDO · CONFIABLE<br/>{oferta-2}"]:::r
+  V3["anexo de proveedor<br/>PUBLICO · NO_CONFIABLE<br/>{anexo-1}"]:::n
+  REF["ref:oferta-2<br/>referencia opaca"]:::n
+
+  LEG ~~~ V2
+  V1 --> CTX
+  V2 --> CTX
+  V3 --> CTX
+  REF -->|"abrir(ref) contamina"| CTX
+  CTX(["Contexto del agente<br/>RESTRINGIDO · NO_CONFIABLE<br/>{oferta-2, anexo-1}"]):::r
+  CTX -->|"toda escritura hereda"| W["valor escrito<br/>misma etiqueta del contexto,<br/>aunque el texto cambie"]:::r
+  W -->|"lo lee otro agente"| CTX2(["Contexto del siguiente agente<br/>hereda la misma etiqueta"]):::r
+
+  REF -->|"pasarla no contamina"| DEC["Desclasificador declarado<br/>calcular_puntajes(refs)"]:::p
+  DEC --> PUB["puntajes<br/>PUBLICO"]:::p
+
+  classDef r fill:#f7e1da,stroke:#a3361f,color:#17221d
+  classDef p fill:#dde9e2,stroke:#2f5d4a,color:#17221d
+  classDef n fill:#f6e7d2,stroke:#b8680f,color:#17221d
+  classDef leg fill:#ffffff,stroke:#999999,color:#17221d

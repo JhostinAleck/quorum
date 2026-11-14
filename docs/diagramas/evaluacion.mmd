@@ -1,0 +1,36 @@
+flowchart LR
+  subgraph GEN["Episodios (por semilla)"]
+    direction TB
+    H["Honesto<br/>n = 60"]
+    M["Ataque monolítico<br/>n = 60"]
+    R["Ataque repartido<br/>n = 60"]
+  end
+
+  subgraph ARMS["Brazos (mismos episodios)"]
+    direction TB
+    N0["Sin defensa"]
+    A1["M1 · monitor por agente"]
+    A2["M2 · monitor de composición"]
+    AQ["Quórum · compuerta"]
+  end
+
+  CAL["Calibración<br/>umbral a 5 % FPR<br/>solo con honestos"]
+
+  subgraph MET["Métricas pre-registradas"]
+    direction TB
+    F["Tasa de fuga del canario"]
+    DT["Detección a 5 % FPR"]
+    UT["Utilidad honesta"]
+    OB["Bloqueos de más"]
+  end
+
+  OUT["IC 95 % bootstrap<br/>figura principal<br/>20 trazas auditadas a mano"]
+
+  H --> CAL --> A1
+  CAL --> A2
+  GEN --> ARMS
+  ARMS --> MET --> OUT
+
+  style AQ fill:#dde9e2,stroke:#2f5d4a,stroke-width:2px,color:#17221d
+  style R fill:#f7e1da,stroke:#a3361f,color:#17221d
+  style CAL fill:#f6e7d2,stroke:#b8680f,color:#17221d

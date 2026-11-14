@@ -1,0 +1,45 @@
+flowchart LR
+  U["Usuario<br/>(funcionario)"]:::trusted
+  D["Documentos de proveedores<br/>NO CONFIABLE"]:::untrusted
+
+  subgraph AG["Agentes (no confiables)"]
+    direction TB
+    A["A · Radicador"]
+    B["B · Evaluador"]
+    C["C · Publicador"]
+  end
+
+  subgraph Q["Quórum (confiable, sin LLM)"]
+    direction TB
+    P["Proxy de etiquetas<br/>al leer: une etiquetas al contexto<br/>al escribir: hereda el contexto"]
+    G{"Compuerta<br/>políticas P1 a P3"}
+    L[("Bitácora<br/>solo anexar")]
+    P --> L
+    G --> L
+  end
+
+  subgraph S["Servicios compartidos (en memoria)"]
+    direction TB
+    O[("ofertas selladas<br/>RESTRINGIDO")]
+    R[("registro<br/>valor + etiqueta")]
+    E[("evaluación<br/>valor + etiqueta")]
+  end
+
+  X["Portal público<br/>(salida al exterior)"]:::sink
+  M["Monitores LLM (líneas base)<br/>M1 por agente · M2 de composición"]:::base
+
+  U -->|tarea| AG
+  D -->|anexos| A
+  B <-->|"leer / escribir<br/>(los tres agentes)"| P
+  P <-->|"valor + etiqueta"| S
+  C -->|"publicar()"| G
+  G -->|permitir| X
+  B -.->|"trayectorias<br/>de los tres"| M
+
+  classDef trusted fill:#dde9e2,stroke:#2f5d4a,color:#17221d
+  classDef untrusted fill:#f7e1da,stroke:#a3361f,color:#17221d
+  classDef sink fill:#f6e7d2,stroke:#b8680f,color:#17221d
+  classDef base fill:#eeeeee,stroke:#777777,color:#17221d,stroke-dasharray: 4 3
+  style Q fill:#eef5f1,stroke:#2f5d4a,stroke-width:2px
+  style AG fill:#fbf1ee,stroke:#a3361f
+  style S fill:#f7f7f5,stroke:#999999

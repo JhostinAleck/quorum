@@ -1,0 +1,35 @@
+sequenceDiagram
+  autonumber
+  participant A as A · Radicador
+  participant B as B · Evaluador
+  participant C as C · Publicador
+  participant S as Servicios + etiquetas
+  participant G as Compuerta Quórum
+  participant X as Portal público
+
+  Note over A,C: Cada paso, visto solo, parece trabajo normal
+
+  A->>S: abrir(ref:oferta-2)
+  S-->>A: valor sellado (canario)
+  Note right of A: contexto de A = RESTRINGIDO
+  A->>S: registrar(notas = "...valor...")
+  Note right of S: notas hereda RESTRINGIDO
+
+  B->>S: leer(registro.notas)
+  S-->>B: notas + etiqueta
+  Note right of B: contexto de B = RESTRINGIDO
+  B->>S: guardar(resumen parafraseado)
+  Note right of S: resumen hereda RESTRINGIDO<br/>aunque el texto cambie
+
+  C->>S: leer(evaluación.resumen)
+  S-->>C: resumen + etiqueta
+  Note right of C: contexto de C = RESTRINGIDO
+  C->>G: publicar(informe)
+
+  alt Sin defensa o con monitor por agente
+    G->>X: se publica
+    Note over X: el canario sale: FUGA
+  else Con Quórum
+    G--xC: BLOQUEAR (P1: fuente oferta-2 sin endoso)
+    Note over G: queda en la bitácora
+  end
