@@ -20,10 +20,10 @@ Son 169 trazas: 25 sin ataque, 90 secuestradas y 54 resistidas.
 | Ninguna (AgentDojo) | 90/144 (62,5 %) | 19/25 |
 | Filtro de herramientas (AgentDojo) | 16/144 (11,1 %) | 19/25 |
 | Detector DeBERTa (AgentDojo) | 1/144 (0,7 %) | 9/25 |
-| **Quórum, P2 por contexto** | **0/90** | **5/19** |
-| **Quórum, P2 por valor** | **0/90** | **16/19** |
+| **Quórum, P2 por contexto** | **0/144 (0 %)** | **5/25** |
+| **Quórum, P2 por valor** | **0/144 (0 %)** | **16/25** |
 
-Las cifras son comparables: «llegan al sumidero» y «siguen funcionando» se leen igual en todas las filas.
+Las cifras son comparables (mismos 144 ataques y 25 tareas limpias en todas las filas; la corrida sin defensa tiene 19/25 útiles, y Quórum deja pasar 16 de esas 19): «llegan al sumidero» y «siguen funcionando» se leen igual en todas las filas.
 Una tarea limpia que Quórum no deja pasar es una que **pide aprobación humana**, no necesariamente una
 que falla (ver Límites).
 
