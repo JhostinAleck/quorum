@@ -137,12 +137,22 @@ def report(args: argparse.Namespace) -> None:
     admin_token = _env("QUORUM_ADMIN_TOKEN")
     _wait_until_healthy(args.url)
     state = RemoteAdmin(args.url, admin_token).state()
-    declared = {k: v for k, v in (state.get("extra", {}).get("integrity") or {}).items() if k != "pinned"}
+    extra = state.get("extra") if isinstance(state.get("extra"), dict) else {}
+    declared = extra.get("integrity") if isinstance(extra.get("integrity"), dict) else {}
+    declared = {k: v for k, v in declared.items() if k != "pinned"}
     # what the monitor says it runs must be what it sealed in the log before the first call
-    sealed = bool(declared) and integrity.sealed(state["audit_log"]) == declared
+    in_log = integrity.sealed(state["audit_log"])
+    sealed = bool(declared) and in_log == declared
+    # and it is not taken at its word: the operator's hash, or else this side's own lock, has the last say
+    expected = os.environ.get("QUORUM_EXPECT_PIPELINE", "").strip() or integrity.locked_pipeline(
+        str(extra.get("scenario") or ""))
+    approved = bool(in_log) and bool(expected) and in_log.get("pipeline") == expected
+    runtime = integrity.sealed_runtime(state["audit_log"]) or {}
     summary = {
-        **state.get("extra", {}),
+        **extra,
         "integrity_sealed": sealed,
+        "integrity_approved": approved,
+        "enforce_sealed": runtime.get("enforce"),
         "audit_log_valid": state["audit_log_valid"],
         "audit_log_events": len(state["audit_log"]),
         "steps": {principal: len(steps) for principal, steps in state["trajectories"].items()},
@@ -152,7 +162,7 @@ def report(args: argparse.Namespace) -> None:
                    for event in state["blocks"]],
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
-    if not state["audit_log_valid"] or not sealed:
+    if not state["audit_log_valid"] or not sealed or (not approved and not args.unpinned):
         sys.exit(1)
 
 
@@ -184,6 +194,8 @@ def parser() -> argparse.ArgumentParser:
 
     r = commands.add_parser("report", help="print how the episode went")
     r.add_argument("--url", required=True)
+    r.add_argument("--unpinned", action="store_true",
+                   help="do not fail when the sealed pipeline is not the approved one (it is still reported)")
     r.set_defaults(run=report)
     return main
 

@@ -127,6 +127,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 ## Documentos
 
 - [Ficha técnica](docs/ficha-tecnica.md)
+- [Documento técnico de dos páginas, en LaTeX](docs/documento-tecnico/quorum.pdf) (fuente en `docs/documento-tecnico/quorum.tex`, se compila con `docs/documento-tecnico/build.sh`)
 - [Correcciones de la mentoría: lo medido](docs/correcciones-mentoria.md)
 - [Arquitectura](docs/arquitectura.md)
 - [Modelo de amenaza](docs/modelo-de-amenaza.md)
@@ -149,7 +150,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ```bash
 uv sync
-uv run pytest        # 878 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
+uv run pytest        # 910 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los ocho casos (honesto, honesto con oferta escaneada, honesto descuidado, ataque repartido entre 1, 2 y 3 agentes, ataque del agente que lee el documento e inyección) sin llamar a ningún modelo:

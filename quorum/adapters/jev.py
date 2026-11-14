@@ -83,7 +83,7 @@ def _number(value: Any) -> bool:
 
 def _answer(reply: Any, question: str) -> float | None:
     """The number Jev gave for that kind of question, or None if the reply is anything but a clean answer."""
-    if not isinstance(reply, Mapping) or "error" in reply or not isinstance(reply.get("answers"), Mapping):
+    if not isinstance(reply, Mapping) or reply.get("error") or not isinstance(reply.get("answers"), Mapping):
         return None
     answer = reply["answers"].get("leak")
     if not isinstance(answer, Mapping) or answer.get("type") != question or not _number(answer.get(question)):
