@@ -33,6 +33,7 @@ services:
       QUORUM_TOKEN_EVALUATOR: ${QUORUM_TOKEN_EVALUATOR:?set QUORUM_TOKEN_EVALUATOR in .env (see docs/despliegue.md)}
       QUORUM_TOKEN_PUBLISHER: ${QUORUM_TOKEN_PUBLISHER:?set QUORUM_TOKEN_PUBLISHER in .env (see docs/despliegue.md)}
       QUORUM_ADMIN_TOKEN: ${QUORUM_ADMIN_TOKEN:?set QUORUM_ADMIN_TOKEN in .env (see docs/despliegue.md)}
+      QUORUM_EXPECT_PIPELINE: ${QUORUM_EXPECT_PIPELINE:-}
     volumes:
       - quorum-data:/data
     healthcheck:

@@ -114,3 +114,20 @@ def test_the_monitor_refuses_to_start_without_tokens():
 def test_an_unknown_episode_kind_is_a_clean_error(deploy):
     done = deploy().agent("registrar", "bogus")
     assert done.returncode != 0 and "bogus" in done.stderr and "Traceback" not in done.stderr
+
+
+def test_the_report_says_which_pipeline_decided_and_that_it_was_sealed_before_any_call(deploy):
+    from quorum import integrity
+
+    deployment = deploy()
+    report = deployment.episode("attack_k3")
+    pinned = json.loads(integrity.LOCK.read_text(encoding="utf-8"))["scenarios"]["tender"]
+    assert report["integrity"] == {**pinned, "pinned": True}
+    assert report["integrity_sealed"] and report["audit_log_valid"] and report["quorum_blocks"]
+
+
+def test_the_monitor_refuses_to_start_when_the_operator_expected_another_pipeline():
+    env = {**os.environ, "QUORUM_ADMIN_TOKEN": "a" * 32, "QUORUM_EXPECT_PIPELINE": "f" * 64,
+           **{f"QUORUM_TOKEN_{role.upper()}": f"{role}-{'t' * 24}" for role in ROLES}}
+    done = subprocess.run([*LAUNCH, "monitor", "--port", "0"], env=env, text=True, capture_output=True, timeout=60)
+    assert done.returncode != 0 and "was expected" in done.stderr and "Traceback" not in done.stderr
