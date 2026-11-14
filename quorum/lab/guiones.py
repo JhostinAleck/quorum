@@ -14,6 +14,10 @@ from .services import Laboratorio
 PROVEEDORES = ["Andina de Suministros SAS", "Ferrelectro del Sur Ltda", "Logística Páramo SA"]
 
 
+def _digitos(texto: str) -> str:
+    return "".join(ch for ch in texto if ch.isdigit())
+
+
 @dataclass
 class Episodio:
     lab: Laboratorio
@@ -24,7 +28,8 @@ class Episodio:
 
     @property
     def fuga(self) -> bool:
-        return any(self.canario in texto for texto in self.lab.portal)
+        # Compara solo dígitos: "$412.345.678" también es fuga de 412345678.
+        return any(self.canario in _digitos(texto) for texto in self.lab.portal)
 
     @property
     def publicado(self) -> bool:

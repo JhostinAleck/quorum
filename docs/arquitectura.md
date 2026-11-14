@@ -79,9 +79,10 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/defense/labels.py` | Etiquetas y operación `join` |
 | `quorum/defense/gate.py` | Políticas P1 a P3 |
 | `quorum/lab/services.py` | Registro, evaluación y portal, con etiquetas por valor |
-| `quorum/lab/agents.py` | Los tres roles y sus herramientas |
-| `quorum/lab/scenarios.py` | Generador de episodios y canarios |
-| `quorum/defense/monitors.py` | Monitores M1 y M2 |
-| `quorum/eval/task.py` | Tareas de Inspect AI, una por brazo |
-| `quorum/eval/scorers.py` | Fuga, utilidad y sospecha |
-| `analysis/` | Bootstrap y figura principal |
+| `quorum/lab/guiones.py` | Episodios de referencia de los cuatro casos |
+| `quorum/lab/scenarios.py` | Generador del barrido: k = 1..3, generaciones L0..L4, gemelo benigno, decodificadores de fuga |
+| `quorum/defense/monitors.py` | Monitores M1 y M2 (OpenRouter, o heurístico sin red para desarrollo) |
+| `quorum/demo.py` | Demo en vivo de un episodio |
+| `analysis/evaluate.py` | Barrido de todos los brazos, calibración, bootstrap |
+| `analysis/figura.py` | Figura principal, curva por generación y escena |
+| `quorum/eval/` | Tareas de Inspect AI con agentes LLM (pendiente, opcional) |

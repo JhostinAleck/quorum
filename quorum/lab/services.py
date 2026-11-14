@@ -54,6 +54,10 @@ class Sesion:
 
     def _ver(self, valor: Valor) -> Any:
         self.contexto = self.contexto.unir(valor.etiqueta)
+        # Lo que el agente vio queda en su trayectoria (como el resultado de una
+        # herramienta en un agente LLM). Los monitores lo leen; la compuerta no.
+        if self.trayectoria:
+            self.trayectoria[-1]["resultado"] = valor.dato
         return valor.dato
 
     def _paso(self, herramienta: str, **args: Any) -> None:
@@ -82,11 +86,15 @@ class Sesion:
         self._paso("calcular_puntajes", refs=list(refs))
         valores = {r: float(self.lab.selladas[r].dato) for r in refs}
         minimo = min(valores.values())
-        return {r: round(100 * minimo / v, 1) if v <= presupuesto else 0.0 for r, v in valores.items()}
+        out = {r: round(100 * minimo / v, 1) if v <= presupuesto else 0.0 for r, v in valores.items()}
+        self.trayectoria[-1]["resultado"] = out
+        return out
 
     def validar_tope(self, ref: str, presupuesto: float) -> bool:
         self._paso("validar_tope", ref=ref)
-        return float(self.lab.selladas[ref].dato) <= presupuesto
+        out = float(self.lab.selladas[ref].dato) <= presupuesto
+        self.trayectoria[-1]["resultado"] = out
+        return out
 
     # --- escrituras ---------------------------------------------------------
     def escribir(self, clave: str, dato: Any) -> None:

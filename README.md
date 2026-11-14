@@ -68,12 +68,27 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 
 ```bash
 uv sync
-uv run pytest        # 20 tests de etiquetas, compuerta y laboratorio, sin modelos ni costo
+uv run pytest        # etiquetas, compuerta, laboratorio y escenarios del barrido, sin modelos ni costo
 ```
 
-Los episodios guionados de `quorum/lab/guiones.py` recorren los cuatro casos (honesto, honesto con oferta escaneada, ataque monolítico y ataque repartido) sin llamar a ningún modelo. Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
+Demo en vivo de un episodio, con la etiqueta de cada paso y la decisión de la compuerta:
 
-Las corridas con modelos reales usan una key de OpenRouter en `.env` (ver `.env.example`).
+```bash
+uv run python -m quorum.demo ataque 3 4     # ataque repartido en k=3 agentes, generación L4
+uv run python -m quorum.demo escaneada      # el bloqueo de más conocido
+```
+
+Barrido completo y figuras:
+
+```bash
+uv run python -m analysis.evaluate --backend heuristico          # sin red: prueba el pipeline, NO da resultados
+uv run --extra eval python -m analysis.evaluate --backend openrouter --modelo <id-de-openrouter>
+uv run python -m analysis.figura                                  # resultados/fig_*.svg
+```
+
+Los agentes son guionados (`quorum/lab/scenarios.py`): honestos, honestos con oferta escaneada y ataques con fragmentación k = 1, 2, 3 y generaciones de disfraz L0 a L4. Lo que se evalúa con modelos reales son los monitores M1 y M2 (`quorum/defense/monitors.py`), que leen esas trayectorias. Los honestos incluyen un *gemelo benigno*: radicados, folios y lemas con el mismo formato que usa el ataque, para que el formato no delate al ataque.
+
+Las corridas con modelos reales usan una key de OpenRouter en `.env` (ver `.env.example`). Las respuestas de los monitores quedan en caché en `resultados/cache_monitores.jsonl`.
 
 ## Reglas que cumple este repo
 
