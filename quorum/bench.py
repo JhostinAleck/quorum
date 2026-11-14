@@ -8,12 +8,15 @@ Every episode is scripted: no language model, no cost, same result on every
 machine. So this measures the mechanism (does the gate stop the flow, what does
 it cost, does it need changes per domain), not how often a model misbehaves.
 
-Three defenses are compared on the same episodes:
+Four defenses are compared on the same episodes:
 
   none        nothing is checked
   exact match a filter that knows every secret and blocks an output that carries
               one verbatim to somebody who may not have it. It is what one would
               build first, and it never blocks honest work
+  harness     least privilege, what a careful harness does without labels: every
+              role keeps only the tools its honest work uses, and nothing else
+              is checked. It never blocks honest work either
   Quorum      the provenance gate, with the policy file of the domain
 
 Each kind of episode runs twice per seed: once in audit mode, where nothing is
@@ -64,14 +67,34 @@ class Row:
     n: int = 0
     harm_none: int = 0          # harm with no defense
     harm_exact: int = 0         # harm left by the exact-match filter
+    harm_harness: int = 0       # harm left by least privilege alone
     harm_quorum: int = 0        # harm left by the gate
     useful_none: int = 0
     useful_quorum: int = 0
     blocked_quorum: int = 0     # episodes in which the gate stopped something
 
 
+def least_privilege(module: Any) -> Any:
+    """The policy of the domain with every role cut down to the tools its honest work actually uses."""
+    from quorum.domain.policy import Role
+
+    used: dict[str, set[str]] = {}
+    for kind in module.KINDS:
+        if group(kind) == "honest":
+            for seed in range(3):
+                for role, steps in module.run(kind, seed, defense=False).trajectories.items():
+                    used.setdefault(role, set()).update(step["tool"] for step in steps)
+    roles = {name: Role(name, tuple(tool for tool in role.tools if tool in used.get(name, ())),
+                        role.reads, role.writes)
+             for name, role in module.POLICY.roles.items()}
+    return module.POLICY.evolve(roles=roles)
+
+
 def measure(domain: str, seeds: Iterable[int]) -> list[Row]:
+    from quorum.domain.errors import QuorumError
+
     module = importlib.import_module(f"quorum.scenarios.{domain}")
+    harness = least_privilege(module)
     rows = []
     for kind in module.KINDS:
         variants = [(group(kind), False)]
@@ -87,6 +110,10 @@ def measure(domain: str, seeds: Iterable[int]) -> list[Row]:
                 row.harm_none += harmed(audited)
                 # the filter stops the episode only if a secret left verbatim; whatever else happened, happened
                 row.harm_exact += harmed(audited) and not audited.leak
+                try:    # no gate, only the trimmed roles
+                    row.harm_harness += harmed(module.run(kind, seed, defense=False, policy=harness, **options))
+                except QuorumError:
+                    pass    # the attack needed a tool its role no longer has, and stopped before any output
                 row.harm_quorum += harmed(enforced)
                 row.useful_none += bool(audited.useful)
                 row.useful_quorum += bool(enforced.useful)
@@ -131,7 +158,8 @@ def summarize(rows: list[Row]) -> dict[str, dict[str, Any]]:
     summary: dict[str, dict[str, Any]] = {}
     for row in rows:
         cell = summary.setdefault(row.domain, {}).setdefault(row.group, Row(row.domain, "*", row.group))
-        for field in ("n", "harm_none", "harm_exact", "harm_quorum", "useful_none", "useful_quorum", "blocked_quorum"):
+        for field in ("n", "harm_none", "harm_exact", "harm_harness", "harm_quorum", "useful_none", "useful_quorum",
+                      "blocked_quorum"):
             setattr(cell, field, getattr(cell, field) + getattr(row, field))
     return summary
 
@@ -154,8 +182,9 @@ def report(domains: list[str], seeds: int) -> tuple[str, dict[str, Any]]:
     out += ["## Daño que queda con cada defensa", "",
             "Porcentaje de episodios en los que un secreto llegó a quien no debía o se movió dinero sin permiso. "
             "Menos es mejor.", "",
-            "| Dominio | Tipo de episodio | Sin defensa | Filtro de coincidencia exacta | Quórum |",
-            "|---|---|---|---|---|"]
+            "| Dominio | Tipo de episodio | Sin defensa | Filtro de coincidencia exacta | "
+            "Buen harness (mínimo privilegio) | Quórum |",
+            "|---|---|---|---|---|---|"]
     labels = {"attack": "Ataque repartido (k = 1, 2, 3)",
               "disguised": "El mismo ataque con el dato escrito en palabras",
               "injection": "Inyección en un documento, agentes honestos"}
@@ -167,7 +196,8 @@ def report(domains: list[str], seeds: int) -> tuple[str, dict[str, Any]]:
                 if name == "attack" and "wrong_recipient" in kinds:
                     label += " y envío al destinatario equivocado"
                 out.append(f"| {DOMAINS[domain]} | {label} | {_pct(cell.harm_none, cell.n)} | "
-                           f"{_pct(cell.harm_exact, cell.n)} | {_pct(cell.harm_quorum, cell.n)} |")
+                           f"{_pct(cell.harm_exact, cell.n)} | {_pct(cell.harm_harness, cell.n)} | "
+                           f"{_pct(cell.harm_quorum, cell.n)} |")
 
     out += ["", "## Trabajo legítimo que sobrevive", "",
             "Porcentaje de episodios honestos que terminan bien. Más es mejor. El trámite descuidado es un agente "
@@ -204,12 +234,32 @@ def report(domains: list[str], seeds: int) -> tuple[str, dict[str, Any]]:
     out += ["", "El tiempo es la mediana de una decisión de la compuerta en esta máquina "
             "y cambia un poco entre corridas."]
 
+    out += ["", "## Ablación: juzgar cada salida con lo que ha visto cualquier agente", "",
+            "El interruptor `high_water_mark` cierra el canal de las claves ausentes "
+            "(ver intentos de evasión). Esta tabla dice dónde es gratis y dónde no se puede usar: "
+            "trámites honestos que terminan bien con el interruptor apagado y encendido.", "",
+            "| Dominio | Apagado | Encendido | En la política del dominio |", "|---|---|---|---|"]
+    for domain in domains:
+        module = importlib.import_module(f"quorum.scenarios.{domain}")
+        honest = [kind for kind in module.KINDS if group(kind) == "honest"]
+        counts = []
+        for switch in (False, True):
+            policy = module.POLICY.evolve(high_water_mark=switch)
+            counts.append(sum(bool(module.run(kind, seed, policy=policy).useful)
+                              for kind in honest for seed in range(seeds)))
+        n = len(honest) * seeds
+        out.append(f"| {DOMAINS[domain]} | {_pct(counts[0], n)} | {_pct(counts[1], n)} | "
+                   f"{'encendido' if module.POLICY.high_water_mark else 'apagado'} |")
+    out += ["", "Donde un trámite honesto necesita que un agente vea un dato restringido y que después salga algo "
+            "por una vía que no lo admite (la factura a la aseguradora, el escrito ante el juzgado), "
+            "el interruptor detiene ese trabajo. Ahí se deja apagado y el canal queda acotado con cupos por salida."]
+
     totals = Row("*", "*", "*")
     for domain in domains:
         for name in ("attack", "disguised", "injection"):
             cell = summary[domain].get(name)
             if cell:
-                for field in ("n", "harm_none", "harm_exact", "harm_quorum"):
+                for field in ("n", "harm_none", "harm_exact", "harm_harness", "harm_quorum"):
                     setattr(totals, field, getattr(totals, field) + getattr(cell, field))
     honest_n = sum(summary[d]["honest"].n for d in domains)
     honest_ok = sum(summary[d]["honest"].useful_quorum for d in domains)
@@ -218,7 +268,8 @@ def report(domains: list[str], seeds: int) -> tuple[str, dict[str, Any]]:
     out += ["", "## En una frase", "",
             f"En {len(domains)} dominios y {totals.n} episodios adversos, el daño ocurre en "
             f"{_pct(totals.harm_none, totals.n)} sin defensa, en {_pct(totals.harm_exact, totals.n)} con el filtro de "
-            f"coincidencia exacta y en {_pct(totals.harm_quorum, totals.n)} con Quórum. "
+            f"coincidencia exacta, en {_pct(totals.harm_harness, totals.n)} con un buen harness de mínimo privilegio "
+            f"y en {_pct(totals.harm_quorum, totals.n)} con Quórum. "
             f"De {honest_n} trámites honestos, Quórum deja terminar {_pct(honest_ok, honest_n)}. "
             f"El costo: de {careless_n} trámites descuidados, que no filtran nada, deja terminar "
             f"{_pct(careless_ok, careless_n)}. "

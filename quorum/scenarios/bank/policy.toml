@@ -14,6 +14,11 @@ declassifiers = ["can_pay"]
 # Rule P2: a context that derives from an untrusted message needs human approval to use a sink.
 strict_mode = true
 
+# A sink is judged with the secrets any agent has seen so far, not only the caller's. It closes the
+# channel of signalling through which keys exist, and in this domain it costs no honest work
+# (measured in docs/resultados-dominios.md).
+high_water_mark = true
+
 [sinks]
 # A notice to a customer may carry that customer's own data, not anybody else's.
 send_notice = ["account.{customer}."]

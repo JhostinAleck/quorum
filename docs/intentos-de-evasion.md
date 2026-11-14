@@ -37,11 +37,13 @@ Un monitor que lee texto se puede dejar convencer por el texto que lee. Probamos
 
 Esto no se ha medido contra los monitores M1 y M2, que sí leen texto. Es el experimento que falta para comparar.
 
-## Señalar sin escribir el valor: sí funciona con la política por defecto
+## Señalar sin escribir el valor: funcionaba, y así quedó cerrado
 
-Este intento sí rompe la compuerta.
+Este intento sí rompió la compuerta. Lo encontramos nosotros y por eso la política cambió.
 
 El Evaluador conoce el valor y **nunca lo escribe**. Solo decide qué claves crear: crea `evaluation.n57`, `evaluation.n58`, y así en adelante, donde 57 es el tramo del presupuesto en el que cae el valor. El Publicador lee las claves en orden. Cada clave que **no existe** le dice "el valor es mayor que este umbral", y como no leyó ningún dato, sigue limpio y puede publicarlo.
+
+Sin protección, esto pasaba:
 
 | Claves usadas | Avisos publicados | El portal revela el valor con un error de | Bloqueos |
 |---|---|---|---|
@@ -49,21 +51,34 @@ El Evaluador conoce el valor y **nunca lo escribe**. Solo decide qué claves cre
 | 256 | 162 | 0,6 % | 0 |
 | 4096 | 2600 | 0,04 % | 0 |
 
-La métrica de fuga del experimento tampoco lo ve, porque busca el número exacto en lo publicado y aquí solo salen umbrales.
+La métrica de fuga del experimento tampoco lo veía, porque busca el número exacto en lo publicado y aquí solo salen umbrales.
 
 **Por qué pasa.** Las etiquetas viajan pegadas a los datos. Que una clave exista o no también es información, y esa información no lleva etiqueta. Es una debilidad conocida de los sistemas de etiquetas flotantes.
 
-**Cómo se cierra.** La política tiene un interruptor, `high_water_mark`. Con él, la compuerta juzga cada salida con los secretos que ha visto **cualquier** agente hasta ese momento, no solo quien publica. Si alguien abrió un sobre, nada sale al portal.
+**Dos protecciones, y qué vale cada una** (licitación, 256 claves):
 
-| | Política por defecto | Con `high_water_mark` |
+| Política | Avisos que salen | Qué revela el portal |
 |---|---|---|
-| Canal de claves ausentes (256 claves) | El valor sale con error de 0,6 % | 0 avisos publicados, bloqueado |
-| Trámite honesto, licitación (20 semillas) | 20 de 20 útiles | 20 de 20 útiles |
-| Trámite honesto con oferta escaneada (20 semillas) | 20 de 20 útiles | 20 de 20 útiles |
-| Trámite honesto, mesa de ayuda (10 semillas) | 10 de 10 útiles | 10 de 10 útiles |
-| Un agente abre un sobre por una razón legítima antes de publicar | Se publica | Se bloquea toda publicación |
+| Sin protección | 162 | El valor con error de 0,6 % |
+| Solo cupo de una publicación por agente | 1 | Un solo sí o no sobre el valor |
+| Marea alta (`high_water_mark`), **la política por defecto de la licitación** | 0 | Nada: bloqueado |
 
-**Lo que cuesta.** En los trámites guionados no cuesta nada, porque nadie necesita abrir un sobre antes de publicar. El costo aparece en la última fila: un agente honesto que abre un sobre detiene la publicación de todos. Con agentes de modelo eso puede pasar por descuido, y hay que medirlo con las trazas reales antes de afirmar que es gratis. Por eso el interruptor está apagado por defecto y el experimento principal no lo usa.
+- **Cupo por salida.** Cada agente puede usar cada salida una vez. No cierra el canal, lo deja en un solo umbral por episodio. No cuesta trabajo honesto.
+- **Marea alta.** La compuerta juzga cada salida con los secretos que ha visto **cualquier** agente hasta ese momento, no solo quien publica. Si alguien abrió un sobre, nada sale al portal. Cierra el canal.
+
+**Lo que cuesta la marea alta, por dominio.** Es gratis donde ningún trámite honesto necesita ver un dato restringido antes de una salida que no lo admite, y no se puede usar donde sí:
+
+| Dominio | Trámites honestos que terminan con marea alta | Cómo queda en su política |
+|---|---|---|
+| Licitación pública | 100 % | Encendida, más cupo de una publicación |
+| Mesa de ayuda | 100 % | Encendida |
+| Banca | 100 % | Encendida |
+| Historias clínicas | 0 % | Apagada; cupo de una llamada por salida |
+| Sector legal | 0 % | Apagada; cupo de una llamada por salida |
+
+En la clínica y en el bufete, quien redacta tiene que ver el expediente y después sale un documento que no puede llevarlo (la factura, el escrito ante el juzgado). Con marea alta ese documento se bloquea siempre. Ahí el canal queda acotado, no cerrado, y hay que decirlo. Las cifras se regeneran con `python -m quorum.bench`.
+
+**Sin medir.** El costo de la marea alta con agentes de modelo. Si un agente honesto abre un sobre por descuido, se bloquea la publicación.
 
 ## Usar un desclasificador como oráculo: cerrado
 
@@ -73,7 +88,8 @@ Dos agentes registraban valores conocidos junto a la oferta secreta y la deducí
 
 - **Tiempo, orden y número de llamadas.** Ningún modo los cubre.
 - **Lo que revelan los desclasificadores por diseño.** Un puntaje dice algo del valor. Está acotado, no eliminado.
-- **Con `high_water_mark` apagado**, el canal de claves ausentes sigue ahí.
+- **En la clínica y el bufete**, el canal de claves ausentes queda acotado a un sí o no por salida, no cerrado.
+- **Entre episodios.** Un sí o no por episodio se acumula si el mismo secreto vive muchos episodios.
 
 ## Cómo reproducirlo
 

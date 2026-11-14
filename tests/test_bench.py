@@ -57,3 +57,23 @@ def test_the_tables_are_written_between_the_markers(tmp_path):
     bench.main(["--seeds", "2", "--domains", "helpdesk", "--out", str(page)])
     text = page.read_text(encoding="utf-8")
     assert "old" not in text and "Mesa de ayuda" in text and text.startswith("# Title") and text.endswith("tail\n")
+
+
+def test_least_privilege_keeps_every_tool_the_honest_work_needs_and_drops_the_rest():
+    tender = importlib.import_module("quorum.scenarios.tender")
+    roles = bench.least_privilege(tender).roles
+    assert "open_bid" not in roles["registrar"].tools and "open_bid" not in roles["evaluator"].tools
+    assert {"read_annex", "transcribe", "write"} <= set(roles["registrar"].tools)
+    assert set(roles["publisher"].tools) == {"read", "publish"}
+
+
+def test_a_good_harness_is_enough_for_the_tender_and_not_for_the_other_domains():
+    """The honest answer to 'what does the gate add over least privilege'."""
+    for domain in DOMAINS:
+        summary = bench.summarize(bench.measure(domain, range(3)))[domain]
+        left = sum(summary[group].harm_harness for group in ("attack", "disguised", "injection") if group in summary)
+        assert summary["honest"].useful_none == summary["honest"].n
+        if domain == "tender":
+            assert left == 0
+        else:
+            assert left > 0 and summary["attack"].harm_quorum == 0

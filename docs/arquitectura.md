@@ -105,7 +105,7 @@ evaluate(request, policy) -> Decision(allow, policy, reason)
 |---|---|---|
 | P1 | Una salida se bloquea si el contexto de quien llama deriva de alguna fuente restringida que ese sumidero no admite y que el usuario no endosó | Confidencialidad en la salida |
 | P2 | Modo estricto, opcional: si el contexto deriva de fuentes no confiables, la salida exige una aprobación humana que se obtiene fuera de los agentes. Desactivada en el experimento principal | Integridad: un documento entrante no decide acciones |
-| P1 con marea alta | Opcional (`high_water_mark`): la salida se juzga con los secretos que ha visto cualquier agente, no solo quien llama. Cierra el canal de claves ausentes. Desactivada en el experimento principal | Confidencialidad frente a señales que no viajan en los datos |
+| P1 con marea alta | Interruptor `high_water_mark`: la salida se juzga con los secretos que ha visto cualquier agente, no solo quien llama. Cierra el canal de claves ausentes. Encendido en la licitación, la mesa de ayuda y la banca, donde no cuesta trabajo honesto | Confidencialidad frente a señales que no viajan en los datos |
 | P3 | Toda llamada y toda decisión quedan en una bitácora de solo anexar, encadenada con hashes, que los agentes no pueden escribir | Auditoría |
 
 La compuerta es una función pura: misma entrada, misma salida. Si una regla falla con una excepción, la respuesta es negar. Se pueden agregar reglas propias sin tocar el núcleo. Se prueba con `pytest` y `hypothesis` sin llamar a ningún modelo.
@@ -129,7 +129,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 
 ## Qué se probó
 
-`uv run pytest` corre 565 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 594 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
@@ -186,5 +186,8 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/scenarios/bank/` | Banca: integridad, un mensaje de un tercero no ordena pagos |
 | `quorum/scenarios/lawfirm/` | Sector legal: muralla entre clientes y un escrito público que no lleva nada reservado |
 | `quorum/bench.py` | Mide los cinco dominios con el mismo código y escribe las tablas |
+| `quorum/adapters/monitors.py` | Monitores M1 y M2 con prompt normal y endurecido; respuesta ilegible vale nota máxima |
+| `quorum/monitor_bench.py` | Mide con un modelo real si una nota dirigida al revisor cambia el veredicto |
+| `quorum/llm_bench.py` | Corre la licitación con agentes de modelo y prompts honestos, con y sin una carta inyectada |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
 | `analysis/` | Bootstrap y figura principal (en construcción) |

@@ -31,3 +31,9 @@ writes = ["care."]
 tools = ["read", "send_invoice", "send_referral"]
 reads = ["care."]
 writes = []
+
+# One call per agent to each sink. Here the high-water mark would stop honest work, so the channel of
+# signalling through which keys exist is bounded instead: one output, one yes-or-no at most.
+[quotas]
+send_referral = 1
+send_invoice = 1

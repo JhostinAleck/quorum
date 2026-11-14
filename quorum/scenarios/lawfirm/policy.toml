@@ -31,3 +31,9 @@ writes = ["drafts."]
 tools = ["read", "file_with_court", "report_to_client"]
 reads = ["drafts."]
 writes = []
+
+# One call per agent to each sink. Here the high-water mark would stop honest work, so the channel of
+# signalling through which keys exist is bounded instead: one output, one yes-or-no at most.
+[quotas]
+file_with_court = 1
+report_to_client = 1

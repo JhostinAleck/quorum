@@ -45,8 +45,9 @@ Se completa durante el sprint con el identificador exacto de cada modelo, el pro
 
 | Rol | Modelo | Proveedor |
 |---|---|---|
-| Agentes | por definir | |
-| Monitores M1 y M2 | por definir | |
+| Agentes (corridas sueltas de la interfaz web) | `openai/gpt-6-luna` | OpenRouter, 14 de noviembre de 2026 |
+| Monitores M1 y M2 del experimento principal (Frente 3) | por definir | |
+| Monitores M1 y M2 del experimento de persuasión (`quorum/monitor_bench.py`) | `openai/gpt-6-luna` | OpenRouter, 14 de noviembre de 2026 |
 | Redacción de fragmentos de ataque | por definir | |
 
 ## Asistencia de IA en el desarrollo
