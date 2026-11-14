@@ -39,6 +39,7 @@ from ..scenarios.tender import (
 )
 from ..scenarios.tender.rules import lowest_bidder
 from . import agents
+from .redact import SEALED, redact
 
 Emit = Callable[[dict[str, Any]], None]
 KINDS = ("honest", "attack_k1", "attack_k2", "attack_k3")   # a scanned bid comes from the documents, not from a kind
@@ -64,6 +65,9 @@ _AMOUNT_CONTINUES = re.compile(r"[ \t]*[.,'’][ \t]*\w*\d|[ \t]\d|[^\W\d_]")
 # The label, alone on its side of the separator (so "Proveedores invitados: ..." is not it), with or
 # without markdown decoration, and the rest of its own line: it never reaches into the next one.
 _SUPPLIER = re.compile(r"^(?:[^\n\w]|_)*proveedor[ \t*_`]*[:;=][ \t]*([^\r\n]*)", re.I | re.M)
+# Only when there is no 'Proveedor:' line: the identification table of a formal bid, "Proponente  <name> - NIT ...",
+# with or without a separator. Same line rules; the name goes through the same validation.
+_BIDDER = re.compile(r"^(?:[^\n\w]|_)*proponente\b[ \t*_`]*(?:[:;=][ \t]*|[ \t]+)([^\r\n]*)", re.I | re.M)
 # The supplier name is written by whoever uploads the document, yet it ends up as a
 # key of terms.bids, which is trusted public tender data that every agent reads with
 # no `untrusted` label. So it is not accepted as free text: only a short company
@@ -142,27 +146,36 @@ def parse_bid(text: str, filename: str = "", scanned: bool = False, *, position:
                          "'Valor: 468.915.720'")
     value = int("".join(ch for ch in amount.group(1) if ch.isdigit()))
     supplier = _SUPPLIER.search(text)
-    if supplier:
-        name = supplier_name(supplier.group(1), filename)
-    else:                                  # the file name is as untrusted as the text
+    name = supplier_name(supplier.group(1), filename) if supplier else _bidder_name(text, filename)
+    if name is None:                       # the file name is as untrusted as the text
         try:
             name = _name_from_file(filename, position)
         except ValueError:
             raise ValueError(f"{where}: falta una línea 'Proveedor: <nombre>' y el nombre del archivo no sirve "
                              "como nombre de proveedor") from None
     annex = text[:label.start()] + (text[line_end:] if line_end != -1 else "")
-    return Bid(name, value, annex.strip(), scanned)
+    # the copies of the amount elsewhere in the document (summary box, letter, in words) are sealed too
+    return Bid(name, value, redact(annex, value).strip(), scanned)
 
 
-SEALED = "[sellado]"
+def _bidder_name(text: str, filename: str) -> str | None:
+    """The name of a 'Proponente' line, or None if there is none or it is not a plain company name."""
+    bidder = _BIDDER.search(text)
+    try:
+        return supplier_name(bidder.group(1), filename) if bidder else None
+    except ValueError:
+        return None
 
 
 def mask_value(text: str) -> str:
-    """The document as the page shows it: the amount of the 'Valor:' line replaced by a mark.
-    Reads the line exactly as parse_bid does, so what is hidden is what gets sealed."""
+    """The document as the page shows it: the sealed amount replaced by a mark, in the 'Valor:' line
+    and in every other copy (in figures or in words), the same copies parse_bid takes out of the annex."""
     label = _VALUE.search(text)
     amount = _AMOUNT.match(text, label.end()) if label else None
-    return text if not amount else text[:amount.start()] + SEALED + text[amount.end():]
+    if not amount:
+        return text
+    value = int("".join(ch for ch in amount.group(1) if ch.isdigit()))
+    return redact(text[:amount.start()] + SEALED + text[amount.end():], value)
 
 
 def build_case(bids: list[Bid], *, defense: bool = True) -> Case:
