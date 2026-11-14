@@ -1,0 +1,3 @@
+Lo medimos en noventa trámites con agentes de modelo.
+Sin defensa, el valor se fugó en dieciséis de treinta ataques.
+La compuerta bloqueó las dieciséis fugas y dejó pasar los sesenta trámites honestos, sin llamar a un modelo.

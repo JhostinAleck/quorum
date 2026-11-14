@@ -8,3 +8,6 @@ logs/
 *.eval
 .DS_Store
 node_modules/
+
+# Video: extracted frames of the generated shots (rebuilt by docs/video/montar.sh)
+docs/video/planos/g*/

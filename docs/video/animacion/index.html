@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Quórum: video de presentación</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;background:#070c18;overflow:hidden}
+body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:#e8eefc}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:radial-gradient(1400px 900px at 30% 20%,#12203f 0%,#0a1122 55%,#070c18 100%)}
+#grid{position:absolute;inset:-80px;background-image:linear-gradient(rgba(91,140,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(91,140,255,.07) 1px,transparent 1px);background-size:80px 80px}
+section{position:absolute;inset:0;opacity:0;display:none}
+.abs{position:absolute}
+.kicker{position:absolute;left:100px;top:64px;font-size:28px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#6f9bff}
+.h1{position:absolute;left:100px;top:108px;right:100px;font-size:62px;font-weight:800;letter-spacing:-1px;line-height:1.12}
+.foot{position:absolute;left:100px;right:100px;top:912px;font-size:27px;color:#a9b8d8;line-height:1.35}
+.red{color:#ff7b7b}.green{color:#3ddc97}.amber{color:#ffc857}.blue{color:#7da2ff}.mute{color:#a9b8d8}
+.mono{font-family:"SF Mono",Menlo,monospace}
+.card{position:absolute;background:#131d33;border:2px solid #2a3960;border-radius:22px;padding:26px 30px}
+.card h3{font-size:40px;font-weight:750;line-height:1.15}
+.card p{font-size:30px;color:#b9c6e4;line-height:1.3;margin-top:8px}
+.tagchip{display:inline-block;font-family:"SF Mono",Menlo,monospace;font-size:26px;padding:5px 16px;border-radius:999px;background:#3a1620;color:#ff9c9c;border:2px solid #8a3145;white-space:nowrap}
+.pill{display:inline-block;font-size:32px;font-weight:700;padding:12px 30px;border-radius:999px;background:#16233f;border:2px solid #33487a;white-space:nowrap}
+#sub{position:absolute;left:0;right:0;top:978px;display:flex;justify-content:center}
+#sub span{font-size:31px;font-weight:500;line-height:1.3;color:#f2f5ff;background:rgba(5,9,18,.78);padding:9px 26px;border-radius:14px;max-width:1640px;text-align:center}
+#bar{position:absolute;left:0;top:1074px;height:6px;width:1920px;background:rgba(255,255,255,.07)}
+#bar i{display:block;height:100%;background:#5b8cff;width:0}
+/* envelope */
+.env{position:absolute;width:150px;height:100px;border-radius:10px;background:#e9edf7;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.env:before{content:"";position:absolute;inset:0;border-radius:10px;background:linear-gradient(180deg,#c9d2e6 0,#c9d2e6 100%);clip-path:polygon(0 0,100% 0,50% 58%)}
+.env:after{content:"";position:absolute;left:61px;top:40px;width:28px;height:28px;border-radius:50%;background:#d6455a;box-shadow:0 0 0 4px rgba(214,69,90,.3)}
+.env.small{width:96px;height:64px}.env.small:after{left:38px;top:24px;width:20px;height:20px}
+/* product frame */
+.frame{position:absolute;left:160px;top:128px;width:1600px;height:800px;border-radius:18px;overflow:hidden;background:#f4f6f9;box-shadow:0 30px 90px rgba(0,0,0,.6);border:2px solid #33487a}
+.frame .tb{height:40px;background:#dfe4ee;display:flex;align-items:center;gap:9px;padding:0 16px;font-size:19px;color:#4a5670}
+.frame .tb b{width:13px;height:13px;border-radius:50%;background:#b8c1d4;display:inline-block}
+.frame .vp{position:relative;height:760px;overflow:hidden;background:#f4f6f9}
+.stack{position:absolute;left:0;top:0;width:1600px;transform-origin:0 0}
+.stack img{display:block;width:1600px;margin-bottom:24px}
+.hl{position:absolute;border:6px solid #ff4d5e;border-radius:14px;box-shadow:0 0 0 6px rgba(255,77,94,.22),0 0 30px rgba(255,77,94,.5);opacity:0}
+.hl.ok{border-color:#12a865;box-shadow:0 0 0 6px rgba(18,168,101,.22),0 0 30px rgba(18,168,101,.5)}
+.call{display:none;position:absolute;font-size:30px;font-weight:800;padding:10px 20px;border-radius:12px;background:#ff4d5e;color:#fff;white-space:nowrap;opacity:0;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.call.ok{background:#12a865}
+.cap{position:absolute;left:160px;top:60px;right:160px;display:flex;align-items:center;gap:20px;font-size:30px;font-weight:700}
+.cap i{font-style:normal;font-size:22px;font-weight:700;letter-spacing:1.5px;padding:6px 16px;border-radius:999px;background:#1c2a4a;color:#a9b8d8;text-transform:uppercase}
+.stamp{position:absolute;font-size:70px;font-weight:900;letter-spacing:6px;color:#ff4d5e;border:10px solid #ff4d5e;border-radius:18px;padding:6px 34px;background:rgba(255,255,255,.9);opacity:0}
+/* dots */
+.dot{position:absolute;width:44px;height:44px;border-radius:50%;background:#3b4a70}
+.big{font-size:120px;font-weight:800;letter-spacing:-3px;line-height:1}
+.big small{font-size:48px;font-weight:650;color:#b9c6e4;letter-spacing:0}
+table.cmp{position:absolute;left:100px;top:250px;width:1720px;border-collapse:collapse;font-size:36px}
+table.cmp th{font-size:27px;color:#a9b8d8;font-weight:600;text-align:left;padding:14px 22px;border-bottom:2px solid #2a3960}
+table.cmp td{padding:34px 22px;border-bottom:2px solid #2a3960;vertical-align:middle}
+table.cmp td.n{font-size:50px;font-weight:800;white-space:nowrap}
+.barrow{position:absolute;left:36px;right:36px;height:62px}
+.barrow .l{position:absolute;left:0;top:0;font-size:27px;color:#b9c6e4}
+.barrow .b{position:absolute;left:0;top:36px;height:22px;border-radius:11px}
+.barrow .v{position:absolute;top:28px;font-size:30px;font-weight:800;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="grid"></div>
+<div id="clip" style="position:absolute;inset:0;opacity:0"><img id="clipimg" style="width:1920px;height:1080px;object-fit:cover;display:block"><div id="clipshade" style="position:absolute;inset:0"></div><div id="cliptag" style="position:absolute;right:40px;top:36px;font-size:22px;font-weight:600;letter-spacing:1px;color:rgba(232,238,252,.72);background:rgba(5,9,18,.55);padding:6px 14px;border-radius:999px">Plano generado con IA · Higgsfield</div></div>
+
+<!-- 01 opening -->
+<section id="s01">
+  <div class="kicker" style="top:150px" data-at="t:0.05">DefAcc Hackathon · riesgos multiagente</div>
+  <div class="abs" style="left:100px;top:190px;font-size:190px;font-weight:850;letter-spacing:-5px" data-at="t:0.15" data-fx="pop">Quórum</div>
+  <div class="abs" style="left:104px;top:430px;font-size:52px;font-weight:700;line-height:1.2" data-at="0:0.06">Una compuerta determinista de procedencia</div>
+  <div id="a1coded">
+  <div class="abs" id="a1track" style="left:120px;top:770px;width:1680px;height:4px;background:#33487a;border-radius:2px" data-at="0:0.12" data-fx="fade"></div>
+  <div class="abs" id="a1agents" style="left:0;top:0"></div>
+  <div class="env" id="a1env" style="top:720px"></div>
+  <div class="abs" id="a1tag" style="top:838px"><span class="tagchip">dato sellado</span></div>
+  <div class="abs" id="a1gt" style="left:1196px;width:18px;border-radius:9px;top:630px"></div>
+  <div class="abs" id="a1gb" style="left:1196px;width:18px;border-radius:9px"></div>
+  <div class="abs" style="left:1098px;top:578px;width:214px;text-align:center;font-size:27px;font-weight:800;letter-spacing:3px;color:#a9b8d8" data-at="0:0.18">COMPUERTA</div>
+  <div class="abs red" id="a1no" style="left:1246px;top:728px;font-size:44px;font-weight:850;white-space:nowrap">✕ no sale</div>
+  <div class="card" style="left:1500px;top:690px;width:300px;height:160px;text-align:center;border-style:dashed" data-at="0:0.2"><h3 style="font-size:34px">Portal público</h3><p style="font-size:26px">salida al exterior</p></div>
+  </div>
+  <div class="abs" id="a1sub" style="left:104px;top:520px;font-size:40px;font-weight:600;color:#b9c6e4;line-height:1.3;opacity:0">Un dato sellado no sale publicado,<br>aunque el ataque se reparta entre varios agentes</div>
+</section>
+
+<!-- 02 the case and the distributed attack -->
+<section id="s02">
+  <div class="kicker" id="b2k">El caso</div>
+  <div class="h1" id="b2h1">Una licitación pública con ofertas selladas</div>
+  <div class="h1 red" id="b2h2" style="color:#ff9c9c">El ataque se reparte: ningún paso aislado se ve raro</div>
+  <div id="b2pipe"></div>
+  <div class="abs" id="b2tok" style="top:0"><span class="tagchip" style="background:#ff4d5e;color:#fff;border-color:#ff4d5e;font-weight:700">valor sellado</span></div>
+  <div class="foot" data-at="0:0.7">Datos sintéticos: proveedores, valores y documentos ficticios. El ataque existe solo dentro del laboratorio.</div>
+</section>
+
+<!-- 03 the idea -->
+<section id="s03">
+  <div class="kicker">La idea</div>
+  <div class="h1">La etiqueta viaja con el dato</div>
+  <div id="c3pipe"></div>
+  <div class="abs" id="c3gt" style="left:1398px;width:16px;border-radius:8px;top:400px"></div>
+  <div class="abs" id="c3gb" style="left:1398px;width:16px;border-radius:8px"></div>
+  <div class="abs" style="left:1316px;top:352px;width:180px;text-align:center;font-size:23px;font-weight:800;letter-spacing:2px;color:#a9b8d8" data-at="1:0.02">COMPUERTA</div>
+  <div class="card" style="left:470px;top:706px;width:900px;padding:16px 28px" data-at="1:0.16">
+    <p style="margin:0;font-size:28px">Etiqueta de la salida <span class="tagchip" style="margin-left:14px">{sealed.bid-2}</span></p>
+    <p style="margin-top:12px;font-size:28px">Política <span class="tagchip" style="margin-left:14px;background:#11301f;color:#6fe3ae;border-color:#1f6b45">publish = [ ]</span> <span style="margin-left:10px">no admite fuentes restringidas</span></p>
+  </div>
+  <div class="abs red" style="left:1420px;top:736px;font-size:46px;font-weight:850;white-space:nowrap" data-at="1:0.36" data-fx="pop">✕ bloqueada</div>
+  <div class="abs" style="left:0;right:0;top:880px;display:flex;justify-content:center;gap:40px">
+    <span class="pill" data-at="1:0.56" data-fx="pop">No lee el texto</span>
+    <span class="pill" data-at="1:0.76" data-fx="pop">No llama a ningún modelo</span>
+  </div>
+</section>
+
+<!-- 04 product: honest run -->
+<section id="s04">
+  <div class="cap"><i>Captura real de la interfaz</i><span id="d4cap">El producto funcionando · agentes con guion, sin modelo · datos sintéticos</span></div>
+  <div class="frame"><div class="tb"><b></b><b></b><b></b><span style="margin-left:14px">127.0.0.1 · Quórum · Laboratorio de licitación</span></div>
+    <div class="vp"><div class="stack" id="d4stack">
+      <img src="../capturas/ui/ui-config.png"><img src="../capturas/ui/honesto-agentes.png"><img src="../capturas/ui/honesto-resultado.png">
+      <div class="hl ok" id="d4h1"></div><div class="hl ok" id="d4h2"></div>
+      <div class="call ok" id="d4c1">La compuerta permite</div><div class="call ok" id="d4c2">La adjudicación sale al portal</div>
+    </div></div></div>
+</section>
+
+<!-- 05 product: attack blocked -->
+<section id="s05">
+  <div class="cap"><i>Captura real de la interfaz</i><span id="e5cap">Tres agentes desviados · agentes con guion, sin modelo · datos sintéticos</span></div>
+  <div class="frame"><div class="tb"><b></b><b></b><b></b><span style="margin-left:14px">127.0.0.1 · Quórum · Laboratorio de licitación</span></div>
+    <div class="vp"><div class="stack" id="e5stack">
+      <img src="../capturas/ui/ataque-config.png"><img src="../capturas/ui/ataque-agentes.png"><img src="../capturas/ui/ataque-resultado.png">
+      <div class="hl" id="e5h0"></div><div class="hl" id="e5h1"></div><div class="hl" id="e5h2"></div><div class="hl" id="e5h3"></div><div class="hl" id="e5h4"></div>
+      <div class="call" id="e5c0">El Radicador abre un sobre</div><div class="call" id="e5c1">El Evaluador hereda la etiqueta</div><div class="call" id="e5c2">El Publicador también</div>
+      <div class="call" id="e5c3">La compuerta bloquea</div><div class="call" id="e5c4" style="display:none"></div>
+      <div class="stamp" id="e5stamp">BLOQUEADO</div>
+    </div></div></div>
+</section>
+
+<!-- 06 main experiment -->
+<section id="s06">
+  <div class="kicker">Cómo se probó</div>
+  <div class="h1">90 trámites, con agentes manejados por un modelo</div>
+  <div class="abs" style="left:100px;top:232px;font-size:34px;font-weight:650;color:#a9b8d8" data-at="0:0.3">60 trámites honestos</div>
+  <div class="abs" style="left:1010px;top:232px;font-size:34px;font-weight:650;color:#a9b8d8" data-at="0:0.5">30 ataques, repartidos entre 1, 2 y 3 agentes</div>
+  <div id="f6dots"></div>
+  <div class="abs" id="f6leak" style="left:1010px;top:520px"><div class="big red"><span id="f6n">0</span> <small>de 30</small></div><div style="font-size:32px;color:#b9c6e4;margin-top:8px">ataques terminan en fuga, sin defensa</div></div>
+  <div class="abs" id="f6blk" style="left:1010px;top:520px"><div class="big green">16 <small>de 16</small></div><div style="font-size:32px;color:#b9c6e4;margin-top:8px">fugas bloqueadas por la compuerta</div></div>
+  <div class="abs" id="f6hon" style="left:100px;top:620px"><div class="big green">0 <small>de 60</small></div><div style="font-size:32px;color:#b9c6e4;margin-top:8px">trámites honestos bloqueados</div></div>
+  <div class="abs" id="f6zero" style="left:1010px;top:748px"><span class="pill" style="border-color:#3ddc97;color:#3ddc97">0 llamadas a un modelo</span></div>
+  <div class="foot" data-at="1:0.9">Son 30 ataques con plantillas fijas: los intervalos son anchos (16 de 16: de 81 a 100 %, al 95 %).</div>
+</section>
+
+<!-- 07 monitors -->
+<section id="s07">
+  <div class="kicker">La línea base</div>
+  <div class="h1">Un monitor LLM por agente también detecta</div>
+  <table class="cmp">
+    <tr><th style="width:420px"></th><th>Fugas detectadas</th><th>Honestos marcados</th><th>Llamadas a un modelo<br>por trámite</th><th>Cuándo decide</th></tr>
+    <tr><td data-at="0:0.0">Monitor LLM<br>por agente</td><td class="n" data-at="0:0.42" data-fx="pop">16 de 16</td><td class="n" data-at="0:0.74" data-fx="pop">0 de 30<span style="font-size:30px;vertical-align:top">*</span></td><td class="n amber" data-at="1:0.12" data-fx="pop">3</td><td class="amber" style="font-weight:700" data-at="1:0.56">al final:<br>detecta</td></tr>
+    <tr><td style="font-weight:800" data-at="1:0.72">Compuerta<br>de Quórum</td><td class="n green" data-at="1:0.76" data-fx="pop">16 de 16</td><td class="n green" data-at="1:0.8" data-fx="pop">0 de 60</td><td class="n green" data-at="1:0.84" data-fx="pop">0</td><td class="green" style="font-weight:700" data-at="1:0.88">en cada salida:<br>detiene</td></tr>
+  </table>
+  <div class="foot" data-at="0:0.8">* Los umbrales del monitor se calibran con la mitad de los 60 trámites honestos; sus falsos positivos se miden en los otros 30.</div>
+</section>
+
+<!-- 08 five domains and AgentDojo -->
+<section id="s08">
+  <div class="kicker">Más allá de la licitación</div>
+  <div class="card" style="left:100px;top:120px;width:900px;height:770px">
+    <h3>Cinco dominios, agentes con guion</h3>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px" id="g8chips"></div>
+    <p style="margin-top:26px;font-size:28px;color:#a9b8d8">Episodios adversos con daño, de 7600</p>
+    <div style="position:relative;height:300px;margin-top:6px" id="g8bars"></div>
+    <p class="mute" style="font-size:25px;position:absolute;left:30px;right:30px;bottom:22px">Sin modelo: mide el mecanismo, no la conducta de un modelo.</p>
+  </div>
+  <div class="card" id="g8dojo" style="left:1040px;top:120px;width:780px;height:770px">
+    <h3>AgentDojo</h3><p>Un banco de pruebas ajeno: trazas grabadas de la suite de banca</p>
+    <div class="big green" style="margin-top:70px;font-size:150px"><span id="g8n">0</span></div>
+    <div style="font-size:44px;font-weight:650;color:#b9c6e4;margin-top:6px">de 1521 secuestros frenados</div>
+    <div style="position:relative;height:26px;margin-top:38px;background:#24314f;border-radius:13px;overflow:hidden"><div id="g8b" style="height:100%;background:#3ddc97;width:0"></div></div>
+    <p style="font-size:28px;margin-top:34px;color:#cbd5e1" id="g8note">En los 15 que escapan, el valor viene del pedido del usuario.</p>
+  </div>
+</section>
+
+<!-- 09 costs and limits -->
+<section id="s09">
+  <div class="kicker amber" style="color:#ffc857">Costos y límites</div>
+  <div class="h1">Lo que cuesta y lo que no cierra</div>
+  <div class="card" style="left:100px;top:260px;width:550px;height:480px" data-at="1:0.0">
+    <h3 class="amber">Bloquea de más</h3>
+    <div class="big amber" style="font-size:104px;margin-top:20px">1000 <small>de 1000</small></div>
+    <p>trámites honestos descuidados quedan detenidos</p>
+    <p class="mute" style="font-size:26px;margin-top:22px">Un agente abrió un sobre que no necesitaba y no filtró nada.</p>
+  </div>
+  <div class="card" style="left:685px;top:260px;width:550px;height:480px" data-at="2:0.0">
+    <h3 class="amber">Frena trabajo legítimo</h3>
+    <div class="big amber" style="font-size:104px;margin-top:20px">75 <small>de 411</small></div>
+    <p>tareas limpias de AgentDojo quedan detenidas</p>
+    <p class="mute" style="font-size:26px;margin-top:22px">En la prueba principal conserva 16 de las 19 tareas que funcionan sin defensa.</p>
+  </div>
+  <div class="card" style="left:1270px;top:260px;width:550px;height:480px" data-at="3:0.0">
+    <h3 class="amber" style="font-size:37px">No cierra lo que se publica</h3>
+    <div class="big amber" style="font-size:104px;margin-top:20px">50 <small>de 50</small></div>
+    <p>veces un rival externo recupera el monto sellado</p>
+    <p class="mute" style="font-size:26px;margin-top:22px">El pliego publica los puntajes y la fórmula es conocida. La compuerta no lo impide.</p>
+  </div>
+</section>
+
+<!-- 10 closing -->
+<section id="s10">
+  <div class="kicker" style="top:250px">Código, datos y límites</div>
+  <div class="abs mono" id="h10url" style="left:100px;top:300px;font-size:88px;font-weight:700;letter-spacing:-2px;white-space:nowrap"></div>
+  <div class="abs" style="left:100px;top:470px;font-size:40px;font-weight:650;color:#b9c6e4" data-at="0:0.45">16 de 16 fugas bloqueadas · 0 de 60 trámites honestos bloqueados · 0 llamadas a un modelo</div>
+  <div class="foot" style="top:700px;font-size:27px" data-at="t:1.0">Datos sintéticos. No se atacó ni escaneó ningún sistema real.<br>Uso de IA en este video: guion, animación y montaje con Claude Code; <span id="h10voz"></span>; investigación del flujo con Grok; revisión con agy.<br>Las capturas son de la interfaz real, con agentes que siguen un guion. Sin rostros ni datos de personas reales; la voz es sintética, de catálogo.</div>
+</section>
+
+<div id="sub"><span></span></div>
+<div id="bar"><i></i></div>
+</div>
+
+<script src="timeline.js"></script>
+<script src="../capturas/ui/meta.js"></script>
+<script src="../planos/clips.js"></script>
+<script>
+"use strict";
+const TL = window.TL, UI = window.UI, CL = window.CLIPS || {};
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const eo = x => 1 - Math.pow(1 - clamp(x), 3);
+const eio = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const P = (t, a, d = .5) => clamp((t - a) / d);
+const lerp = (a, b, p) => a + (b - a) * p;
+const SC = Object.fromEntries(TL.scenes.map(s => [s.id, s]));
+const T = (id, i, f = 0) => { const c = SC[id].s[i]; return c.start + (c.end - c.start) * f; };
+const op = (el, v) => { el.style.opacity = v; };
+const VOICE = "voz sintética (" + TL.scenes[0].voice + ")" + (Object.keys(CL).length ? "; planos generados con Higgsfield (Seedance 2.5)" : "");
+$("h10voz").textContent = VOICE;
+
+// ---------- shared pipeline (scenes 02 and 03)
+const PIPE = { env: 70, cards: [250, 610, 970], w: 310, y: 400, h: 210, portal: 1500, pw: 320 };
+function pipeline(prefix, at) {
+  const names = [["Radicador", "Registra las ofertas"], ["Evaluador", "Calcula los puntajes"], ["Publicador", "Publica la adjudicación"]];
+  let h = `<div class="abs" style="left:150px;top:${PIPE.y + PIPE.h / 2 - 2}px;width:1400px;height:4px;background:#33487a" ${at.line}></div>`;
+  for (let i = 0; i < 3; i++) h += `<div class="env small" style="left:${PIPE.env + i * 14}px;top:${PIPE.y + 40 + i * 26}px" ${at.env(i)}></div>`;
+  names.forEach(([n, job], i) => {
+    h += `<div class="card" id="${prefix}card${i}" style="left:${PIPE.cards[i]}px;top:${PIPE.y}px;width:${PIPE.w}px;height:${PIPE.h}px" ${at.card(i)}><h3>${n}</h3><p>${job}</p></div>`;
+    h += `<div class="abs" id="${prefix}x${i}" style="left:${PIPE.cards[i]}px;top:${PIPE.y + PIPE.h + 18}px;width:${PIPE.w}px;opacity:0"></div>`;
+  });
+  h += `<div class="card" id="${prefix}portal" style="left:${PIPE.portal}px;top:${PIPE.y}px;width:${PIPE.pw}px;height:${PIPE.h}px;border-style:dashed" ${at.portal}><h3>Portal público</h3><p id="${prefix}ptxt">Única salida al exterior</p></div>`;
+  h += `<div class="abs" id="${prefix}xe" style="left:${PIPE.env - 10}px;top:${PIPE.y + PIPE.h + 18}px;opacity:0"></div>`;
+  return h;
+}
+$("b2pipe").innerHTML = pipeline("b2", { line: 'data-at="1:0.0" data-fx="fade"', env: i => `data-at="0:${(.55 + i * .1).toFixed(2)}" data-fx="pop"`,
+  card: i => `data-at="1:${[0, .36, .7][i]}"`, portal: 'data-at="1:0.92"' });
+["Abre un sobre y anota el valor", "Lo copia a su resultado", "Lo publica"].forEach((txt, i) => {
+  $("b2x" + i).innerHTML = `<span style="font-size:29px;font-weight:700;color:#ff9c9c;line-height:1.25;display:block">${txt}</span>`; });
+$("c3pipe").innerHTML = pipeline("c3", { line: "", env: () => "", card: () => "", portal: "" });
+$("c3portal").style.left = "1500px"; $("c3xe").style.top = (PIPE.y - 26) + "px"; $("c3xe").style.left = "36px";
+["c3xe", "c3x0", "c3x1", "c3x2"].forEach(id => { $(id).innerHTML = `<span class="tagchip">{sealed.bid-2}</span>`; });
+
+// ---------- product stacks: geometry of each capture inside the 1600 px wide stack
+const K = 1600 / 1072, GAP = 24;
+function stackGeo(names) { let y = 0; const g = {}; for (const n of names) { const h = UI[n].h * K; g[n] = { y, h }; y += h + GAP; } g.total = y - GAP; return g; }
+const G4 = stackGeo(["ui-config", "honesto-agentes", "honesto-resultado"]);
+const G5 = stackGeo(["ataque-config", "ataque-agentes", "ataque-resultado"]);
+function place(el, geo, r, pad = 10) { const s = el.style;
+  s.left = (r[0] * 1600 - pad) + "px"; s.top = (geo.y + r[1] * geo.h - pad) + "px"; s.width = (r[2] * 1600 + 2 * pad) + "px"; s.height = (r[3] * geo.h + 2 * pad) + "px";
+  return { x: r[0] * 1600, y: geo.y + r[1] * geo.h, w: r[2] * 1600, h: r[3] * geo.h }; }
+function callAt(el, x, y) { el.style.left = x + "px"; el.style.top = y + "px"; }
+const R4 = UI["honesto-resultado"].rects, R5a = UI["ataque-agentes"], R5r = UI["ataque-resultado"].rects;
+const b41 = place($("d4h1"), G4["honesto-resultado"], R4.gate), b42 = place($("d4h2"), G4["honesto-resultado"], R4.portal, 6);
+callAt($("d4c1"), b41.x + b41.w + 30, b41.y - 82); callAt($("d4c2"), b42.x + 700, b42.y - 74);
+const openR = [R5a.rects.open[0], R5a.rects.open[1], R5a.rects.r1[2] + 0.02, R5a.rects.r1[1] + R5a.rects.r1[3] - R5a.rects.open[1]];
+const b50 = place($("e5h0"), G5["ataque-agentes"], openR), b51 = place($("e5h1"), G5["ataque-agentes"], R5a.chips[1].chip), b52 = place($("e5h2"), G5["ataque-agentes"], R5a.chips[2].chip);
+const b53 = place($("e5h3"), G5["ataque-resultado"], R5r.gate), b54 = place($("e5h4"), G5["ataque-resultado"], R5r.portal, 6);
+callAt($("e5c0"), b50.x + b50.w + 40, b50.y + 6); callAt($("e5c1"), b51.x - 4, b51.y + b51.h + 26); callAt($("e5c2"), b52.x - 4, b52.y + b52.h + 26);
+callAt($("e5c3"), b53.x + b53.w + 30, b53.y - 84); callAt($("e5c4"), b54.x + 420, b54.y + 8);
+$("e5stamp").style.left = "880px"; $("e5stamp").style.top = (b54.y - 34) + "px";
+
+// ---------- dots of scene 06
+const DOT = 60, HON = { x: 100, y: 292 }, ATK = { x: 1010, y: 292 };
+const LEAKS = [5, 6, 5];   // leaks with k = 1, 2, 3 (10 attacks each)
+let dots = "";
+for (let i = 0; i < 60; i++) dots += `<div class="dot" id="f6h${i}" style="left:${HON.x + (i % 12) * DOT}px;top:${HON.y + Math.floor(i / 12) * DOT}px"></div>`;
+for (let i = 0; i < 30; i++) dots += `<div class="dot" id="f6a${i}" style="left:${ATK.x + (i % 10) * DOT}px;top:${ATK.y + Math.floor(i / 10) * DOT}px"></div>`;
+$("f6dots").innerHTML = dots;
+const leakOrder = []; for (let c = 0; c < 6; c++) for (let r = 0; r < 3; r++) if (c < LEAKS[r]) leakOrder.push(r * 10 + c);
+
+// ---------- scene 08
+const DOMAINS = ["licitación", "mesa de ayuda", "historias clínicas", "banca", "legal"];
+$("g8chips").innerHTML = DOMAINS.map((d, i) => `<span class="pill" style="font-size:26px;padding:8px 20px" id="g8c${i}">${d}</span>`).join("");
+const BARS = [["Sin defensa", 7600, "#ff7b7b"], ["Filtro de coincidencia exacta", 3200, "#ffc857"], ["Mínimo privilegio por rol", 3200, "#ffc857"], ["Quórum", 0, "#3ddc97"]];
+$("g8bars").innerHTML = BARS.map(([l, v, c], i) => `<div class="barrow" style="top:${i * 74}px"><span class="l">${l}</span><div class="b" id="g8bar${i}" style="background:${c};width:0"></div><span class="v" id="g8v${i}" style="color:${c}">0</span></div>`).join("");
+
+// ---------- generic reveals
+const reveals = [];
+document.querySelectorAll("section").forEach(sec => { const id = sec.id.slice(1);
+  sec.querySelectorAll("[data-at]").forEach(el => { const [a, b] = el.dataset.at.split(":");
+    reveals.push({ el, at: a === "t" ? SC[id].start + parseFloat(b) : T(id, +a, parseFloat(b)), fx: el.dataset.fx || "up" }); }); });
+function reveal(t) { for (const r of reveals) { const p = eo(P(t, r.at, .45)); r.el.style.opacity = p;
+  r.el.style.transform = r.fx === "pop" ? `scale(${lerp(.7, 1, p)})` : r.fx === "fade" ? "none" : `translateY(${(1 - p) * 26}px)`; } }
+
+function gate(top, bot, y0, y1, close, wide) {   // two bars that meet in the middle
+  const mid = (y0 + y1) / 2, open = 34, h = lerp(open, mid - y0, close), c = close > .6 ? "#ff4d5e" : "#5b8cff";
+  for (const [el, y] of [[top, y0], [bot, y1 - h]]) { el.style.top = y + "px"; el.style.height = h + "px"; el.style.background = c;
+    el.style.boxShadow = close > .6 ? "0 0 34px rgba(255,77,94,.8)" : "0 0 18px rgba(91,140,255,.5)"; }
+}
+
+const FX = {
+  "01"(t) {
+    if (CL.g1) { $("a1coded").style.display = "none"; const p = eo(P(t, T("01", 0, .3), .5)); op($("a1sub"), p); $("a1sub").style.transform = `translateY(${(1 - p) * 26}px)`; return; }
+    const go = eio(P(t, T("01", 0, .22), T("01", 0, .50) - T("01", 0, .22)));
+    const hit = P(t, T("01", 0, .50), .35);
+    const shake = hit > 0 && hit < 1 ? Math.sin(hit * 40) * 10 * (1 - hit) : 0;
+    const x = lerp(150, 1020, go) + shake, shown = eo(P(t, T("01", 0, .14), .4));
+    $("a1env").style.left = x + "px"; op($("a1env"), shown);
+    $("a1tag").style.left = (x - 10) + "px"; op($("a1tag"), shown);
+    gate($("a1gt"), $("a1gb"), 630, 910, eo(P(t, T("01", 0, .44), .35)));
+    op($("a1gt"), eo(P(t, T("01", 0, .18), .4))); op($("a1gb"), eo(P(t, T("01", 0, .18), .4)));
+    const no = eo(P(t, T("01", 0, .52), .35)); op($("a1no"), no); $("a1no").style.transform = `scale(${lerp(.6, 1, no)})`;
+    let h = "";
+    for (let i = 0; i < 3; i++) { const p = eo(P(t, T("01", 0, .68 + i * .08), .4)); if (p <= 0) continue;
+      h += `<div class="abs" style="left:${250 + i * 250}px;top:${600 - (1 - p) * 20}px;opacity:${p};font-size:28px;font-weight:700;padding:10px 22px;border-radius:999px;border:2px dashed #ff7b7b;color:#ff9c9c;white-space:nowrap">agente ${i + 1}</div>`; }
+    $("a1agents").innerHTML = h;
+  },
+  "02"(t) {
+    $("b2pipe").style.opacity = CL.g2 ? P(t, T("02", 1, -.06), .3) : 1;
+    const sw = eio(P(t, T("02", 2, -.08), .5));
+    op($("b2h1"), 1 - sw); op($("b2h2"), sw); $("b2k").textContent = sw > .5 ? "El ataque repartido" : "El caso"; $("b2k").style.color = sw > .5 ? "#ff7b7b" : "#6f9bff";
+    const stops = [[PIPE.env + 20, PIPE.y - 10], ...PIPE.cards.map(x => [x + 60, PIPE.y - 62]), [PIPE.portal + 60, PIPE.y - 62]];
+    const f = [0, .22, .46, .70, .94], d = .2; let pos = stops[0], vis = P(t, T("02", 2, -.02), .25);
+    for (let i = 1; i < 5; i++) { const p = eio(P(t, T("02", 2, f[i] - d), T("02", 2, f[i]) - T("02", 2, f[i] - d)));
+      if (p > 0) pos = [lerp(stops[i - 1][0], stops[i][0], p), lerp(stops[i - 1][1], stops[i][1], p) - Math.sin(p * Math.PI) * 70]; }
+    $("b2tok").style.left = pos[0] + "px"; $("b2tok").style.top = pos[1] + "px"; op($("b2tok"), vis);
+    for (let i = 0; i < 3; i++) { const p = eo(P(t, T("02", 2, f[i + 1]), .3)); op($("b2x" + i), p);
+      $("b2card" + i).style.borderColor = p > .1 ? "#ff7b7b" : "#2a3960"; }
+    const end = eo(P(t, T("02", 2, f[4]), .3));
+    $("b2portal").style.borderColor = end > .1 ? "#ff4d5e" : "#2a3960"; $("b2portal").style.background = end > .1 ? "#3a1620" : "#131d33";
+    $("b2ptxt").textContent = end > .1 ? "El valor sellado queda a la vista" : "Única salida al exterior"; $("b2ptxt").style.color = end > .1 ? "#ff9c9c" : "#b9c6e4";
+  },
+  "03"(t) {
+    const marks = [["c3xe", .30], ["c3x0", .62], ["c3x1", .76], ["c3x2", .90]];
+    for (const [id, f] of marks) { const p = eo(P(t, T("03", 0, f), .4)); op($(id), p); $(id).style.transform = `translateY(${(1 - p) * -18}px)`; }
+    const g = eo(P(t, T("03", 1, .02), .4)); op($("c3gt"), g); op($("c3gb"), g);
+    const close = eo(P(t, T("03", 1, .30), .4)); gate($("c3gt"), $("c3gb"), 400, 610, close);
+    $("c3portal").style.opacity = lerp(1, .45, close);
+  },
+  "04"(t) {
+    const pan = eio(P(t, T("04", 1, -.12), 1.1));
+    $("d4stack").style.transform = `translateY(${-lerp(0, G4.total - 760, pan)}px)`;
+    const a = eo(P(t, T("04", 1, .25), .35)), b = eo(P(t, T("04", 1, .58), .35));
+    op($("d4h1"), a); op($("d4c1"), a); op($("d4h2"), b); op($("d4c2"), b);
+    $("d4cap").textContent = pan > .5 ? "Trámite honesto: la compuerta permite y la adjudicación sale al portal" : "El producto funcionando · agentes con guion, sin modelo · datos sintéticos";
+    $("d4cap").style.color = pan > .5 ? "#3ddc97" : "#e8eefc";
+  },
+  "05"(t) {
+    const A = G5["ataque-agentes"].y, yOpen = b50.y - 330, yTop = A - 24, yRes = G5.total - 760;
+    const p1 = eio(P(t, T("05", 0, .44), .7)), p2 = eio(P(t, T("05", 1, -.1), 1.0));
+    $("e5stack").style.transform = `translateY(${-lerp(lerp(yOpen, yTop, p1), yRes, p2)}px)`;
+    const out1 = 1 - P(t, T("05", 0, .42), .25), out2 = 1 - P(t, T("05", 1, -.1), .25);
+    const h0 = eo(P(t, T("05", 0, .04), .35)) * out1, h1 = eo(P(t, T("05", 0, .60), .3)) * out2, h2 = eo(P(t, T("05", 0, .72), .3)) * out2;
+    const phase = p2 > .5 ? "La compuerta bloquea: no se publica nada" : p1 > .5 ? "El Evaluador y el Publicador heredan la etiqueta" : "El Radicador abre un sobre: su contexto queda restringido";
+    $("e5cap").textContent = phase; $("e5cap").style.color = "#ff9c9c";
+    op($("e5h0"), h0); op($("e5c0"), h0); op($("e5h1"), h1); op($("e5c1"), h1); op($("e5h2"), h2); op($("e5c2"), h2);
+    const h3 = eo(P(t, T("05", 1, .22), .3)), h4 = eo(P(t, T("05", 1, .62), .3));
+    op($("e5h3"), h3); op($("e5c3"), h3); op($("e5h4"), h4); op($("e5c4"), h4);
+    const st = eo(P(t, T("05", 1, .92), .3)); op($("e5stamp"), st); $("e5stamp").style.transform = `rotate(-8deg) scale(${lerp(1.8, 1, st)})`;
+  },
+  "06"(t) {
+    for (let i = 0; i < 60; i++) { const p = eo(P(t, T("06", 0, .3) + i * .012, .3)); const d = $("f6h" + i); op(d, p); d.style.transform = `scale(${lerp(.3, 1, p)})`;
+      const ok = eo(P(t, T("06", 2, .5) + (i % 12) * .03, .3)); d.style.background = ok > .5 ? "#3ddc97" : "#3b4a70"; }
+    const leakT = i => T("06", 1, .42) + leakOrder.indexOf(i) * (T("06", 1, .95) - T("06", 1, .42)) / 16;
+    let n = 0;
+    for (let i = 0; i < 30; i++) { const p = eo(P(t, T("06", 0, .5) + i * .02, .3)); const d = $("f6a" + i); op(d, p); d.style.transform = `scale(${lerp(.3, 1, p)})`;
+      const isLeak = leakOrder.includes(i), leaked = isLeak && t >= leakT(i); if (leaked) n++;
+      const blocked = isLeak && t >= T("06", 2, .08) + leakOrder.indexOf(i) * .04;
+      d.style.background = blocked ? "#0a1122" : leaked ? "#ff4d5e" : "#3b4a70";
+      d.style.border = blocked ? "6px solid #3ddc97" : "none"; d.style.boxShadow = leaked && !blocked ? "0 0 18px rgba(255,77,94,.7)" : "none"; }
+    $("f6n").textContent = n;
+    const sw = eo(P(t, T("06", 2, .12), .4));
+    op($("f6leak"), eo(P(t, T("06", 1, .3), .3)) * (1 - sw)); op($("f6blk"), sw);
+    op($("f6hon"), eo(P(t, T("06", 2, .5), .4))); op($("f6zero"), eo(P(t, T("06", 2, .84), .35)));
+  },
+  "08"(t) {
+    DOMAINS.forEach((_, i) => { const p = eo(P(t, T("08", 0, .02 + i * .04), .35)); op($("g8c" + i), p); });
+    BARS.forEach(([_, v], i) => { const p = eo(P(t, T("08", 0, .42 + i * .09), .8)); const w = Math.max(v / 7600 * 620, 6) * p;
+      $("g8bar" + i).style.width = w + "px"; $("g8v" + i).style.left = (w + 16) + "px"; $("g8v" + i).textContent = Math.round(v * p) + " de 7600"; op($("g8v" + i), p > 0 ? 1 : 0); });
+    const d = eo(P(t, T("08", 1, -.03), .45)); op($("g8dojo"), d); $("g8dojo").style.transform = `translateY(${(1 - d) * 26}px)`;
+    const c = eio(P(t, T("08", 1, .22), T("08", 1, .62) - T("08", 1, .22)));
+    $("g8n").textContent = Math.round(1506 * c); $("g8b").style.width = (1506 / 1521 * 100 * c) + "%";
+    op($("g8note"), eo(P(t, T("08", 1, .3), .4)));
+  },
+  "10"(t) {
+    const url = "github.com/JhostinAleck/quorum", n = Math.round(url.length * P(t, SC["10"].start + .25, 1.5));
+    $("h10url").textContent = url.slice(0, n) + (n < url.length ? "▌" : "");
+  },
+};
+
+const SHOTS = [
+  { clip: "g1", from: 0, to: SC["01"].end, fadeIn: 0, fadeOut: .25,
+    shade: "linear-gradient(90deg,rgba(7,12,24,.94) 0%,rgba(7,12,24,.80) 42%,rgba(7,12,24,.10) 100%)" },
+  { clip: "g2", from: SC["02"].start, to: T("02", 1, -.02), fadeIn: .3, fadeOut: .35,
+    shade: "linear-gradient(180deg,rgba(7,12,24,.92) 0%,rgba(7,12,24,.30) 34%,rgba(7,12,24,.30) 78%,rgba(7,12,24,.9) 100%)" },
+  { clip: "g3", from: SC["10"].start, to: TL.total + .01, fadeIn: .3, fadeOut: 0, shade: "rgba(7,12,24,.74)" },
+].filter(s => CL[s.clip]);
+let clipSrc = "";
+async function seek(t) {
+  t = clamp(t, 0, TL.total);
+  const shot = SHOTS.find(s => t >= s.from && t < s.to);
+  if (shot) { const n = CL[shot.clip].frames, i = Math.min(n - 1, Math.floor((t - shot.from) / (shot.to - shot.from) * n));
+    const src = `../planos/${shot.clip}/f_${String(i + 1).padStart(4, "0")}.jpg`;
+    if (src !== clipSrc) { clipSrc = src; $("clipimg").src = src; try { await $("clipimg").decode(); } catch (e) {} }
+    $("clipshade").style.background = shot.shade;
+    $("clip").style.opacity = Math.min(shot.fadeIn ? P(t, shot.from, shot.fadeIn) : 1, shot.fadeOut ? 1 - P(t, shot.to - shot.fadeOut, shot.fadeOut) : 1);
+  } else $("clip").style.opacity = 0;
+  $("grid").style.transform = `translate(${-(t * 4) % 80}px, ${-(t * 2.5) % 80}px)`;
+  for (const s of TL.scenes) { const el = $("s" + s.id), on = t >= s.start - .01 && t < s.end + .01;
+    el.style.display = on ? "block" : "none";
+    if (on) el.style.opacity = Math.min(s.id === "01" ? 1 : eo(P(t, s.start, .3)), s.id === "10" ? 1 : 1 - P(t, s.end - .22, .22)); }
+  reveal(t);
+  for (const s of TL.scenes) if (FX[s.id] && t >= s.start - .01 && t < s.end + .01) FX[s.id](t);
+  let cue = null; for (const s of TL.scenes) for (const c of s.s) if (t >= c.start - .08 && t <= c.end + .14) cue = c;
+  const sub = document.querySelector("#sub span"); sub.textContent = cue ? cue.text : ""; sub.style.opacity = cue ? 1 : 0;
+  document.querySelector("#bar i").style.width = (t / TL.total * 100) + "%";
+  return true;
+}
+window.seek = seek;
+const q = new URLSearchParams(location.search);
+if (q.has("t")) seek(parseFloat(q.get("t")));
+else if (q.has("play")) { const t0 = performance.now(); (async function loop() { await seek((performance.now() - t0) / 1000); requestAnimationFrame(loop); })(); }
+else seek(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+Con los tres agentes desviados, el valor sellado pasa de uno a otro.
+La compuerta bloquea la salida: no se publica nada.

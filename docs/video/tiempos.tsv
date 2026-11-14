@@ -1,0 +1,33 @@
+escena	frase	inicio_s	fin_s	texto
+01	1	0.35	10.10	Quórum es una compuerta determinista: impide que un dato sellado salga publicado, aunque el ataque se reparta entre varios agentes de inteligencia artificial.
+01	fin	10.43	10.43	
+02	1	10.43	16.06	El caso: tres agentes tramitan una licitación pública con ofertas selladas.
+02	2	16.18	19.57	Uno radica, otro evalúa y otro publica.
+02	3	19.61	23.00	Si el ataque se reparte, ningún paso se ve raro.
+02	fin	23.32	23.32	
+03	1	23.32	28.65	Cada dato lleva la etiqueta de sus fuentes, y lo que un agente escribe la hereda.
+03	2	28.73	35.20	En cada salida, la compuerta compara etiquetas: no lee texto ni llama a ningún modelo.
+03	fin	35.53	35.53	
+04	1	35.53	39.03	Así se ve funcionando, con datos sintéticos.
+04	2	39.11	42.31	En un trámite honesto, la adjudicación se publica.
+04	fin	43.13	43.13	
+05	1	43.13	48.31	Con los tres agentes desviados, el valor sellado pasa de uno a otro.
+05	2	48.35	52.50	La compuerta bloquea la salida: no se publica nada.
+05	fin	53.35	53.35	
+06	1	53.35	57.12	Lo medimos en noventa trámites con agentes de modelo.
+06	2	57.16	61.92	Sin defensa, el valor se fugó en dieciséis de treinta ataques.
+06	3	61.96	69.20	La compuerta bloqueó las dieciséis fugas y dejó pasar los sesenta trámites honestos, sin llamar a un modelo.
+06	fin	69.45	69.45	
+07	1	69.45	74.28	Un monitor por agente también las detecta, sin falsos positivos.
+07	2	74.30	81.19	Pero gasta tres llamadas a un modelo por trámite y califica al final: detecta, no detiene.
+07	fin	81.43	81.43	
+08	1	81.43	89.36	En cinco dominios, con agentes que siguen un guion, dejó en cero el daño en siete mil seiscientos episodios adversos.
+08	2	89.59	95.91	Y en trazas públicas de AgentDojo frenó mil quinientos seis de mil quinientos veintiún secuestros.
+08	fin	96.24	96.24	
+09	1	96.24	97.61	Tiene costos.
+09	2	97.73	102.15	Bloquea siempre al agente honesto que abre un sobre que no necesitaba.
+09	3	102.19	106.03	En AgentDojo detiene parte de las tareas legítimas.
+09	4	106.07	111.56	Y un rival externo puede recuperar el monto con los puntajes que la licitación publica.
+09	fin	111.81	111.81	
+10	1	111.81	116.22	El código, los datos y los límites están en el repositorio.
+10	fin	118.45	118.45	

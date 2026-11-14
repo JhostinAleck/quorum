@@ -1,0 +1,4 @@
+Tiene costos.
+Bloquea siempre al agente honesto que abre un sobre que no necesitaba.
+En AgentDojo detiene parte de las tareas legítimas.
+Y un rival externo puede recuperar el monto con los puntajes que la licitación publica.
