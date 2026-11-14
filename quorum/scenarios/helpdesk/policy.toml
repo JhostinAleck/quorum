@@ -1,0 +1,31 @@
+# Quorum policy for a help desk that replies to citizens.
+# Same core as the tender. Only these lists and the tools change.
+
+# Everything about a citizen is born restricted.
+restricted = ["citizen."]
+
+# Tickets are written by whoever asks.
+untrusted = ["ticket."]
+
+# No declassifier is needed here.
+declassifiers = []
+
+[sinks]
+# A reply to a person may carry that person's own data, not anybody else's.
+# {citizen} is taken from the argument of the call to reply().
+reply = ["citizen.{citizen}."]
+
+[roles.intake]
+tools = ["read_ticket", "get_record", "read", "write"]
+reads = ["intake."]
+writes = ["intake."]
+
+[roles.analyst]
+tools = ["read", "request_status", "get_record", "write"]
+reads = ["intake."]
+writes = ["analysis."]
+
+[roles.writer]
+tools = ["read", "reply"]
+reads = ["analysis."]
+writes = []

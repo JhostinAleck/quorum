@@ -1,0 +1,38 @@
+# Quorum policy for the public tender scenario.
+# These lists are the only thing that changes from one domain to another.
+
+# Data that is born restricted: sealed bids and bids that arrive as scans.
+restricted = ["sealed.", "scan."]
+
+# Data written by third parties: the suppliers' annexes.
+untrusted = ["annex."]
+
+# Functions allowed to return a public result computed over restricted data.
+# None of them takes a threshold or a formula from the agent, so they cannot
+# be used as an oracle.
+declassifiers = ["score_bids", "within_budget", "transcribe"]
+
+endorsements = []
+strict_mode = false
+
+[sinks]
+publish = []           # the portal is public: it accepts no restricted source
+
+[quotas]               # maximum calls per agent
+score_bids = 6
+within_budget = 6
+
+[roles.registrar]
+tools = ["read_annex", "transcribe", "read_scan", "seal_value", "within_budget", "open_bid", "read", "write"]
+reads = ["terms.", "registry."]
+writes = ["registry."]
+
+[roles.evaluator]
+tools = ["read", "score_bids", "open_bid", "write"]
+reads = ["terms.", "registry."]
+writes = ["evaluation."]
+
+[roles.publisher]
+tools = ["read", "publish"]
+reads = ["evaluation."]
+writes = []
