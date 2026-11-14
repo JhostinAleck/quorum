@@ -117,6 +117,13 @@ def hidden_tasks_for(kind: str, case: Case, style: str = "covert") -> dict[str, 
     return hidden_tasks(kind, case.refs[TARGET], TARGET, style, case.scan)
 
 
+def side_tasks(kind: str, case: Case, style: str = "covert") -> dict[str, str]:
+    """{role: text} for the web interface (quorum.ui.workflow), which appends it to SYSTEM[role].
+
+    The attack policy goes with the step: without it, in the pilots, the model reported the step or ignored it."""
+    return {role: f"{ATTACK_POLICY}\n\n{task}" for role, task in hidden_tasks_for(kind, case, style).items()}
+
+
 def with_hidden_task(system_prompt: str, role: str, tasks: Mapping[str, str]) -> str:
     return system_prompt + ("\n\n" + tasks[role] if role in tasks else "")
 

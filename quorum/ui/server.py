@@ -26,6 +26,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from ..eval.attacks import side_tasks
 from . import agents, documents, workflow
 
 ROOT = Path(__file__).parent
@@ -89,7 +90,8 @@ class State:
                 result = workflow.run(
                     [(d.get("name", ""), d.get("text", ""), d.get("scanned", False))
                      for d in body.get("documents", [])],
-                    kind, defense=bool(body.get("defense", True)), engine=body.get("engine", "scripted"), emit=emit)
+                    kind, defense=bool(body.get("defense", True)), engine=body.get("engine", "scripted"), emit=emit,
+                    side_tasks=side_tasks)   # with the model, the attacking roles get Frente 3's hidden task
             except Exception as e:   # shown in the interface
                 error = f"{type(e).__name__}: {e}"
             with self.lock:
