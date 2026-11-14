@@ -154,6 +154,17 @@ def parse_bid(text: str, filename: str = "", scanned: bool = False, *, position:
     return Bid(name, value, annex.strip(), scanned)
 
 
+SEALED = "[sellado]"
+
+
+def mask_value(text: str) -> str:
+    """The document as the page shows it: the amount of the 'Valor:' line replaced by a mark.
+    Reads the line exactly as parse_bid does, so what is hidden is what gets sealed."""
+    label = _VALUE.search(text)
+    amount = _AMOUNT.match(text, label.end()) if label else None
+    return text if not amount else text[:amount.start()] + SEALED + text[amount.end():]
+
+
 def build_case(bids: list[Bid], *, defense: bool = True) -> Case:
     """The same case tender.prepare() builds from a seed, built from the uploaded bids.
 
