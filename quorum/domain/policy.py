@@ -9,6 +9,9 @@ A policy is four lists plus the roles:
   - declassifiers: tools allowed to return a public result computed over
                    restricted data
 
+Two switches make the gate stricter: strict_mode (rule P2) and
+high_water_mark, which closes the channels that labels on values do not see.
+
 A policy is a value object: immutable, validated when it is built, and with
 no I/O. Loading it from a file is the job of the infrastructure layer.
 """
@@ -46,6 +49,7 @@ class Policy:
     endorsements: frozenset[str] = frozenset()      # sources the user allowed to leave
     quotas: Mapping[str, int] = field(default_factory=dict)   # maximum calls per agent
     strict_mode: bool = False                # turns rule P2 on
+    high_water_mark: bool = False            # a sink is judged with the secrets any agent has seen
     roles: Mapping[str, Role] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -74,7 +78,7 @@ class Policy:
     @classmethod
     def from_dict(cls, d: Mapping[str, Any]) -> Policy:
         allowed_fields = {"restricted", "untrusted", "sinks", "declassifiers",
-                          "endorsements", "quotas", "strict_mode", "roles"}
+                          "endorsements", "quotas", "strict_mode", "high_water_mark", "roles"}
         unknown = set(d) - allowed_fields
         if unknown:  # a typo must not silently weaken the policy
             raise InvalidConfiguration(f"unknown fields in the policy: {sorted(unknown)}")
@@ -93,5 +97,6 @@ class Policy:
             endorsements=frozenset(d.get("endorsements", ())),
             quotas=d.get("quotas", {}),
             strict_mode=bool(d.get("strict_mode", False)),
+            high_water_mark=bool(d.get("high_water_mark", False)),
             roles=roles,
         )
