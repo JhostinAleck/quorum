@@ -38,6 +38,16 @@ WEAKER = {
         **p.roles, "publisher": type(p.roles["publisher"])("publisher", p.roles["publisher"].tools,
                                                           (*p.roles["publisher"].reads, "sealed."),
                                                           p.roles["publisher"].writes)}),
+    "a prefix is no longer untrusted": lambda p: p.evolve(untrusted=p.untrusted[1:]),
+    "a prefix becomes untrusted": lambda p: p.evolve(untrusted=(*p.untrusted, "terms.")),
+    "a declassifier is dropped": lambda p: p.evolve(declassifiers=sorted(p.declassifiers)[1:]),
+    "a declassifier is added": lambda p: p.evolve(declassifiers={*p.declassifiers, "read"}),
+    "a role can write more": lambda p: p.evolve(roles={
+        **p.roles, "publisher": type(p.roles["publisher"])("publisher", p.roles["publisher"].tools,
+                                                          p.roles["publisher"].reads, ("registry.",))}),
+    "a role is renamed inside": lambda p: p.evolve(roles={
+        **p.roles, "publisher": type(p.roles["publisher"])("registrar", p.roles["publisher"].tools,
+                                                          p.roles["publisher"].reads, p.roles["publisher"].writes)}),
     "a role gets another tool": lambda p: p.evolve(roles={
         **p.roles, "publisher": type(p.roles["publisher"])("publisher", (*p.roles["publisher"].tools, "open_bid"),
                                                           p.roles["publisher"].reads, p.roles["publisher"].writes)}),
@@ -180,3 +190,111 @@ def test_the_command_exits_with_an_error_when_the_lock_is_stale(tmp_path, monkey
     with pytest.raises(SystemExit) as stop:
         integrity.main([])
     assert stop.value.code and "kernel" in capsys.readouterr().err
+
+
+# --- what a review of the first version found --------------------------------------------------
+
+def test_a_text_where_a_list_was_meant_is_not_the_list_of_its_letters():
+    role = type(POLICY.roles["publisher"])
+    one = POLICY.evolve(roles={"x": role("x", "ab", "bids/")})
+    other = POLICY.evolve(roles={"x": role("x", ("a", "b"), ("/", "b", "d", "i", "s"))})
+    assert integrity.policy_digest(one) != integrity.policy_digest(other)
+
+
+@pytest.mark.parametrize("field", ["description", "params", "rationale", "name"])
+def test_every_part_of_a_tool_s_interface_is_in_its_hash(field):
+    tool = next(t for t in TOOLS if t.kind is Kind.DECLASSIFIER)
+    changed = Tool(tool.name, tool.fn, tool.description, tool.params, tool.kind, tool.rationale)
+    if field == "params":
+        changed.params = {name: text + " (otro)" for name, text in tool.params.items()}
+    else:
+        setattr(changed, field, getattr(tool, field) + "x")
+    swapped = [changed if t is tool else t for t in TOOLS]
+    assert integrity.tools_digest(swapped) != integrity.tools_digest(TOOLS)
+
+
+def test_a_file_in_a_subfolder_counts(tmp_path):
+    copy = tmp_path / "tender"
+    shutil.copytree(integrity.ROOT / "scenarios" / "tender", copy, ignore=shutil.ignore_patterns("__pycache__"))
+    original = integrity.files_digest(copy)
+    (copy / "deep" / "deeper").mkdir(parents=True)
+    (copy / "deep" / "deeper" / "extra.py").write_text("X = 1\n", encoding="utf-8")
+    assert integrity.files_digest(copy) != original
+
+
+@pytest.mark.parametrize("plant", ["compiled package", "compiled module", "linked folder", "linked file"])
+def test_something_planted_to_be_imported_in_place_of_the_source_is_refused(tmp_path, plant):
+    """A compiled file or a link is imported without a look at the source that the hash covers."""
+    copy = tmp_path / "tender"
+    shutil.copytree(integrity.ROOT / "scenarios" / "tender", copy, ignore=shutil.ignore_patterns("__pycache__"))
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "__init__.py").write_text("evaluate = None\n", encoding="utf-8")
+    if plant == "compiled package":
+        (copy / "rules").mkdir()
+        (copy / "rules" / "__init__.pyc").write_bytes(b"\x00")
+    elif plant == "compiled module":
+        (copy / "rules.so").write_bytes(b"\x00")
+    elif plant == "linked folder":
+        (copy / "gate").symlink_to(outside, target_is_directory=True)
+    else:
+        (copy / "extra.py").symlink_to(outside / "__init__.py")
+    with pytest.raises(InvalidConfiguration):
+        integrity.files_digest(copy)
+    (copy / "__pycache__").mkdir(exist_ok=True)
+    (copy / "__pycache__" / "rules.cpython-313.pyc").write_bytes(b"\x00")    # the cache is where they belong
+
+
+def test_the_seal_says_whether_the_gate_blocks_or_only_watches():
+    """Audit mode turns the gate off without touching a file: the hashes are the same, the seal is not."""
+    blocking, watching = tender.prepare(1, defense=True), tender.prepare(1, defense=False)
+    same = integrity.seal(blocking.quorum, "tender")
+    assert integrity.seal(watching.quorum, "tender") == same
+    assert integrity.sealed_runtime(blocking.quorum.audit_log)["enforce"] is True
+    assert integrity.sealed_runtime(watching.quorum.audit_log)["enforce"] is False
+    assert integrity.sealed_runtime(blocking.quorum.audit_log)["rules"] and integrity.verify_log(watching.quorum,
+                                                                                                "tender")
+    watching.quorum.enforce = True                      # the monitor no longer runs the way it sealed
+    assert not integrity.verify_log(watching.quorum, "tender")
+    assert integrity.sealed_runtime(tender.prepare(2, defense=True).quorum.audit_log) is None
+
+
+def test_a_monitor_without_rules_or_with_an_approver_seals_that():
+    bare = new_monitor(POLICY, TOOLS, rules=(), approver=lambda request: True)
+    integrity.seal(bare)
+    assert integrity.sealed_runtime(bare.audit_log) == {"enforce": True, "rules": [], "approver": True}
+
+
+def test_a_log_is_sealed_once():
+    case = tender.prepare(1, defense=True)
+    integrity.seal(case.quorum, "tender")
+    with pytest.raises(InvalidConfiguration):
+        integrity.seal(case.quorum, "tender")
+    assert sum(event["kind"] == "integrity" for event in case.quorum.audit_log) == 1
+
+
+@pytest.mark.parametrize("text", ["[]", "null", '{"scenarios": {"tender": "x"}}', '{"kernel": 3}', '"x"'])
+def test_a_lock_of_the_wrong_shape_is_a_difference_and_not_a_crash(tmp_path, text):
+    lock = tmp_path / "lock.json"
+    lock.write_text(text, encoding="utf-8")
+    assert integrity.check(lock) and not integrity.pinned("tender", lock)
+    assert integrity.locked_pipeline("tender", lock) == ""
+
+
+def test_the_check_compares_every_hash_the_lock_holds(tmp_path):
+    lock = tmp_path / "lock.json"
+    pinned = integrity.current()
+    pinned["scenarios"]["tender"]["pipeline"] = "0" * 64
+    lock.write_text(json.dumps(pinned), encoding="utf-8")
+    assert integrity.check(lock) == ["tender: pipeline changed"] and not integrity.pinned("tender", lock)
+    pinned = integrity.current()
+    pinned["scenarios"]["tender"]["kernel"] = "0" * 64
+    lock.write_text(json.dumps(pinned), encoding="utf-8")
+    assert integrity.check(lock) == ["tender: kernel changed"]
+    assert integrity.locked_pipeline("tender") == integrity.current()["scenarios"]["tender"]["pipeline"]
+
+
+def test_the_service_that_gives_each_token_its_role_is_part_of_the_trusted_path():
+    assert {"launch.py", "integrity.py", "__init__.py", "adapters/http_server.py"} <= set(integrity.KERNEL)
+    for part in integrity.KERNEL:
+        assert (integrity.ROOT / part).exists(), part
