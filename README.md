@@ -63,6 +63,7 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 - [Plan de evaluación](docs/plan-de-evaluacion.md)
 - [Límites, riesgo dual y uso responsable](docs/uso-responsable.md)
 - [Referencias y atribución](docs/referencias.md)
+- [Tareas del equipo](docs/tareas.md)
 
 ## Cómo correrlo
 
