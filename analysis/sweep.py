@@ -3,9 +3,13 @@
   uv run python -m analysis.sweep --out resultados/guionado.csv
   uv run --extra eval python -m analysis.metrics resultados/guionado.csv
 
-Every episode runs once with the gate in audit mode, so nothing is blocked and every arm
-is read off the same behaviour. It runs a second time with high_water_mark on, to get that
-arm too (hwm_blocks).
+Every episode runs once with nothing in its way (labels only, in audit mode): that run gives
+what was published, what leaked and the trajectories. The gate's decision is then read off
+the same episode under three policies, each in audit mode:
+
+  quorum_blocks        the scenario's policy as it ships
+  labels_only_blocks   labels on values alone: no high-water mark, no cap on publications
+  hwm_blocks           with high_water_mark on
 
 Kinds: honest and honest_scanned, attack_k1..3, twin_k1..3 (the hard negative of each
 attack, same seed) and attack_signal (the missing-keys channel, see probes.py).
@@ -23,21 +27,21 @@ import random
 from pathlib import Path
 from typing import Any
 
-from quorum.scenarios.tender import (
-    POLICY,
+from quorum import Policy
+from quorum.scenarios.tender import POLICY, SUPPLIERS, Episode
+from quorum.scenarios.tender.probes import (
     SIGNAL_STEPS,
-    SUPPLIERS,
-    Episode,
+    labels_only,
     leaked_bits,
-    run,
     run_signal,
     run_twin,
+    run_under,
+    with_high_water_mark,
 )
 
-COLUMNS = ["kind", "k", "seed", "steps", "leak", "leaked_bits", "leaked_bits_insider", "quorum_blocks", "hwm_blocks",
-           "useful", "error"]
+COLUMNS = ["kind", "k", "seed", "steps", "leak", "leaked_bits", "leaked_bits_insider", "quorum_blocks",
+           "labels_only_blocks", "hwm_blocks", "useful", "error"]
 INSIDER = SUPPLIERS[2]      # a competing supplier: it knows its own amount, nothing else (as in quorum.eval.break_gate)
-HWM = POLICY.evolve(high_water_mark=True)
 
 
 def episodes(honest: int, per_k: int, signal: int, scanned: float, seed: int) -> list[tuple[str, int, int | None]]:
@@ -51,23 +55,23 @@ def episodes(honest: int, per_k: int, signal: int, scanned: float, seed: int) ->
     return plan
 
 
-def run_one(kind: str, seed: int, steps: int | None, *, hwm: bool = False) -> Episode:
+def run_one(kind: str, seed: int, steps: int | None, policy: Policy) -> Episode:
+    """The episode in audit mode under that policy: nothing is blocked, the decision is recorded."""
     if kind == "attack_signal":
-        return run_signal(seed, steps or SIGNAL_STEPS[0], defense=False, policy=HWM if hwm else POLICY)
+        return run_signal(seed, steps or SIGNAL_STEPS[0], defense=False, policy=policy)
     if kind.startswith("twin_k"):
-        if hwm:   # a twin opens the bid like its attack, so the high-water mark sees the same thing
-            return run(f"attack_k{kind[-1]}", seed, defense=False, policy=HWM)
-        return run_twin(int(kind[-1]), seed, defense=False)
-    return run(kind, seed, defense=False, policy=HWM if hwm else POLICY)
+        return run_twin(int(kind[-1]), seed, defense=False, policy=policy)
+    return run_under(kind, seed, policy, defense=False)
 
 
 def row(kind: str, seed: int, steps: int | None) -> tuple[dict[str, Any], Episode]:
-    episode = run_one(kind, seed, steps)
+    episode = run_one(kind, seed, steps, labels_only())
     return {"kind": kind, "k": episode.k, "seed": seed, "steps": steps or "", "leak": int(episode.leak),
             "leaked_bits": round(leaked_bits(episode), 2),
             "leaked_bits_insider": round(leaked_bits(episode, INSIDER), 2),
-            "quorum_blocks": int(episode.quorum_blocks),
-            "hwm_blocks": int(run_one(kind, seed, steps, hwm=True).quorum_blocks),
+            "quorum_blocks": int(run_one(kind, seed, steps, POLICY).quorum_blocks),
+            "labels_only_blocks": int(episode.quorum_blocks),
+            "hwm_blocks": int(run_one(kind, seed, steps, with_high_water_mark()).quorum_blocks),
             "useful": int(episode.useful), "error": ""}, episode
 
 
