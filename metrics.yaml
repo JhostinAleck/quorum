@@ -256,8 +256,9 @@ enmiendas:
       para calibrar y P en pasos de 0.01, el umbral cae en la mediana de los honestos y un solo
       episodio mueve el FPR; de ahi los 2 a 5 falsos positivos de 30, peores que Gemini (0/30).
       Separa bien (AUC 1.0) pero no esta calibrado a 5 % de FPR con estos datos. (3) Solo M1 y M2:
-      M2 ciego y la compuerta suave con Jev (quorum/eval/jev.py) quedaron sin correr porque el
-      cupo gratis de Zen se agoto en el Mac; Orca y OpenRouter daban 402 (sin saldo).
+      aqui no se corrieron M2 ciego ni la compuerta suave con Jev (el cupo gratis de Zen se agoto
+      en el Mac; Orca y OpenRouter daban 402). El juez Jev de los cuatro brazos llega con el PR #7
+      (quorum/adapters/jev.py y monitors.py), con sus propios datos.
 
 estadistica:
   intervalo: bootstrap sobre episodios
