@@ -48,6 +48,7 @@ from . import agents, documents, workflow
 ROOT = Path(__file__).parent
 EXAMPLES = ROOT / "examples"
 MAX_BODY = 12_000_000
+IMAGES = {"/logo.png": "logo.png", "/favicon.png": "favicon.png"}   # the only files served besides the page
 
 
 def read_document(name: str, data: bytes) -> dict[str, Any]:
@@ -263,6 +264,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ("/", "/index.html"):
             self._state()                  # the cookie arrives with the page, before any call
             self._send((ROOT / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif self.path in IMAGES:
+            self._send((ROOT / IMAGES[self.path]).read_bytes(), "image/png")
         elif self.path == "/api/state":
             self._json(self._state().view())
         elif self.path in ("/api/examples", "/api/examples/pdf"):
