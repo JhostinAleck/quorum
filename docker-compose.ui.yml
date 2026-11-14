@@ -1,0 +1,94 @@
+# Web interface: upload bids (text, PDF or scans) and run episode after episode.
+# A file of its own, not an override of docker-compose.yml. How to use it: docs/interfaz-web.md
+#
+#   docker compose -f docker-compose.ui.yml up --build      ->  http://127.0.0.1:8765
+#
+# Same isolation as the base deployment (docs/despliegue.md), with long-running services:
+#   - lab holds the monitor, the store, the audit log and the gate, plus the page and the OCR
+#     tools. It has no model key.
+#   - each agent has the model key and its own token, nothing else. It reaches the monitor
+#     with the protocol of docs/protocolo.md and waits to be told that it is its turn.
+#   - each agent shares a private network only with lab: agents cannot reach each other.
+
+name: quorum-ui
+
+x-hardening: &hardening
+  init: true
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: [/tmp]
+  pids_limit: 128
+
+x-agent: &agent
+  <<: *hardening
+  image: quorum:llm
+  build:
+    context: .
+    args:
+      WITH_LLM: "1"
+  entrypoint: ["python", "-m", "quorum.ui.agent_service"]
+  command: []
+  mem_limit: 512m
+  depends_on: [lab]
+
+x-agent-environment: &agent-environment
+  OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?set OPENROUTER_API_KEY in .env}
+  QUORUM_MODEL: ${QUORUM_MODEL:-openai/gpt-6-luna}
+  QUORUM_MONITOR_URL: http://lab:8080
+  QUORUM_AGENT_HOST: 0.0.0.0
+
+services:
+  lab:
+    <<: *hardening
+    image: quorum:ui
+    build:
+      context: .
+      args:
+        WITH_OCR: "1"
+    entrypoint: ["python", "-m", "quorum.ui.server"]
+    command: []
+    mem_limit: 768m
+    ports: ["${QUORUM_UI_BIND:-127.0.0.1}:${QUORUM_UI_PORT:-8765}:8765"]
+    environment:
+      QUORUM_UI_HOST: 0.0.0.0
+      QUORUM_UI_BIND: ${QUORUM_UI_BIND:-127.0.0.1}
+      QUORUM_UI_PASSWORD: ${QUORUM_UI_PASSWORD:-}
+      QUORUM_MONITOR_HOST: 0.0.0.0
+      QUORUM_MODEL: ${QUORUM_MODEL:-openai/gpt-6-luna}
+      QUORUM_AGENT_URLS: registrar=http://registrar:8000,evaluator=http://evaluator:8000,publisher=http://publisher:8000
+      QUORUM_TOKEN_REGISTRAR: ${QUORUM_TOKEN_REGISTRAR:?set QUORUM_TOKEN_REGISTRAR in .env (see docs/despliegue.md)}
+      QUORUM_TOKEN_EVALUATOR: ${QUORUM_TOKEN_EVALUATOR:?set QUORUM_TOKEN_EVALUATOR in .env (see docs/despliegue.md)}
+      QUORUM_TOKEN_PUBLISHER: ${QUORUM_TOKEN_PUBLISHER:?set QUORUM_TOKEN_PUBLISHER in .env (see docs/despliegue.md)}
+    networks: [front, net-registrar, net-evaluator, net-publisher]
+
+  registrar:
+    <<: *agent
+    environment:
+      <<: *agent-environment
+      QUORUM_ROLE: registrar
+      QUORUM_TOKEN: ${QUORUM_TOKEN_REGISTRAR}
+    networks: [net-registrar]
+
+  evaluator:
+    <<: *agent
+    environment:
+      <<: *agent-environment
+      QUORUM_ROLE: evaluator
+      QUORUM_TOKEN: ${QUORUM_TOKEN_EVALUATOR}
+    networks: [net-evaluator]
+
+  publisher:
+    <<: *agent
+    environment:
+      <<: *agent-environment
+      QUORUM_ROLE: publisher
+      QUORUM_TOKEN: ${QUORUM_TOKEN_PUBLISHER}
+    networks: [net-publisher]
+
+networks:
+  front:
+  net-registrar:
+  net-evaluator:
+  net-publisher:

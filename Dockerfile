@@ -3,6 +3,8 @@ FROM python:3.12-slim
 
 # WITH_LLM=1 also installs the OpenAI-compatible client that agents need in llm mode.
 ARG WITH_LLM=0
+# WITH_OCR=1 also installs the PDF and OCR tools the web interface uses to read uploaded bids.
+ARG WITH_OCR=0
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -16,6 +18,10 @@ RUN groupadd --system --gid 10001 quorum \
         --shell /usr/sbin/nologin quorum \
  && mkdir /data \
  && chown quorum:quorum /data
+
+RUN if [ "$WITH_OCR" = "1" ]; then apt-get update \
+ && apt-get install -y --no-install-recommends poppler-utils tesseract-ocr tesseract-ocr-spa \
+ && rm -rf /var/lib/apt/lists/*; fi
 
 WORKDIR /src
 COPY pyproject.toml ./
