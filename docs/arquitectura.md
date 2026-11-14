@@ -22,10 +22,10 @@ El código está organizado en capas, y las dependencias apuntan siempre hacia a
 | Dominio | `quorum/domain/` | El modelo de la defensa: etiquetas, política, compuerta, agente, bitácora y el puerto del almacén. Sin entrada ni salida | Solo la biblioteca estándar |
 | Aplicación | `quorum/application/` | El caso de uso "un agente llama a una herramienta": el monitor de referencia y las herramientas genéricas | El dominio |
 | Infraestructura | `quorum/infrastructure/` | Almacenes (memoria, SQLite) y lectura de políticas en TOML | El dominio |
-| Adaptadores | `quorum/adapters/` | Puentes hacia frameworks de agentes (Inspect AI, function calling genérico) | Aplicación y dominio |
+| Adaptadores | `quorum/adapters/` | Puentes hacia afuera: frameworks de agentes (Inspect AI, function calling genérico), el bucle de agente y el protocolo HTTP (servidor y cliente) | Aplicación y dominio |
 | Contextos | `quorum/scenarios/<contexto>/` | Cada dominio de uso: su `policy.toml`, sus herramientas y sus reglas de negocio | Todas las capas, pero no otro contexto |
 
-`quorum/bootstrap.py` es la raíz de composición: el único lugar que une la aplicación con una infraestructura concreta (`new_monitor`). Todo lo público se importa desde `quorum` (`from quorum import Policy, new_monitor, Blocked`).
+`quorum/bootstrap.py` es la raíz de composición: el único lugar que une la aplicación con una infraestructura concreta (`new_monitor`). `quorum/launch.py` es la segunda: arma los procesos que corren por separado (el monitor, cada agente y el reporte del operador) y es el único módulo que conoce a la vez un escenario, los adaptadores y la infraestructura. Todo lo público se importa desde `quorum` (`from quorum import Policy, new_monitor, Blocked`).
 
 Las piezas, con el nombre que les da DDD:
 
@@ -111,16 +111,36 @@ La compuerta es una función pura: misma entrada, misma salida. Si una regla fal
 
 El monitor tiene dos modos. Con `enforce=True` bloquea. Con `enforce=False` solo audita: nada se bloquea, pero la decisión queda en la bitácora. El experimento usa el segundo para obtener los cuatro brazos de una sola corrida, y un test comprueba que ambos modos deciden igual.
 
+## Monitor y agentes en contenedores
+
+En un solo proceso, los agentes y el monitor comparten memoria: sirve para medir, pero la frontera entre el agente y lo que se protege es una convención del código. Para que sea una frontera real, el monitor corre como un servicio y cada agente en su propio contenedor.
+
+![Contenedores](diagramas/contenedores.png)
+
+- **El monitor es el único que tiene datos.** El almacén, la bitácora y la compuerta viven en su contenedor. Un agente no monta ningún volumen: solo recibe lo que el monitor le responde.
+- **La identidad sale del token, no de lo que el agente diga.** Cada agente tiene un token propio y el monitor deduce de él el nombre y el rol. Un agente no puede actuar con el rol de otro ni leer el estado del episodio, que exige un token de administración aparte.
+- **Los agentes no se hablan entre sí.** Todo lo que comparten pasa por el almacén etiquetado del monitor, así que la etiqueta no se pierde por el camino.
+- **La red no tiene salida.** En el modo guionado, la red de los contenedores es interna. El único camino de un dato hacia afuera es el sumidero `publish`, que pasa por la compuerta.
+
+Nada de esto cambia el dominio ni la aplicación. El servidor (`MonitorServer`) y el cliente (`RemoteSession`) son adaptadores, hechos con la biblioteca estándar. `RemoteSession` se comporta como una sesión local para todo lo que usa un agente, así que el mismo código de agente corre en un proceso o repartido en contenedores. El contrato está en [protocolo](protocolo.md) y la forma de correrlo en [despliegue](despliegue.md).
+
+Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas de segundo por episodio guionado), y los contenedores sirven para mostrar la defensa con la frontera puesta (unos 8 segundos por episodio).
+
 ## Qué se probó
 
-`uv run pytest` corre 115 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 385 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
 - **Los tests detectan fallos reales**: si se quita la propagación al leer, la herencia al escribir o la decisión de la compuerta, la batería falla.
 - **La invariante del agente**: su contexto nunca pierde una fuente y no se puede reasignar.
+- **Ninguna llamada escapa de la bitácora**: ni un texto que no se puede codificar ni un argumento con ciclos impiden registrar el evento. Antes de este arreglo, una escritura así se ejecutaba y no quedaba anotada.
 - **La regla de dependencias** entre capas.
 - **Los dos escenarios** de punta a punta, con almacén en memoria y con SQLite.
+- **El protocolo por red**: tokens desconocidos, roles cruzados, cuerpos mal formados y llamadas en paralelo. Un agente remoto obtiene exactamente lo mismo que uno local.
+- **Procesos separados**: el monitor y cada agente como procesos distintos que solo comparten un puerto. El ataque repartido entre tres procesos se bloquea igual.
+
+Además, el despliegue con Docker Compose se corrió a mano en los cuatro casos (honesto, honesto con oferta escaneada, ataque k = 3 con compuerta y en modo auditoría) con los resultados que indica [despliegue](despliegue.md).
 
 ## Por qué no un monitor LLM
 
@@ -152,8 +172,12 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/infrastructure/stores.py` | Almacén en memoria y en SQLite |
 | `quorum/infrastructure/policy_files.py` | Lectura de políticas en TOML |
 | `quorum/bootstrap.py` | Raíz de composición |
-| `quorum/adapters/` | Inspect AI y function calling genérico |
-| `quorum/scenarios/tender/` | La licitación: política, reglas, herramientas, casos y episodios guionados |
+| `quorum/launch.py` | Puntos de entrada de los procesos: `monitor`, `agent` y `report` |
+| `quorum/adapters/functions.py`, `inspect_ai.py` | Function calling genérico e Inspect AI |
+| `quorum/adapters/http_server.py`, `http_client.py` | El monitor como servicio HTTP y la sesión remota de un agente |
+| `quorum/adapters/agent_loop.py`, `openai_chat.py` | Bucle de agente con modelo y cliente de un proveedor compatible con OpenAI |
+| `Dockerfile`, `docker-compose.yml`, `docker-compose.llm.yml` | Una imagen para todos los servicios, el despliegue guionado y la variante con modelo |
+| `quorum/scenarios/tender/` | La licitación: política, reglas, herramientas, casos, episodios guionados y prompts base de cada rol |
 | `quorum/scenarios/helpdesk/` | La mesa de ayuda, segundo contexto |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
 | `analysis/` | Bootstrap y figura principal (en construcción) |

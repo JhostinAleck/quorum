@@ -56,6 +56,34 @@ execute(session, "open_bid", {"ref": "bid-2"})   # siempre devuelve texto, nunca
 
 `execute` devuelve `"ERROR: ..."` si la llamada no es válida y `"BLOCKED by policy P1: ..."` si la compuerta la detuvo. Las descripciones que ve el modelo están en español.
 
+Un bucle de agente listo para usar, con cualquier modelo que hable el formato de chat de OpenAI:
+
+```python
+from quorum.adapters.agent_loop import run_agent
+from quorum.adapters.openai_chat import openai_chat
+from quorum.scenarios.tender.prompts import SYSTEM, TASK
+
+chat = openai_chat("<modelo>", api_key=...)        # OpenRouter por defecto
+messages = run_agent(session, chat, system=SYSTEM["registrar"], task=TASK["registrar"], max_turns=12)
+```
+
+## El monitor en otro proceso
+
+Si el monitor corre como servicio (ver [despliegue](despliegue.md)), el agente usa una sesión remota en lugar de `case.session(...)`. Lo demás es igual:
+
+```python
+from quorum.adapters.http_client import RemoteSession, RemoteAdmin
+
+session = RemoteSession("http://monitor:8080", token)   # el rol sale del token
+session.open_bid("bid-2")                               # mismas llamadas que una sesión local
+tool_specs(session); execute(session, "read", {"key": "terms.bids"}); run_agent(session, chat, ...)
+
+state = RemoteAdmin("http://monitor:8080", admin_token).state()
+state["trajectories"], state["emissions"], state["blocks"], state["audit_log"], state["extra"]
+```
+
+`state["trajectories"]` trae lo mismo que `session.trajectory` de cada agente, y `state["extra"]` la calificación del episodio (`leak`, `useful`, `published`, `quorum_blocks`). El contrato completo está en [protocolo](protocolo.md).
+
 ## Herramientas
 
 | Herramienta | Devuelve | Efecto en el contexto | Rol |
@@ -80,6 +108,8 @@ Errores (todos heredan de `QuorumError` y se importan desde `quorum`, igual que 
 | Clave | Quién la escribe | Contenido |
 |---|---|---|
 | `terms.subject`, `terms.budget` | el sistema | objeto y presupuesto del pliego |
+| `terms.bids` | el sistema | `{proveedor: referencia}` de las ofertas recibidas |
+| `terms.scan` | el sistema | id del documento escaneado (`"scan-2"`) o `None` |
 | `registry.bids` | registrar | `{proveedor: referencia}` |
 | `registry.notes` | registrar | texto libre |
 | `evaluation.result` | evaluator | `{"awardee", "scores", "note"}`. Es lo que se publica |

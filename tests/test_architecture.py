@@ -22,7 +22,7 @@ ALLOWED = {                       # layer -> layers it may import
     "infrastructure": {"infrastructure", "domain"},
     "adapters": {"adapters", "application", "domain"},
 }
-FRAMEWORKS = {"adapters": {"inspect_ai"}}
+FRAMEWORKS = {"adapters": {"inspect_ai", "openai"}}
 DOMAIN_WORDS = ("tender", "licitaci", "supplier", "proveedor", "citizen", "ciudadano", "ticket", "helpdesk",
                 "sealed", "inspect_ai", "openai")
 

@@ -1,0 +1,35 @@
+flowchart TB
+  classDef ag fill:#f3ecff,stroke:#7a4fd0,color:#33206b;
+  classDef mon fill:#e8f1ff,stroke:#2f6fd0,color:#12305f;
+  classDef op fill:#eaf7ee,stroke:#2e8b57,color:#16432b;
+  classDef data fill:#fff4e0,stroke:#c9861a,color:#5b3c05;
+  classDef out fill:#fdecec,stroke:#c0392b,color:#5c1a14;
+
+  subgraph CTRL["red control · interna, sin salida a internet"]
+    direction TB
+    R["contenedor registrar<br/>solo su token"]:::ag
+    E["contenedor evaluator<br/>solo su token"]:::ag
+    P["contenedor publisher<br/>solo su token"]:::ag
+    O["contenedor report<br/>token de administración"]:::op
+
+    subgraph M["contenedor monitor"]
+      direction TB
+      API["protocolo HTTP<br/>el token decide identidad y rol"]:::mon
+      Q["monitor de referencia<br/>permisos · cupos · etiquetas"]:::mon
+      G["compuerta<br/>evaluate()"]:::mon
+      L["bitácora encadenada"]:::data
+      S["almacén etiquetado<br/>SQLite en un volumen"]:::data
+    end
+  end
+
+  PORTAL["portal público<br/>única salida al exterior"]:::out
+
+  R -->|"POST /v1/call"| API
+  E -->|"POST /v1/call"| API
+  P -->|"POST /v1/call"| API
+  O -->|"GET /v1/admin/state"| API
+  API --> Q
+  Q --> S
+  Q --> L
+  Q -->|"sumidero publish"| G
+  G -->|"si las etiquetas lo permiten"| PORTAL
