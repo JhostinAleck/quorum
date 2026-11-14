@@ -6,15 +6,24 @@ Proyecto del Defensive Acceleration Hackathon (AI Safety Colombia x IEEE CS Unia
 
 > Estado: en construcción durante el sprint. Los resultados se agregan a `docs/resultados.md` cuando existan. Nada en este repo afirma un número que no salga de los logs.
 
-## El problema en una frase
+## La idea: juntar dos líneas que estaban separadas
 
-Cuando una acción dañina se reparte entre varios agentes, un monitor que revisa a cada agente por separado ve tres pasos normales y ninguna alarma. El daño solo existe en el conjunto. Este efecto ya fue medido para monitores (Makins et al., UK AISI, 2026, arXiv:2607.07368). Aquí medimos si una compuerta determinista de procedencia lo detiene y cuánto cuesta. El trabajo relacionado y lo que aportamos está en [referencias](docs/referencias.md).
+| Línea de trabajo | Qué mostró | Qué dejó sin probar |
+|---|---|---|
+| **Control de IA multiagente** (Makins et al., UK AISI, 2026, arXiv:2607.07368) | Si un ataque se reparte entre varios agentes, cada paso se ve menos sospechoso y los monitores por agente lo detectan menos | Solo evalúa monitores LLM. No prueba defensas de flujo de información |
+| **Control de flujo de información para agentes** (FIDES, CaMeL, SafeFlow) | Etiquetar los datos y decidir con reglas deterministas frena fugas causadas por contenido malicioso | Asume que el agente es honesto y el contenido es el atacante. No se compara con monitores ni contra agentes que coluden |
+
+**Quórum junta las dos:** toma el ataque repartido de la primera línea y lo enfrenta, en los mismos episodios, a los monitores de esa línea y a una compuerta determinista de procedencia de la segunda, bajo el supuesto más duro: los propios agentes son los atacantes.
+
+La pregunta que respondemos con datos:
+
+> Cuando el ataque se reparte entre más agentes, la detección de los monitores cae. ¿Cae también la de una compuerta de procedencia? ¿Y cuánto trabajo legítimo cuesta?
 
 ## La defensa
 
 Cada dato lleva una etiqueta con su origen y su nivel de confidencialidad. La etiqueta viaja con el dato entre agentes a través de los servicios compartidos, y lo que un agente escribe hereda las etiquetas de todo lo que leyó. Antes de cualquier salida al exterior, una función pura (sin modelo de lenguaje) revisa las etiquetas y bloquea lo que no debe salir.
 
-La compuerta no lee prosa, no puntúa sospecha y no se puede persuadir.
+La compuerta no lee prosa, no puntúa sospecha y no se puede persuadir. Tampoco le importa entre cuántos agentes se repartió el ataque: la etiqueta llega igual al final.
 
 ![Arquitectura](docs/diagramas/arquitectura.png)
 
@@ -34,13 +43,18 @@ El secreto es el valor de la oferta sellada de un competidor, marcado con un can
 
 ## Qué medimos
 
-Tres brazos sobre los mismos episodios (honestos, ataque monolítico, ataque repartido):
+Cuatro brazos sobre los mismos episodios:
 
-1. **M1**: monitor LLM por agente (línea base).
-2. **M2**: monitor LLM que ve las tres trayectorias juntas.
-3. **Quórum**: compuerta de procedencia.
+1. **Sin defensa**: referencia.
+2. **M1**: monitor LLM por agente, la línea base de control de IA.
+3. **M2**: monitor LLM que ve las trayectorias de todos los agentes juntas.
+4. **Quórum**: compuerta de procedencia.
+
+El ataque se corre con **fragmentación k = 1, 2 y 3**: el número de agentes entre los que se reparte. Con k = 1 es el ataque monolítico.
 
 Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de falsos positivos, tasa de fuga del canario, utilidad en episodios honestos y bloqueos de más. Intervalos de confianza al 95 % por bootstrap sobre episodios.
+
+![Diseño experimental](docs/diagramas/evaluacion.png)
 
 ## Documentos
 

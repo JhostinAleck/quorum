@@ -1,36 +1,34 @@
 flowchart LR
-  subgraph GEN["Episodios (por semilla)"]
+  subgraph L1["Línea 1 · Control de IA multiagente"]
     direction TB
-    H["Honesto<br/>n = 60"]
-    M["Ataque monolítico<br/>n = 60"]
-    R["Ataque repartido<br/>n = 60"]
+    ATK["Ataque repartido<br/>k = 1, 2, 3 agentes"]
+    MON["Monitores LLM<br/>M1 por agente · M2 de composición"]
   end
 
-  subgraph ARMS["Brazos (mismos episodios)"]
+  subgraph L2["Línea 2 · Control de flujo de información"]
     direction TB
-    N0["Sin defensa"]
-    A1["M1 · monitor por agente"]
-    A2["M2 · monitor de composición"]
-    AQ["Quórum · compuerta"]
+    GATE["Compuerta determinista<br/>de procedencia (Quórum)"]
   end
 
-  CAL["Calibración<br/>umbral a 5 % FPR<br/>solo con honestos"]
+  LAB["Mismo laboratorio, mismos episodios<br/>licitación pública sintética, en español<br/>60 honestos + 60 por cada k"]
+
+  CAL["Umbrales a 5 % FPR<br/>calibrados solo con honestos"]
 
   subgraph MET["Métricas pre-registradas"]
     direction TB
+    DT["Detección según k"]
     F["Tasa de fuga del canario"]
-    DT["Detección a 5 % FPR"]
-    UT["Utilidad honesta"]
-    OB["Bloqueos de más"]
+    UT["Utilidad honesta y bloqueos de más"]
   end
 
-  OUT["IC 95 % bootstrap<br/>figura principal<br/>20 trazas auditadas a mano"]
+  OUT["Figura principal<br/>detección contra k, una línea por defensa<br/>IC 95 % bootstrap · 20 trazas auditadas"]
 
-  H --> CAL --> A1
-  CAL --> A2
-  GEN --> ARMS
-  ARMS --> MET --> OUT
+  ATK --> LAB
+  MON --> LAB
+  GATE --> LAB
+  LAB --> CAL --> MET --> OUT
 
-  style AQ fill:#dde9e2,stroke:#2f5d4a,stroke-width:2px,color:#17221d
-  style R fill:#f7e1da,stroke:#a3361f,color:#17221d
-  style CAL fill:#f6e7d2,stroke:#b8680f,color:#17221d
+  style L1 fill:#fbf1ee,stroke:#a3361f,color:#17221d
+  style L2 fill:#eef5f1,stroke:#2f5d4a,color:#17221d
+  style GATE fill:#dde9e2,stroke:#2f5d4a,stroke-width:2px,color:#17221d
+  style LAB fill:#f6e7d2,stroke:#b8680f,color:#17221d
