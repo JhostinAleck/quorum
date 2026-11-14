@@ -1,0 +1,40 @@
+# Override for agents driven by a language model. Use it on top of the base file:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.llm.yml up --build ...
+#
+# The agents get a second network with a way out, to reach the model provider.
+# The monitor and the report stay on the internal network only.
+
+x-llm-agent: &llm-agent
+  image: quorum:llm
+  build:
+    context: .
+    args:
+      WITH_LLM: "1"
+  mem_limit: 512m
+  networks: [control, egress]
+
+# The provider key and the model id, the same for the three agents. QUORUM_KIND
+# does not apply here: it only selects a scripted episode.
+x-llm-environment: &llm-environment
+  OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?set OPENROUTER_API_KEY in .env (see docs/despliegue.md)}
+  QUORUM_MODEL: ${QUORUM_MODEL:?set QUORUM_MODEL in .env (see docs/despliegue.md)}
+
+services:
+  registrar:
+    <<: *llm-agent
+    command: agent --role registrar --url http://monitor:8080 --mode llm
+    environment: *llm-environment
+
+  evaluator:
+    <<: *llm-agent
+    command: agent --role evaluator --url http://monitor:8080 --mode llm
+    environment: *llm-environment
+
+  publisher:
+    <<: *llm-agent
+    command: agent --role publisher --url http://monitor:8080 --mode llm
+    environment: *llm-environment
+
+networks:
+  egress: {}

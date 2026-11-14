@@ -1,0 +1,103 @@
+# Scripted mode: the monitor and each agent in its own container, with no model
+# and no way out to the internet. How to use it: docs/despliegue.md
+
+name: quorum
+
+# Shared by every service: same image, same hardening, only the control network.
+x-service: &service
+  image: quorum:local
+  build: .
+  init: true                  # forwards SIGTERM, so a container stops right away
+  restart: "no"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: [/tmp]
+  mem_limit: 256m
+  pids_limit: 64
+  networks: [control]
+
+services:
+  # The only service with the store and the audit log, and the only one that
+  # knows all four tokens.
+  monitor:
+    <<: *service
+    # A string, not a list: QUORUM_MONITOR_FLAGS may carry several flags
+    # ("--audit --scanned") and Compose splits it into words.
+    command: >-
+      monitor --scenario tender --seed ${QUORUM_SEED:-1}
+      --host 0.0.0.0 --port 8080 --store /data/quorum.db
+      ${QUORUM_MONITOR_FLAGS:-}
+    environment:
+      QUORUM_TOKEN_REGISTRAR: ${QUORUM_TOKEN_REGISTRAR:?set QUORUM_TOKEN_REGISTRAR in .env (see docs/despliegue.md)}
+      QUORUM_TOKEN_EVALUATOR: ${QUORUM_TOKEN_EVALUATOR:?set QUORUM_TOKEN_EVALUATOR in .env (see docs/despliegue.md)}
+      QUORUM_TOKEN_PUBLISHER: ${QUORUM_TOKEN_PUBLISHER:?set QUORUM_TOKEN_PUBLISHER in .env (see docs/despliegue.md)}
+      QUORUM_ADMIN_TOKEN: ${QUORUM_ADMIN_TOKEN:?set QUORUM_ADMIN_TOKEN in .env (see docs/despliegue.md)}
+    volumes:
+      - quorum-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 2s
+    stop_grace_period: 5s
+    pids_limit: 128
+
+  # Each agent gets its own token as QUORUM_TOKEN and nothing else. They run
+  # one after another: each waits for the previous one to exit with code 0.
+  registrar:
+    <<: *service
+    command: agent --role registrar --url http://monitor:8080 --mode scripted --kind ${QUORUM_KIND:-honest}
+    environment:
+      QUORUM_TOKEN: ${QUORUM_TOKEN_REGISTRAR:?set QUORUM_TOKEN_REGISTRAR in .env (see docs/despliegue.md)}
+    depends_on:
+      monitor:
+        condition: service_healthy
+
+  evaluator:
+    <<: *service
+    command: agent --role evaluator --url http://monitor:8080 --mode scripted --kind ${QUORUM_KIND:-honest}
+    environment:
+      QUORUM_TOKEN: ${QUORUM_TOKEN_EVALUATOR:?set QUORUM_TOKEN_EVALUATOR in .env (see docs/despliegue.md)}
+    depends_on:
+      monitor:
+        condition: service_healthy
+      registrar:
+        condition: service_completed_successfully
+
+  publisher:
+    <<: *service
+    command: agent --role publisher --url http://monitor:8080 --mode scripted --kind ${QUORUM_KIND:-honest}
+    environment:
+      QUORUM_TOKEN: ${QUORUM_TOKEN_PUBLISHER:?set QUORUM_TOKEN_PUBLISHER in .env (see docs/despliegue.md)}
+    depends_on:
+      monitor:
+        condition: service_healthy
+      evaluator:
+        condition: service_completed_successfully
+
+  # The operator: reads how the episode went with the admin token, which no
+  # agent has.
+  report:
+    <<: *service
+    command: report --url http://monitor:8080
+    environment:
+      QUORUM_ADMIN_TOKEN: ${QUORUM_ADMIN_TOKEN:?set QUORUM_ADMIN_TOKEN in .env (see docs/despliegue.md)}
+    depends_on:
+      monitor:
+        condition: service_healthy
+      publisher:
+        condition: service_completed_successfully
+
+networks:
+  # internal: containers reach each other, nothing reaches the outside.
+  control:
+    internal: true
+
+volumes:
+  quorum-data:

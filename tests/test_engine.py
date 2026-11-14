@@ -259,3 +259,38 @@ def test_the_audit_log_survives_concurrent_calls():
     threads = [threading.Thread(target=work, args=(s,)) for s in sessions]
     [t.start() for t in threads], [t.join() for t in threads]
     assert len(q.audit_log) == before + 8 * 80 and q.audit_log.verify()
+
+
+@pytest.mark.parametrize("text", ["\ud800", "ok \udfff end", "\\ud800 literal"])
+def test_no_argument_can_make_a_call_escape_the_audit_log(store, text):
+    """A text that cannot be encoded used to run the tool and then fail to record it."""
+    q = new(enforce=False, store=store)
+    a = q.session("a", "agent")
+    before = len(q.audit_log)
+    try:
+        a.write("board.x", text)
+    except Exception:       # a store may refuse the text, but then the failure itself is on record
+        pass
+    a.emit(text)
+    assert len(q.audit_log) == before + 2 and len(a.trajectory) == 2 and q.audit_log.verify()
+    assert [e["tool"] for e in list(q.audit_log)[before:]] == ["write", "emit"]
+    assert len(q.emitted()) == 1
+    q.audit_log.to_jsonl().encode("utf-8")      # the export can always be saved
+
+
+def test_the_audit_log_tells_apart_a_lone_surrogate_from_its_escape():
+    from quorum.domain.audit_log import AuditLog
+
+    one, other = AuditLog(), AuditLog()
+    one.record(text="\ud800"), other.record(text="\\ud800")
+    assert one[0]["hash"] != other[0]["hash"] and one.verify() and other.verify()
+
+
+def test_the_audit_log_records_events_it_cannot_serialize_as_usual():
+    from quorum.domain.audit_log import AuditLog
+
+    cycle: dict = {}
+    cycle["self"] = cycle
+    log = AuditLog()
+    log.record(args=cycle), log.record(args={1: "a", "b": 2}), log.record(args={("t",): object()})
+    assert len(log) == 3 and log.verify() and len(log.to_jsonl().splitlines()) == 3

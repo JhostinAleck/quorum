@@ -1,0 +1,12 @@
+# Allowlist: nothing enters the build context unless it is named here.
+# That keeps out .git, .venv, tests, docs, caches, .env, logs, uv.lock and
+# anything added later.
+*
+
+!pyproject.toml
+!quorum/
+
+# Caches inside the package (hatchling has no .gitignore to go by in here).
+**/__pycache__/
+**/*.py[cod]
+**/.DS_Store

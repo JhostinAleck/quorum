@@ -64,7 +64,8 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 | Aplicación | `quorum/application/` | El monitor de referencia por el que pasa toda llamada de un agente |
 | Infraestructura | `quorum/infrastructure/` | Almacenes (memoria, SQLite) y políticas en TOML |
 | Contextos | `quorum/scenarios/` | `tender` (la licitación) y `helpdesk` (una mesa de ayuda). Cada uno es un `policy.toml` más sus herramientas y reglas |
-| Adaptadores | `quorum/adapters/` | Inspect AI y function calling genérico |
+| Adaptadores | `quorum/adapters/` | Inspect AI, function calling genérico, bucle de agente y el monitor como servicio HTTP |
+| Despliegue | `quorum/launch.py`, `Dockerfile`, `docker-compose.yml` | El monitor y cada agente en su propio contenedor |
 
 El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo comprueba (ver [arquitectura](docs/arquitectura.md)). El código está en inglés. Lo que leen los modelos y el jurado está en español.
 
@@ -77,12 +78,14 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 - [Referencias y atribución](docs/referencias.md)
 - [Tareas del equipo](docs/tareas.md)
 - [Interfaz del laboratorio](docs/interfaz.md)
+- [Protocolo del monitor por red](docs/protocolo.md)
+- [Despliegue en contenedores](docs/despliegue.md)
 
 ## Cómo correrlo
 
 ```bash
 uv sync
-uv run pytest        # 115 tests del núcleo, los escenarios y los adaptadores, sin modelos ni costo
+uv run pytest        # 385 tests del núcleo, los escenarios y los adaptadores, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo:
@@ -95,13 +98,35 @@ ep.leak, ep.quorum_blocks                       # (True, True): hubo fuga y la c
 run("attack_k3", seed=1, defense=True).leak     # False
 ```
 
+### En contenedores
+
+El monitor y cada agente pueden correr en contenedores separados. Los agentes no tienen el almacén ni la bitácora: solo le hablan al monitor por HTTP, cada uno con su token, en una red sin salida a internet.
+
+![Contenedores](docs/diagramas/contenedores.png)
+
+```bash
+# una vez: cuatro tokens al azar en .env (no se sube al repo)
+for v in QUORUM_TOKEN_REGISTRAR QUORUM_TOKEN_EVALUATOR QUORUM_TOKEN_PUBLISHER QUORUM_ADMIN_TOKEN; do
+  echo "$v=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+done >> .env
+
+docker compose build
+docker compose run --rm report                              # trámite honesto
+docker compose down -v
+
+QUORUM_KIND=attack_k3 docker compose run --rm report        # ataque repartido: la compuerta lo bloquea
+docker compose down -v
+```
+
+El reporte es un JSON con `leak`, `useful`, `quorum_blocks`, lo publicado y cada bloqueo con su motivo. Los demás casos, el modo con modelo y lo que este aislamiento da y no da están en [despliegue](docs/despliegue.md).
+
 Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
 
 Las corridas con modelos reales usan una key de OpenRouter en `.env` (ver `.env.example`).
 
 ## Reglas que cumple este repo
 
-- Todo corre dentro de un proceso local. No hay red, ni sistemas de terceros, ni datos de personas reales.
+- Todo corre en la máquina local, en un proceso o en contenedores propios dentro de una red interna. No se toca ningún sistema de terceros ni hay datos de personas reales. La única conexión hacia afuera es la llamada al proveedor del modelo cuando los agentes usan uno.
 - Los proveedores, valores y documentos son sintéticos.
 - No se publican instrucciones de ataque reutilizables fuera del laboratorio. Se publican tasas, trazas con canarios sintéticos y la defensa.
 
