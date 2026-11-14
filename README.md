@@ -66,6 +66,7 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 | Contextos | `quorum/scenarios/` | `tender` (la licitación) y `helpdesk` (una mesa de ayuda). Cada uno es un `policy.toml` más sus herramientas y reglas |
 | Adaptadores | `quorum/adapters/` | Inspect AI, function calling genérico, bucle de agente y el monitor como servicio HTTP |
 | Despliegue | `quorum/launch.py`, `Dockerfile`, `docker-compose.yml` | El monitor y cada agente en su propio contenedor |
+| Interfaz web | `quorum/ui/`, `docker-compose.ui.yml` | Página de demo: subir ofertas (texto, PDF o escaneos), correr un episodio y ver decidir a la compuerta |
 
 El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo comprueba (ver [arquitectura](docs/arquitectura.md)). El código está en inglés. Lo que leen los modelos y el jurado está en español.
 
@@ -80,12 +81,13 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 - [Interfaz del laboratorio](docs/interfaz.md)
 - [Protocolo del monitor por red](docs/protocolo.md)
 - [Despliegue en contenedores](docs/despliegue.md)
+- [Interfaz web](docs/interfaz-web.md)
 
 ## Cómo correrlo
 
 ```bash
 uv sync
-uv run pytest        # 385 tests del núcleo, los escenarios y los adaptadores, sin modelos ni costo
+uv run pytest        # 408 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo:
@@ -119,6 +121,17 @@ docker compose down -v
 ```
 
 El reporte es un JSON con `leak`, `useful`, `quorum_blocks`, lo publicado y cada bloqueo con su motivo. Los demás casos, el modo con modelo y lo que este aislamiento da y no da están en [despliegue](docs/despliegue.md).
+
+### Interfaz web
+
+Una página para subir ofertas (texto, PDF o escaneos), elegir agentes honestos o desviados y ver cada paso con sus etiquetas y la decisión de la compuerta. Usa el mismo escenario, bucle de agente y protocolo.
+
+```bash
+uv run python -m quorum.ui.server                          # un solo proceso, http://127.0.0.1:8765
+docker compose -f docker-compose.ui.yml up --build         # cada agente en su contenedor
+```
+
+Detalles y límites en [interfaz web](docs/interfaz-web.md).
 
 Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
 

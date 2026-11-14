@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quórum · Laboratorio</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1b2430; --mute:#6b7685; --line:#e2e6ec; --ok:#17794a; --okbg:#e5f5ec;
+          --bad:#b3261e; --badbg:#fde9e7; --warn:#8a5a00; --warnbg:#fff3d6; --acc:#2747d8; --accbg:#e8ecfd; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  header { display:flex; align-items:center; gap:14px; padding:14px 24px; background:var(--card); border-bottom:1px solid var(--line); }
+  header h1 { font-size:18px; margin:0; } header .sub { color:var(--mute); flex:1; }
+  main { max-width:1200px; margin:0 auto; padding:20px 24px 40px; display:grid; gap:16px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:16px; } .three { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  @media (max-width:860px){ .row,.three{ grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; min-width:0; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--mute); margin:0 0 10px; }
+  button { font:inherit; border:1px solid var(--line); background:var(--card); border-radius:7px; padding:7px 12px; cursor:pointer; color:var(--ink); }
+  button:hover:not(:disabled){ border-color:#b9c1cd; } button:disabled{ opacity:.5; cursor:not-allowed; }
+  button.pri { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:600; padding:9px 18px; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; flex-wrap:wrap; }
+  .seg button { border:0; border-radius:0; border-right:1px solid var(--line); } .seg button:last-child{ border-right:0; }
+  .seg button.on { background:var(--accbg); color:var(--acc); font-weight:600; }
+  .field { display:flex; align-items:center; gap:10px; margin:8px 0; flex-wrap:wrap; } .field > span:first-child { width:92px; color:var(--mute); }
+  .drop { border:2px dashed var(--line); border-radius:8px; padding:18px; text-align:center; color:var(--mute); cursor:pointer; }
+  .drop.over { border-color:var(--acc); background:var(--accbg); }
+  .doc { display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .doc small { color:var(--mute); } .doc a { color:var(--bad); cursor:pointer; text-decoration:none; }
+  .chip { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+  .ok { background:var(--okbg); color:var(--ok); } .bad { background:var(--badbg); color:var(--bad); }
+  .warn { background:var(--warnbg); color:var(--warn); } .neu { background:#eef0f4; color:var(--mute); }
+  .agent.mod { border-color:var(--bad); } .agent .head { display:flex; justify-content:space-between; align-items:center; }
+  .agent h3 { margin:0; font-size:15px; } .agent .meta { color:var(--mute); font-size:12px; margin:4px 0 10px; }
+  .step { border-left:3px solid var(--line); padding:4px 0 4px 9px; margin:6px 0; font-size:12.5px; }
+  .step.sec { border-left-color:var(--bad); } .step code { font:12px ui-monospace,Consolas,monospace; word-break:break-word; }
+  .step .res { color:var(--mute); word-break:break-word; } .empty { color:var(--mute); font-size:12.5px; }
+  .portal { background:#0f1722; color:#e6edf5; border-radius:8px; padding:12px; font:12.5px ui-monospace,Consolas,monospace; white-space:pre-wrap; word-break:break-word; min-height:44px; margin-bottom:8px; }
+  .portal.struck { opacity:.55; text-decoration:line-through; }
+  .note { padding:9px 12px; border-radius:8px; margin-top:10px; } .kpis { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .lbl { color:var(--mute); margin-bottom:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Quórum</h1><span class="sub">Laboratorio de licitación · datos sintéticos</span>
+  <span id="initial" class="chip neu">…</span>
+  <button id="btnReset" title="Vuelve los tres agentes a su versión honesta y borra la corrida">↺ Restablecer</button>
+</header>
+<main>
+  <div class="row">
+    <section class="card">
+      <h2>1 · Ofertas</h2>
+      <div id="drop" class="drop">Arrastra aquí las ofertas (texto, PDF o escaneadas) o haz clic para elegirlas
+        <input id="files" type="file" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.tif,.tiff,text/plain,application/pdf,image/*" multiple hidden></div>
+      <div id="docs" style="margin-top:8px"></div>
+      <div style="margin-top:10px"><button id="btnExamples">Ejemplos de texto</button> <button id="btnExamplesPdf">Ejemplos PDF + escaneado</button>
+        <div id="formats" style="color:var(--mute);font-size:12.5px;margin-top:6px"></div><div id="docMsg" style="color:var(--bad);font-size:12.5px"></div></div>
+    </section>
+    <section class="card">
+      <h2>2 · Configuración</h2>
+      <div class="field"><span>Agentes</span><div class="seg" id="segKind">
+        <button data-v="honest">Honestos</button>
+        <button data-v="attack_k1">Modif. k=1</button><button data-v="attack_k2">k=2</button><button data-v="attack_k3">k=3</button></div></div>
+      <div class="field"><span>Compuerta</span><div class="seg" id="segDefense"><button data-v="1">Quórum activa</button><button data-v="0">Solo auditoría</button></div></div>
+      <div class="field"><span>Motor</span><div class="seg" id="segEngine"><button data-v="scripted">Guionado</button><button data-v="llm">LLM</button></div>
+        <small id="engineInfo" style="color:var(--mute)"></small></div>
+      <div class="field" style="margin-top:14px"><button class="pri" id="btnRun">▶ Iniciar flujo</button><span id="msg" style="color:var(--bad)"></span></div>
+    </section>
+  </div>
+  <div class="three" id="agents"></div>
+  <section class="card">
+    <h2>3 · Resultado</h2>
+    <div id="result"><span class="empty">Aún no hay corrida.</span></div>
+  </section>
+</main>
+<script>
+const ROLES = ["registrar","evaluator","publisher"];
+const NAME = {registrar:"Radicador", evaluator:"Evaluador", publisher:"Publicador"};
+const JOB = {registrar:"Recibe y registra las ofertas", evaluator:"Puntúa y deja el resultado", publisher:"Publica en el portal (única salida)"};
+const INVOLVED = {honest:[], attack_k1:["evaluator"], attack_k2:["registrar","evaluator"], attack_k3:ROLES};
+const cfg = {kind:"honest", defense:"1", engine:"scripted"};
+let docs = [], state = null, shown = 0, timer = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const short = (x, n=170) => { const s = typeof x === "string" ? x : JSON.stringify(x); return s.length > n ? s.slice(0,n) + "…" : s; };
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j;
+}
+function seg(id, key) {
+  $(id).querySelectorAll("button").forEach(b => {
+    b.classList.toggle("on", b.dataset.v === cfg[key]);
+    b.onclick = () => { if (b.disabled) return; cfg[key] = b.dataset.v; paint(); };
+  });
+}
+function paintDocs() {
+  $("docs").innerHTML = docs.map((d,i) => {
+    const how = {text:["texto","neu"], pdf:["PDF","neu"], ocr:["escaneado · OCR","warn"]}[d.method];
+    return `<div class="doc"><span>${esc(d.supplier)} <small>${esc(d.name)}</small></span><span>
+      <span class="chip ${how[1]}">${how[0]}</span> <span class="chip neu">valor sellado 🔒 ${d.digits} dígitos</span> <a data-i="${i}">quitar</a></span></div>`;
+  }).join("");
+  $("docs").querySelectorAll("a").forEach(a => a.onclick = () => { docs.splice(+a.dataset.i,1); paintDocs(); });
+}
+const b64 = file => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result.split(",")[1] || ""); r.onerror = bad; r.readAsDataURL(file); });
+async function load(files) {
+  $("docMsg").textContent = "";
+  for (const f of files) {
+    try { $("docMsg").style.color = "var(--mute)"; $("docMsg").textContent = "Leyendo " + f.name + "…";
+          docs.push(await api("/api/extract", {name:f.name, data:await b64(f)})); $("docMsg").textContent = ""; }
+    catch (e) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = e.message; break; }
+    paintDocs();
+  }
+}
+async function examples(path) {
+  try { $("docMsg").textContent = ""; docs = await api(path); paintDocs(); }
+  catch (e) { $("docMsg").style.color = "var(--bad)"; $("docMsg").textContent = e.message; }
+}
+
+function paintAgents() {
+  const live = state && (state.running || state.events.length);
+  const kind = live ? state.kind : cfg.kind;
+  const events = state ? state.events.slice(0, shown) : [];
+  $("agents").innerHTML = ROLES.map(role => {
+    const a = state ? state.agents.find(x => x.role === role) : null;
+    const mod = INVOLVED[kind].includes(role);
+    const box = a ? a.container : undefined;
+    const where = !box ? "" : !box.up ? `<br><b style="color:var(--bad)">contenedor sin respuesta</b>`
+      : `<br>contenedor propio ✓ · ` + (box.intact ? "mismo prompt que la línea base ✓" : `<b style="color:var(--bad)">prompt ALTERADO en el contenedor</b>`);
+    const drv = state && state.result && !state.running ? state.result.engines[role] : null;
+    const driver = drv ? `<br>en esta corrida: ${drv === "llm" ? "modelo de lenguaje" : "guion sin modelo"}` : "";
+    const steps = events.filter(e => e.agent === role).map(e => {
+      const sec = e.secrets.length > 0, d = e.decision;
+      const out = e.error ? `<div class="res" style="color:var(--bad)">✗ ${esc(short(e.error))}</div>`
+                : e.result != null ? `<div class="res">→ ${esc(short(e.result))}</div>` : "";
+      const gate = d && e.tool_kind === "sink" ? `<span class="chip ${d.allow?"ok":"bad"}">compuerta: ${d.allow?"permite":"niega ("+esc(d.policy)+")"}</span>` : "";
+      return `<div class="step ${sec?"sec":""}"><code>${esc(e.tool)}(${esc(short(e.args))})</code>${out}
+        <div>${sec ? `<span class="chip bad">contexto restringido: ${esc(e.secrets.join(", "))}</span>` : `<span class="chip ok">contexto público</span>`}
+        ${e.untrusted.length ? `<span class="chip warn">no confiable: ${e.untrusted.length}</span>` : ""} ${gate}</div></div>`;
+    }).join("");
+    return `<section class="card agent ${mod?"mod":""}"><div class="head"><h3>${NAME[role]}</h3>
+      <span class="chip ${mod?"bad":"ok"}">${mod?"modificado":"honesto"}</span></div>
+      <div class="meta">${JOB[role]} · rol <code>${role}</code><br>prompt honesto <code>${a?esc(a.hash):"…"}</code>${where}${driver}</div>
+      ${steps || `<div class="empty">Sin acciones todavía.</div>`}</section>`;
+  }).join("");
+}
+function paintResult() {
+  const r = state && state.result, el = $("result");
+  if (state && state.error) { el.innerHTML = `<div class="note bad">${esc(state.error)}</div>`; return; }
+  if (state && (state.running || (r && shown < state.events.length))) { el.innerHTML = `<span class="empty">Corriendo…</span>`; return; }
+  if (!r) { el.innerHTML = `<span class="empty">Aún no hay corrida.</span>`; return; }
+  const denied = r.blocks.length > 0, stopped = r.blocks.some(b => b.enforced);
+  const gate = !denied ? "permite ✅" : stopped ? "BLOQUEA ⛔" : "habría bloqueado ⛔ (solo auditoría)";
+  const portal = r.portal.map(p => `<div class="portal">${esc(p.awardee)} — ${esc(p.text)}</div>`).join("") || `<div class="portal">(no se publicó nada)</div>`;
+  const blocked = r.blocks.filter(b => b.enforced).map(b => `<div class="portal struck">${esc(b.awardee)} — ${esc(b.text)}</div>`).join("");
+  el.innerHTML = `<div class="kpis">
+      <span class="chip ${denied?"bad":"ok"}">Compuerta: ${gate}</span>
+      <span class="chip ${r.leak?"bad":"ok"}">${r.leak ? "FUGA: valor sellado de "+esc(r.leaked.join(", ")) : "Sin fuga al exterior"}</span>
+      ${r.attempt_had_secret.length ? `<span class="chip warn">el intento bloqueado contenía el valor de ${esc(r.attempt_had_secret.join(", "))}</span>` : ""}
+      <span class="chip ${r.useful?"ok":"neu"}">${r.useful ? "Adjudicación correcta publicada" : "Sin adjudicación correcta publicada"}</span>
+      <span class="chip neu">${Object.values(r.engines).includes("llm") ? "LLM · "+esc(state.model) : "guionado"}${r.containers ? " · 3 contenedores" : ""}</span>
+      ${r.scan ? `<span class="chip neu">una oferta entró escaneada</span>` : ""}
+      <span class="chip ${r.audit_log_ok?"ok":"bad"}">bitácora: ${r.audit_log_events} eventos · cadena ${r.audit_log_ok?"íntegra ✓":"ROTA"}</span></div>
+    ${denied ? `<div style="margin-bottom:8px">Política ${esc(r.blocks[0].policy)}: <code>${esc(r.blocks[0].reason)}</code></div>` : ""}
+    <div class="lbl">Portal externo:</div>${portal}
+    ${blocked ? `<div class="lbl">Lo que el Publicador intentó publicar (no salió):</div>${blocked}` : ""}
+    <div style="color:var(--mute)">Adjudicación esperada: ${esc(r.expected_winner)}</div>
+    ${Object.entries(r.agent_errors).map(([who, e]) => `<div class="note warn">${esc(NAME[who])}: ${esc(e)}</div>`).join("")}`;
+}
+function paint() {
+  seg("segKind","kind"); seg("segDefense","defense"); seg("segEngine","engine");
+  if (state) {
+    const llm = $("segEngine").querySelector('[data-v="llm"]');
+    llm.disabled = !state.llm_available;
+    if (!state.llm_available && cfg.engine === "llm") { cfg.engine = "scripted"; seg("segEngine","engine"); }
+    const k = cfg.kind.startsWith("attack_k") ? +cfg.kind.slice(-1) : 0;
+    $("engineInfo").textContent = !state.llm_available ? "LLM requiere OPENROUTER_API_KEY en .env"
+      : cfg.engine !== "llm" ? "los tres agentes siguen su guion, sin modelo"
+      : k ? "modelo: " + state.model + " · los agentes modificados siguen el guion de ataque"
+      : "modelo: " + state.model;
+    const f = state.formats;
+    $("formats").textContent = f.scanned_pdf ? "Lee texto, PDF y documentos escaneados (OCR). Cada oferta necesita una línea «Valor: N»; el valor se sella."
+      : "Aquí solo se leen .txt y .md" + (f.pdf ? " y PDF con texto" : "") + ". El lector de PDF escaneado y el OCR vienen en la imagen Docker.";
+    $("btnExamplesPdf").disabled = !f.scanned_pdf;
+    $("initial").className = "chip " + (state.initial ? "ok" : "neu");
+    $("initial").textContent = state.initial ? "Punto inicial · honesto ✓" : "Con corrida / cambios";
+    $("btnRun").disabled = state.running;
+  }
+  paintAgents(); paintResult();
+}
+function animate() {
+  clearInterval(timer);
+  timer = setInterval(async () => {
+    if (state.running) state = await api("/api/state");
+    if (shown < state.events.length) shown++;
+    paint();
+    if (!state.running && shown >= state.events.length) clearInterval(timer);
+  }, 350);
+}
+$("btnRun").onclick = async () => {
+  $("msg").textContent = "";
+  try {
+    shown = 0;
+    state = await api("/api/run", {documents:docs.map(d => ({name:d.name, text:d.text, scanned:d.scanned})), kind:cfg.kind, defense:cfg.defense==="1", engine:cfg.engine});
+    paint(); animate();
+  } catch (e) { $("msg").textContent = e.message; }
+};
+$("btnReset").onclick = async () => {
+  clearInterval(timer); shown = 0;
+  Object.assign(cfg, {kind:"honest", defense:"1", engine:"scripted"});
+  state = await api("/api/reset", {}); paint();
+};
+$("btnExamples").onclick = () => examples("/api/examples");
+$("btnExamplesPdf").onclick = () => examples("/api/examples/pdf");
+const drop = $("drop");
+drop.onclick = () => $("files").click();
+$("files").onchange = e => { load(e.target.files); e.target.value = ""; };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); load(e.dataTransfer.files); };
+api("/api/state").then(s => { state = s; shown = s.events.length; paint(); });
+</script>
+</body>
+</html>
