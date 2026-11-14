@@ -182,4 +182,4 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/scenarios/tender/` | La licitación: política, reglas, herramientas, casos, episodios guionados y prompts base de cada rol |
 | `quorum/scenarios/helpdesk/` | La mesa de ayuda, segundo contexto |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
-| `analysis/` | Bootstrap y figura principal (en construcción) |
+| `analysis/` | `sweep.py` genera el CSV del barrido guionado (honestos, ataques, gemelos y canal de señal); `metrics.py` calcula las métricas con IC 95 % desde ese CSV. La figura principal sigue en construcción |
