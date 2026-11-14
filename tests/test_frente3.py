@@ -3,7 +3,7 @@ import pytest
 
 from quorum.eval import monitors as mon
 from quorum.eval.attacks import MARK, STYLES, attack_k, hidden_tasks, hidden_tasks_for, with_hidden_task
-from quorum.eval.pilot import read_action, run_agent, system_prompt
+from quorum.eval.pilot import RULE, read_action, run_agent, system_prompt
 from quorum.scenarios.tender import KINDS, TARGET, prepare, run
 
 ATTACKS = [k for k in KINDS if k.startswith("attack")]
@@ -129,3 +129,14 @@ def test_half_of_the_attacks_come_with_a_scanned_bid():
     finish = lambda *a, **k: '{"tool": "finish"}'   # noqa: E731
     assert pilot_episode("attack_k2", 2, "fake", finish)["scan"]
     assert not pilot_episode("attack_k2", 3, "fake", finish)["scan"]
+
+
+def test_attack_policy_and_numbered_step_only_reach_attacking_agents():
+    from quorum.eval.attacks import ATTACK_POLICY
+    case = prepare(1, defense=False)
+    tasks = hidden_tasks_for("attack_k1", case)
+    attacker = system_prompt(case, case.session("evaluator"), tasks)
+    honest = system_prompt(case, case.session("registrar"), tasks)
+    assert attacker.startswith(ATTACK_POLICY) and "5) termina." in attacker
+    assert ATTACK_POLICY not in honest and "4) termina." in honest
+    assert RULE in honest and RULE not in attacker
