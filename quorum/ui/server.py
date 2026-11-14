@@ -51,6 +51,7 @@ class State:
     def reset(self) -> None:
         with self.lock:
             self.kind = workflow.INITIAL
+            self.defense, self.engine = True, "scripted"   # of the last run, so the page can show it
             self.running = False
             self.events: list[dict[str, Any]] = []
             self.result: dict[str, Any] | None = None
@@ -60,7 +61,8 @@ class State:
     def view(self) -> dict[str, Any]:
         with self.lock:
             return {
-                "kind": self.kind, "agents": workflow.status(self.kind),
+                "kind": self.kind, "defense": self.defense, "engine": self.engine,
+                "agents": workflow.status(self.kind),
                 "running": self.running, "events": list(self.events),
                 "result": self.result, "error": self.error,
                 "llm_available": workflow.llm_available(), "model": agents.model(),
@@ -77,6 +79,7 @@ class State:
             self.run_id += 1
             mine = self.run_id
             self.kind, self.running = kind, True
+            self.defense, self.engine = bool(body.get("defense", True)), body.get("engine", "scripted")
             self.events, self.result, self.error = [], None, None
 
         def emit(event: dict[str, Any]) -> None:

@@ -61,7 +61,7 @@
       <h2>2 · Configuración</h2>
       <div class="field"><span>Agentes</span><div class="seg" id="segKind">
         <button data-v="honest">Honestos</button>
-        <button data-v="attack_k1">Modif. k=1</button><button data-v="attack_k2">k=2</button><button data-v="attack_k3">k=3</button></div></div>
+        <button data-v="attack_k1">Ataque k=1</button><button data-v="attack_k2">k=2</button><button data-v="attack_k3">k=3</button></div></div>
       <div class="field"><span>Compuerta</span><div class="seg" id="segDefense"><button data-v="1">Quórum activa</button><button data-v="0">Solo auditoría</button></div></div>
       <div class="field"><span>Motor</span><div class="seg" id="segEngine"><button data-v="scripted">Guionado</button><button data-v="llm">LLM</button></div>
         <small id="engineInfo" style="color:var(--mute)"></small></div>
@@ -168,6 +168,18 @@ function paintResult() {
     <div style="color:var(--mute)">Adjudicación esperada: ${esc(r.expected_winner)}</div>
     ${Object.entries(r.agent_errors).map(([who, e]) => `<div class="note warn">${esc(NAME[who])}: ${esc(e)}</div>`).join("")}`;
 }
+const KIND_LABEL = {honest:"honestos", attack_k1:"ataque k=1", attack_k2:"ataque k=2", attack_k3:"ataque k=3"};
+function lastRun() {
+  if (state.running) return "Corriendo: " + KIND_LABEL[state.kind];
+  if (!state.result) return "Sin corrida todavía";
+  return "Última corrida: " + KIND_LABEL[state.kind] + " · " + (state.defense ? "Quórum activa" : "solo auditoría")
+    + " · " + (state.engine === "llm" ? "LLM" : "guionado");
+}
+// The selectors start on the run the page is showing, so they never contradict it.
+function syncFromRun() {
+  if (!state || !(state.result || state.running)) return;
+  Object.assign(cfg, {kind: state.kind, defense: state.defense ? "1" : "0", engine: state.engine});
+}
 function paint() {
   seg("segKind","kind"); seg("segDefense","defense"); seg("segEngine","engine");
   if (state) {
@@ -184,7 +196,7 @@ function paint() {
       : "Aquí solo se leen .txt y .md" + (f.pdf ? " y PDF con texto" : "") + ". El lector de PDF escaneado y el OCR vienen en la imagen Docker.";
     $("btnExamplesPdf").disabled = !f.scanned_pdf;
     $("initial").className = "chip " + (state.initial ? "ok" : "neu");
-    $("initial").textContent = state.initial ? "Punto inicial · honesto ✓" : "Con corrida / cambios";
+    $("initial").textContent = state.initial ? "Punto inicial · honesto ✓" : lastRun();
     $("btnRun").disabled = state.running;
   }
   paintAgents(); paintResult();
@@ -219,7 +231,7 @@ $("files").onchange = e => { load(e.target.files); e.target.value = ""; };
 drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
 drop.ondragleave = () => drop.classList.remove("over");
 drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); load(e.dataTransfer.files); };
-api("/api/state").then(s => { state = s; shown = s.events.length; paint(); });
+api("/api/state").then(s => { state = s; shown = s.events.length; syncFromRun(); paint(); });
 </script>
 </body>
 </html>

@@ -190,6 +190,17 @@ def test_reset_goes_back_to_the_initial_state():
     assert view["events"] == [] and view["result"] is None
 
 
+def test_the_view_remembers_how_the_last_run_was_configured():
+    """The page sets its selectors from these, so they never contradict the run on screen."""
+    state = server.State()
+    assert (state.view()["defense"], state.view()["engine"]) == (True, "scripted")
+    state.start({"documents": [], "kind": "attack_k1", "defense": False, "engine": "scripted"})
+    view = state.view()
+    assert (view["kind"], view["defense"], view["engine"]) == ("attack_k1", False, "scripted")
+    state.reset()
+    assert (state.view()["defense"], state.view()["engine"]) == (True, "scripted")
+
+
 def serve(handler):
     srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
