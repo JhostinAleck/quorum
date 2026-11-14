@@ -66,7 +66,7 @@ LOCK = ROOT / "integrity.lock.json"
 KERNEL = ("domain", "application", "infrastructure", "bootstrap.py", "launch.py", "integrity.py", "__init__.py",
           "adapters/__init__.py", "adapters/http_server.py", "adapters/http_client.py", "adapters/functions.py",
           "scenarios/__init__.py", "scenarios/spanish.py")
-SCENARIOS = ("tender", "helpdesk", "clinic", "bank", "lawfirm")
+SCENARIOS = ("tender", "helpdesk", "clinic", "bank", "lawfirm", "tender_rubric")
 _SOURCES = (".py", ".toml")
 _COMPILED = (".pyc", ".pyo", ".so", ".pyd", ".dylib")
 _PARTS = ("policy", "tools", "kernel", "scenario", "pipeline")
