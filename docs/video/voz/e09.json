@@ -1,0 +1,22 @@
+[
+ {
+  "start": 0.0,
+  "end": 1.44,
+  "text": "Tiene costos."
+ },
+ {
+  "start": 1.56,
+  "end": 6.2,
+  "text": "Bloquea siempre al agente honesto que abre un sobre que no necesitaba."
+ },
+ {
+  "start": 6.24,
+  "end": 10.28,
+  "text": "En AgentDojo detiene parte de las tareas legítimas."
+ },
+ {
+  "start": 10.32,
+  "end": 16.08,
+  "text": "Y un rival externo puede recuperar el monto con los puntajes que la licitación publica."
+ }
+]

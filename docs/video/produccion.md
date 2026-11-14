@@ -1,7 +1,5 @@
 # Cómo se produjo el video (Claude + Higgsfield + ElevenLabs)
 
-> **Versión que quedó en el repositorio:** voz de sistema de macOS (Paulina, es_MX), sintetizada en local con `say`; dura 1:51,2. Los tiempos exactos de cada frase están en `tiempos.tsv`. La primera versión usó una voz del catálogo de ElevenLabs de categoría "professional" (la voz de una persona real que la licencia) y se descartó por la regla "nada de voces, rostros ni correos de personas reales". Lo que este documento dice de ElevenLabs y los tiempos de sus tablas describen esa primera versión (1:58,5); el guion, las cifras, las capturas y los planos son los mismos.
-
 El flujo sale de la investigación con Grok (`investigacion-grok.md`). Las publicaciones se citan como las dio Grok: no se abrieron una por una, así que valen como "según Grok".
 
 ## Qué dice la investigación y qué se hizo

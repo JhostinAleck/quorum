@@ -1,7 +1,5 @@
 # Guion del video de Quórum
 
-> **Versión que quedó en el repositorio:** voz de sistema de macOS (Paulina, es_MX), sintetizada en local con `say`; dura 1:51,2. Los tiempos exactos de cada frase están en `tiempos.tsv`. La primera versión usó una voz del catálogo de ElevenLabs de categoría "professional" (la voz de una persona real que la licencia) y se descartó por la regla "nada de voces, rostros ni correos de personas reales". Lo que este documento dice de ElevenLabs y los tiempos de sus tablas describen esa primera versión (1:58,5); el guion, las cifras, las capturas y los planos son los mismos.
-
 Duración: 1:58,5 (118,5 s), por debajo de los 2:00 que nos pusimos como tope. El hackathon no pide video (ver `cumplimiento.md`); se asume un video de 2 minutos que sirve también como pitch.
 
 Voz: ElevenLabs, voz Camila ES, modelo `eleven_v4`. Los tiempos de cada frase los devuelve ElevenLabs y están en `tiempos.tsv`; la animación se cuelga de esas marcas. Son 266 palabras: a 150 palabras por minuto serían 1:46, y con las pausas entre escenas y la tarjeta de cierre el video queda en 1:58,5.

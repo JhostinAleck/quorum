@@ -209,7 +209,7 @@ table.cmp td.n{font-size:50px;font-weight:800;white-space:nowrap}
   <div class="kicker" style="top:250px">Código, datos y límites</div>
   <div class="abs mono" id="h10url" style="left:100px;top:300px;font-size:88px;font-weight:700;letter-spacing:-2px;white-space:nowrap"></div>
   <div class="abs" style="left:100px;top:470px;font-size:40px;font-weight:650;color:#b9c6e4" data-at="0:0.45">16 de 16 fugas bloqueadas · 0 de 60 trámites honestos bloqueados · 0 llamadas a un modelo</div>
-  <div class="foot" style="top:700px;font-size:27px" data-at="t:1.0">Datos sintéticos. No se atacó ni escaneó ningún sistema real.<br>Uso de IA en este video: guion, animación y montaje con Claude Code; <span id="h10voz"></span>; investigación del flujo con Grok; revisión con agy.<br>Las capturas son de la interfaz real, con agentes que siguen un guion. Sin rostros ni datos de personas reales; <span id="h10origen"></span>.</div>
+  <div class="foot" style="top:700px;font-size:27px" data-at="t:1.0">Datos sintéticos. No se atacó ni escaneó ningún sistema real.<br>Uso de IA en este video: guion, animación y montaje con Claude Code; <span id="h10voz"></span>; investigación del flujo con Grok; revisión con agy.<br>Las capturas son de la interfaz real, con agentes que siguen un guion. Sin rostros ni datos de personas reales; la voz es sintética, de catálogo.</div>
 </section>
 
 <div id="sub"><span></span></div>
@@ -233,10 +233,6 @@ const T = (id, i, f = 0) => { const c = SC[id].s[i]; return c.start + (c.end - c
 const op = (el, v) => { el.style.opacity = v; };
 const VOICE = "voz sintética (" + TL.scenes[0].voice + ")" + (Object.keys(CL).length ? "; planos generados con Higgsfield (Seedance 2.5)" : "");
 $("h10voz").textContent = VOICE;
-const LABEL = TL.scenes[0].voice;
-$("h10origen").textContent = LABEL.includes("Voice Design") ? "la voz es sintética, diseñada con ElevenLabs Voice Design: no es la voz de ninguna persona"
-  : LABEL.startsWith("macOS") ? "la voz es la voz sintética del sistema macOS, no la de un integrante ni un clon"
-  : "la voz es sintética, de catálogo";
 
 // ---------- shared pipeline (scenes 02 and 03)
 const PIPE = { env: 70, cards: [250, 610, 970], w: 310, y: 400, h: 210, portal: 1500, pw: 320 };
