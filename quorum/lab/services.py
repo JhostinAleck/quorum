@@ -27,6 +27,7 @@ class Laboratorio:
     endosos: frozenset[str] = frozenset()
     selladas: dict[str, Valor] = field(default_factory=dict)   # ref -> valor restringido
     anexos: dict[str, Valor] = field(default_factory=dict)     # id -> texto no confiable
+    escaneos: dict[str, Valor] = field(default_factory=dict)   # doc -> (ref destino, valor) restringido
     almacen: dict[str, Valor] = field(default_factory=dict)    # registro y evaluación
     portal: list[str] = field(default_factory=list)            # salida al exterior
     bitacora: list[dict] = field(default_factory=list)         # solo anexar
@@ -38,8 +39,14 @@ class Laboratorio:
     def agregar_anexo(self, ident: str, texto: str) -> None:
         self.anexos[ident] = Valor(texto, no_confiable(ident))
 
-    def sesion(self, agente: str) -> "Sesion":
-        return Sesion(self, agente)
+    def agregar_escaneo(self, doc: str, ref_destino: str, valor: Any) -> None:
+        """Oferta que llega escaneada: todavía no está sellada bajo una referencia."""
+        self.escaneos[doc] = Valor((ref_destino, valor), restringida(doc))
+
+    def sesion(self, agente: str, *, lee: tuple[str, ...] | None = None,
+               escribe: tuple[str, ...] | None = None) -> "Sesion":
+        """lee / escribe: prefijos de clave permitidos (None = sin restricción)."""
+        return Sesion(self, agente, lee=lee, escribe=escribe)
 
     def _anotar(self, **evento: Any) -> None:
         self.bitacora.append(evento)
@@ -51,6 +58,13 @@ class Sesion:
     agente: str
     contexto: Etiqueta = PUBLICA
     trayectoria: list[dict] = field(default_factory=list)
+    lee: tuple[str, ...] | None = None
+    escribe: tuple[str, ...] | None = None
+
+    @staticmethod
+    def _autorizar(clave: str, prefijos: tuple[str, ...] | None, verbo: str) -> None:
+        if prefijos is not None and not clave.startswith(prefijos):
+            raise PermissionError(f"este rol no puede {verbo} {clave!r}")
 
     def _ver(self, valor: Valor) -> Any:
         self.contexto = self.contexto.unir(valor.etiqueta)
@@ -62,6 +76,7 @@ class Sesion:
 
     # --- lecturas -----------------------------------------------------------
     def leer(self, clave: str) -> Any:
+        self._autorizar(clave, self.lee, "leer")
         self._paso("leer", clave=clave)
         valor = self.lab.almacen.get(clave)
         return None if valor is None else self._ver(valor)
@@ -75,6 +90,11 @@ class Sesion:
         self._paso("abrir", ref=ref)
         return self._ver(self.lab.selladas[ref])
 
+    def leer_escaneo(self, doc: str) -> Any:
+        """Revela el valor de una oferta escaneada. Contamina el contexto."""
+        self._paso("leer_escaneo", doc=doc)
+        return self._ver(self.lab.escaneos[doc])[1]
+
     # --- desclasificadores declarados ---------------------------------------
     def calcular_puntajes(self, refs: list[str], presupuesto: float) -> dict[str, float]:
         """Puntaje por precio (menor valor, mayor puntaje). Recibe referencias
@@ -84,12 +104,26 @@ class Sesion:
         minimo = min(valores.values())
         return {r: round(100 * minimo / v, 1) if v <= presupuesto else 0.0 for r, v in valores.items()}
 
+    def transcribir(self, doc: str) -> str:
+        """Sella el valor de una oferta escaneada bajo su referencia y devuelve
+        solo la referencia. El agente no ve el valor: no contamina el contexto."""
+        self._paso("transcribir", doc=doc)
+        ref, valor = self.lab.escaneos[doc].dato
+        return self.lab.sellar(ref, valor)
+
     def validar_tope(self, ref: str, presupuesto: float) -> bool:
         self._paso("validar_tope", ref=ref)
         return float(self.lab.selladas[ref].dato) <= presupuesto
 
     # --- escrituras ---------------------------------------------------------
+    def sellar_valor(self, ref: str, valor: Any) -> str:
+        """Sella un valor que el agente ya conoce. El valor queda restringido,
+        pero el contexto del agente sigue contaminado por haberlo visto."""
+        self._paso("sellar_valor", ref=ref)
+        return self.lab.sellar(ref, valor)
+
     def escribir(self, clave: str, dato: Any) -> None:
+        self._autorizar(clave, self.escribe, "escribir")
         self._paso("escribir", clave=clave, dato=dato)
         self.lab.almacen[clave] = Valor(dato, self.contexto)
 

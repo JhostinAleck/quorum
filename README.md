@@ -64,15 +64,16 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 - [Límites, riesgo dual y uso responsable](docs/uso-responsable.md)
 - [Referencias y atribución](docs/referencias.md)
 - [Tareas del equipo](docs/tareas.md)
+- [Interfaz del laboratorio](docs/interfaz.md)
 
 ## Cómo correrlo
 
 ```bash
 uv sync
-uv run pytest        # 20 tests de etiquetas, compuerta y laboratorio, sin modelos ni costo
+uv run pytest        # 29 tests de etiquetas, compuerta y laboratorio, sin modelos ni costo
 ```
 
-Los episodios guionados de `quorum/lab/guiones.py` recorren los cuatro casos (honesto, honesto con oferta escaneada, ataque monolítico y ataque repartido) sin llamar a ningún modelo. Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
+Los episodios guionados de `quorum/lab/guiones.py` recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo. Las tareas de Inspect AI con agentes LLM están en construcción en `quorum/eval/`.
 
 Las corridas con modelos reales usan una key de OpenRouter en `.env` (ver `.env.example`).
 
