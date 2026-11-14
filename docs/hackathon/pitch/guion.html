@@ -81,7 +81,7 @@ ul.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--acc);fle
 <div class="wrap">
   <p class="sub" style="margin:0">DefAcc Hackathon · Track 6 · pitch de 3 minutos</p>
   <h1>Guion <span>Quórum</span></h1>
-  <p class="sub">Tres turnos, dos relevos. El texto en grande es lo que se dice; cada dato aparece una sola vez. Este guion reemplaza las notas del deck. Las marcas de tiempo reparten los 3:00 según la longitud de cada bloque, con aire para pausas.</p>
+  <p class="sub">Tres turnos, dos relevos. Cada bloque narra su diapositiva en el mismo orden y con las mismas palabras de la pantalla, sin leer los títulos ni repetir cifras. Es el mismo texto de las notas del deck.</p>
 
   <div class="timer" role="region" aria-label="Cronómetro de ensayo">
     <div class="clock" id="clock">0:00</div>
@@ -95,8 +95,8 @@ ul.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--acc);fle
 
   <h2>Relevos</h2>
   <div class="turn">
-    <p style="margin:0 0 8px"><b>Turno 1 → Turno 2.</b> El turno 2 entra con «Lo probamos en una licitación pública».</p>
-    <p style="margin:0"><b>Turno 2 → Turno 3.</b> Tras «…antes de que el dato salga», el turno 3 entra sin pausa con «Cambiando solo un archivo de reglas».</p>
+    <p style="margin:0 0 8px"><b>Turno 1 → Turno 2.</b> Al pasar a la diapositiva 1, el turno 2 entra con «En una licitación…».</p>
+    <p style="margin:0"><b>Turno 2 → Turno 3.</b> Tras «…antes de que el dato se publique», el turno 3 entra sin pausa con el título de su diapositiva: «Fuera de nuestro laboratorio también funciona».</p>
   </div>
 
   <h2>Preguntas probables de los jurados</h2>
@@ -109,26 +109,56 @@ ul.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--acc);fle
 <script>
 const PPM = 150;
 const TURNS = [
-  {name:"Turno 1 · inicio", blocks:[
-    {id:"cover", slide:"Portada",
-     say:"Imaginen tres agentes de IA que manejan información confidencial. Si se ponen de acuerdo, cada uno saca un pedacito y ninguno parece culpable. Quórum es una puerta que no deja salir nada confidencial sin permiso."}
-  ]},
-  {name:"Turno 2", blocks:[
-    {id:"riesgo", slide:"Vector de riesgo",
-     say:"Lo probamos en una licitación pública. El Radicador abre un sobre sellado y anota el valor como si fuera un número de radicado; el Evaluador lo copia; el Publicador lo publica. Con agentes de IA reales y sin defensa, la oferta se filtró en 16 de 30 ataques."},
-    {id:"mecanismo", slide:"Mecanismo",
-     say:"Quórum no adivina intenciones: sigue de dónde viene cada dato. Lo confidencial entra marcado; lo que escribe un agente que lo leyó hereda la marca; y en la salida, una regla fija bloquea lo marcado sin permiso. Como no lee el texto, disfrazar el valor no sirve. Y como vive en las herramientas, no en el prompt, sirve con cualquier modelo."},
-    {id:"validacion", slide:"Validación",
-     say:"Resultado: frenó las 16 fugas y ninguno de los 60 trámites honestos quedó bloqueado. Un vigilante de IA que lee a cada agente también detectó las 16; no lo escondemos. La diferencia: el vigilante consulta un modelo, depende de un umbral y revisa al final. Quórum decide en un microsegundo, sin IA, antes de que el dato salga."}
-  ]},
-  {name:"Turno 3", blocks:[
-    {id:"externa", slide:"Otros dominios y AgentDojo",
-     say:"Cambiando solo un archivo de reglas, el mismo núcleo protegió cinco dominios, entre ellos salud y banca: cero daños en 7.600 ataques. Y en AgentDojo, un benchmark público con ataques que no escribimos, fue la única defensa con 0 secuestros de 144, y conservó 16 de las 19 tareas útiles."},
-    {id:"limites", slide:"Límites y riesgo dual",
-     say:"Sus límites, medidos: frena al honesto que abre un sobre que no necesitaba, no protege lo que las reglas declaran público y no ve canales como el tiempo de respuesta. Lo siguiente: etiquetas por campo, un atacante que se adapta y un proxy MCP para agentes que ya existen. Los ataques solo corren en nuestro laboratorio, con datos inventados."},
-    {id:"cierre", slide:"Cierre",
-     say:"En una frase: un vigilante avisa; Quórum frena. El repositorio está en pantalla y se reproduce sin claves. Gracias."}
-  ]}
+ {
+  "name": "Turno 1 · inicio",
+  "blocks": [
+   {
+    "id": "cover",
+    "slide": "Portada",
+    "say": "Agentes de IA que se ponen de acuerdo pueden sacar información confidencial por partes. Quórum se pone delante de un sistema de agentes y la frena en la salida, sin preguntarle a ninguna IA. Nada confidencial sale sin permiso."
+   }
+  ]
+ },
+ {
+  "name": "Turno 2",
+  "blocks": [
+   {
+    "id": "riesgo",
+    "slide": "1 · Vector de riesgo",
+    "say": "En una licitación, el Radicador abre el sobre sellado; el Evaluador copia el valor; el Publicador publica el informe. Cada paso parece normal, y el valor llega al portal disfrazado de número de radicado. Sin defensa y con agentes de IA reales, pasó en 16 de 30 ataques. Y suponemos lo peor: uno, dos o los tres agentes ya están comprometidos."
+   },
+   {
+    "id": "mecanismo",
+    "slide": "2 · Mecanismo defensivo",
+    "say": "Quórum no juzga lo que dice cada agente: sigue de dónde viene cada dato. Lo confidencial nace marcado. La marca se contagia: lo que un agente escribe hereda lo que leyó, aunque cambie las palabras. Y antes de publicar, una regla fija mira las marcas: con marca, no sale. Por eso disfrazar el valor no sirve. Y como vive en las herramientas, no en el prompt, funciona con cualquier modelo y ninguna IA la puede convencer."
+   },
+   {
+    "id": "validacion",
+    "slide": "3 · Validación empírica",
+    "say": "¿Funciona? Lo probamos con agentes reales en 90 trámites. Frenó las 16 fugas, no frenó ninguno de los 60 honestos y decide en un microsegundo. ¿Y si ponemos una IA a vigilar? También detectó las 16; no lo escondemos. La diferencia está en cómo: le pregunta a una IA en cada trámite, necesita un umbral y revisa al final. Quórum decide en cada salida, antes de que el dato se publique."
+   }
+  ]
+ },
+ {
+  "name": "Turno 3",
+  "blocks": [
+   {
+    "id": "externa",
+    "slide": "3 · Ataques que no escribimos",
+    "say": "Fuera de nuestro laboratorio también funciona. Llevamos el mismo núcleo a otros cuatro dominios cambiando solo un archivo de reglas de unas veinte líneas. De 7.600 trámites con ataque, buscar el valor exacto o dar mínimo privilegio deja daño en 3.200; Quórum, en cero. Y en AgentDojo, con ataques que no escribimos, es la única defensa que frena los 90 secuestros y conserva 16 de las 19 tareas útiles."
+   },
+   {
+    "id": "limites",
+    "slide": "4 · Límites y riesgo dual",
+    "say": "Lo que no cubre, medido. Bloquea de más: frena al honesto que abre un sobre de más. Lo que se declara público, sale. No ve el tiempo ni el orden de las llamadas. Y son solo 30 ataques. Lo que sigue: etiquetas por campo, un atacante que se adapta en vivo y un proxy MCP delante de agentes que ya existen. El ataque solo existe en nuestro laboratorio, con datos inventados."
+   },
+   {
+    "id": "cierre",
+    "slide": "Cierre",
+    "say": "¿Sus agentes de IA manejan información confidencial? La IA vigilante avisa; Quórum frena. El código está en el repositorio y se prueba sin claves ni costo. Gracias."
+   }
+  ]
+ }
 ];
 
 const QA = [
