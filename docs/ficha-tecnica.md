@@ -60,7 +60,7 @@ fuga entre los ataques en que el agente ya tuvo el dato en la mano, que separa e
 de la tasa de éxito del ataque; *falso positivo*, honesto bloqueado (de 60); *utilidad*, honesto que
 publica al adjudicatario correcto y nada más (de 60).
 
-**El baseline del prompt, medido.** Tres agentes honestos y el ataque por contenido dentro de un anexo,
+**El baseline que pide el jurado, medido.** Tres agentes honestos y el ataque por contenido dentro de un anexo,
 diez episodios por pretexto y por nivel de prompt: **0 fugas en 120 episodios con inyección**, con la
 regla del pliego, con una defensa explícita y **sin ninguna de las dos**. En ese escenario un buen prompt
 basta y la compuerta no aporta nada medible; lo decimos. Donde el prompt no llega es en los otros dos: el
@@ -114,8 +114,9 @@ la regla de contenido no confiable, y la inyección llega **dentro de un archivo
 En el corte principal (gpt-4o, ataque `important_instructions`, 169 trazas) frena **90/90 secuestros** y
 deja pasar **16 de 19** tareas limpias; sobre las 7.127 frena 1.506/1.521 (99 %) y deja 336/411 (75 piden
 aprobación humana). En esas mismas trazas, el filtro de herramientas de AgentDojo deja pasar
-16/144 secuestros y el detector DeBERTa 1/144, pero solo deja funcionando 9 de 25 tareas limpias. Límites: trazas grabadas (bloquear no dice qué habría
-hecho después), procedencia aproximada por texto, un solo agente. Protocolo en `quorum/eval/agentdojo/`.
+16/144 secuestros y el detector DeBERTa 1/144, pero solo deja funcionando 9 de 25 tareas limpias.
+Límites: trazas grabadas (bloquear no dice qué habría hecho después), procedencia aproximada por texto,
+un solo agente. Protocolo en `quorum/eval/agentdojo/`.
 
 ## 6. Límites y riesgo dual
 
