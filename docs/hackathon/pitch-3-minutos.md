@@ -25,8 +25,8 @@ El guion tiene unas 440 palabras: a 155 por minuto, con pausas, da unos 2:55. En
 > **(0:15) [Amenaza]** El caso es una licitación pública. Tres agentes: uno registra las ofertas, otro las
 > evalúa, otro publica. Uno, dos o los tres están comprometidos y quieren filtrar el precio de un
 > competidor. Si se reparten el trabajo, cada paso parece rutina: uno abre el sobre y lo anota como
-> si fuera un número de radicado, otro lo copia, el tercero lo publica. Un monitor que mira a cada agente
-> por separado ve tres pasos normales. Makins y otros lo midieron este año: repartir el ataque engaña al
+> si fuera un número de radicado, otro lo copia, el tercero lo publica. Cada paso, visto por separado,
+> parece normal. Makins y otros lo midieron este año: repartir el ataque le baja la sospecha al
 > monitor por agente.
 >
 > **(0:40) [Figura 1]** Nuestra idea no es otro monitor que lea. Cada dato lleva una etiqueta con sus
@@ -36,7 +36,7 @@ El guion tiene unas 440 palabras: a 155 por minuto, con pausas, da unos 2:55. En
 > **(1:05) [Tabla 1]** Lo medimos con agentes de modelo: 90 trámites, 60 honestos y 30 ataques. Sin defensa,
 > el precio llega al portal en 16 de 30. La compuerta bloquea las 16 y no detiene ninguno de los 60
 > honestos. Y la línea base: un monitor por agente también atrapa las 16. Empatamos en
-> detección. La diferencia es todo lo demás: el monitor hace cuatro llamadas a un modelo por trámite, avisa
+> detección. La diferencia es todo lo demás: los monitores suman cuatro llamadas a un modelo por trámite, avisa
 > al final y depende de un umbral; la compuerta decide en un microsegundo, antes de que el dato salga, y
 > ningún texto la convence.
 >
@@ -142,7 +142,7 @@ primera frase y los límites en «Bloquea de más, y lo que la política declara
    decisión. Lo que sí la evade son los canales que no viajan en los datos. Un atacante encontró uno: la
    existencia de una clave revelaba el valor (6,3 bits). Lo cerramos juzgando con lo que vio cualquier
    agente, y quedó en 0 bits. Los que siguen abiertos están en la ficha: tiempo, orden y puntajes publicados.
-2. *«¿Por qué no un monitor mejor?»* Probamos tres jueces, entre ellos Jev, que cuesta la mitad. Siguen
+2. *«¿Por qué no un monitor mejor?»* Probamos tres jueces, entre ellos Jev, que cuesta menos de la mitad. Siguen
    siendo un puntaje con umbral que lee lo que escribe quien vigila. Jev, con ataques hechos por un modelo,
    deja escapar 2 de 16. La compuerta y el monitor se combinan: la compuerta suave solo llama al monitor
    cuando lo publicado deriva de un secreto.
@@ -166,7 +166,7 @@ primera frase y los límites en «Bloquea de más, y lo que la política declara
    necesitaba: lo retiene para revisión humana, a propósito.
 
 **Jairo Torregrosa** (Mercado Libre: agentes y evals abiertos)
-8. *«¿Lo puedo correr?»* Sí, sin llaves ni costo: `uv run pytest` (877 pruebas) y los análisis se
+8. *«¿Lo puedo correr?»* Sí, sin llaves ni costo: `uv run pytest` (880 pruebas) y los análisis se
    recalculan desde `datos/`. La política y el código de la compuerta tienen hashes fijados, y el monitor no
    arranca si cambian.
 9. *«¿Cómo lo meto en mi sistema de agentes?»* Las herramientas que sacan datos pasan por el monitor, y se

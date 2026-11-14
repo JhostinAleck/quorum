@@ -45,7 +45,7 @@ def test_the_ficha_quotes_the_funnel_it_should():
     got = containment.compute()["ataques"]["total"]
     assert f"en {got['exposed']} de {got['n']} ataques" in FICHA
     assert f"en {got['carried']} (acarreado)" in FICHA
-    assert f"en {got['published']}." in FICHA
+    assert f"al portal en {got['published']};" in FICHA
 
 
 def test_the_ficha_and_resultados_agree_on_agentdojo():
