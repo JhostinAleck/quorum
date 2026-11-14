@@ -176,7 +176,7 @@ def tables(rows: list[dict[str, Any]], model: str, seeds: int, cost: float | Non
 
 def _usd(cost: float) -> str:
     """Two decimals, or as many as it takes to show a cost below one cent."""
-    return f"{cost:.2f}" if cost >= 0.01 or cost == 0 else f"{cost:.4f}".rstrip("0")
+    return f"{cost:.2f}" if cost >= 0.01 or cost == 0 else f"{cost:.6f}".rstrip("0").rstrip(".")
 
 
 def _spent(api_key: str) -> float | None:
@@ -203,19 +203,23 @@ def run(chat: Chat | Judge, seeds: int, workers: int = 12,
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="python -m quorum.monitor_bench", description=__doc__.split("\n\n")[0])
-    parser.add_argument("--backend", choices=BACKENDS, default=os.environ.get("QUORUM_MONITOR_BACKEND") or "llm",
-                        help="who gives the score: a chat model or Jev")
-    parser.add_argument("--model", default=os.environ.get("QUORUM_MONITOR_MODEL") or os.environ.get("QUORUM_MODEL", ""),
-                        help="model of the monitors; with --backend jev it defaults to the pinned Jev release")
+    parser.add_argument("--backend", default=os.environ.get("QUORUM_MONITOR_BACKEND") or "llm",
+                        help=f"who gives the score: {' or '.join(BACKENDS)} (or QUORUM_MONITOR_BACKEND)")
+    parser.add_argument("--model", default=os.environ.get("QUORUM_MONITOR_MODEL", ""),
+                        help="model of the monitors (or QUORUM_MONITOR_MODEL). With --backend llm it falls back to "
+                             "QUORUM_MODEL; with --backend jev, to the pinned Jev release, never to a chat model")
     parser.add_argument("--question", choices=("noul", "score"), default="noul",
                         help="how Jev is asked (only with --backend jev)")
-    parser.add_argument("--marker", default="monitors", help="name of the markers in --out to write between")
+    parser.add_argument("--marker", default="", help="name of the markers in --out to write between "
+                        "(default: monitors, monitors-jev or monitors-jev-score, by backend and question)")
     parser.add_argument("--seeds", type=int, default=6)
     parser.add_argument("--workers", type=int, default=12)
     parser.add_argument("--data", default="", help="save every score as JSONL (no trajectories, no key)")
     parser.add_argument("--from-data", default="", help="rebuild the tables from a saved JSONL, without any call")
     parser.add_argument("--out", default="", help="write the tables into this Markdown file, between its markers")
     args = parser.parse_args(argv)
+    if args.backend not in BACKENDS:        # argparse does not check a default that came from the environment
+        parser.error(f"unknown backend {args.backend!r}: choose one of {', '.join(BACKENDS)}")
 
     cost = None
     if args.from_data:
@@ -226,17 +230,20 @@ def main(argv: list[str] | None = None) -> None:
     else:
         backend, question = args.backend, args.question if args.backend == "jev" else ""
         api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-        if not api_key or not (args.model or backend == "jev"):
+        # QUORUM_MODEL names the agents' chat model: it must never reach Jev's endpoint
+        wanted = args.model or ("" if backend == "jev" else os.environ.get("QUORUM_MODEL", ""))
+        if not api_key or not (wanted or backend == "jev"):
             sys.exit("set OPENROUTER_API_KEY and pass --model (or QUORUM_MONITOR_MODEL, or QUORUM_MODEL)")
-        judge = build_judge(backend, args.model, api_key=api_key, **({"question": question} if question else {}))
-        model, seeds, before = getattr(judge, "model", args.model), args.seeds, _spent(api_key)
+        judge = build_judge(backend, wanted, api_key=api_key, **({"question": question} if question else {}))
+        model, seeds, before = getattr(judge, "model", wanted), args.seeds, _spent(api_key)
         rows = run(judge, seeds, args.workers,
                    lambda done, total: print(f"\r{done}/{total}", end="", file=sys.stderr, flush=True))
         print(file=sys.stderr)
         after = _spent(api_key)
         cost = after - before if before is not None and after is not None else None
-        if getattr(judge, "calls", 0):      # a backend that reports what each call cost is the better source
-            cost = judge.cost
+        calls = getattr(judge, "calls", 0)
+        if calls and getattr(judge, "priced", 0) == calls:
+            cost = judge.cost               # every call came with its price: better than the key's running total
         if args.data:
             meta = {"model": model, "backend": backend, "question": question, "seeds": seeds, "cost_usd": cost,
                     "calls": getattr(judge, "calls", None), "notes": NOTES}
@@ -248,7 +255,8 @@ def main(argv: list[str] | None = None) -> None:
     if not args.out:
         sys.stdout.write(text)
         return
-    path, start, end = Path(args.out), f"<!-- {args.marker}:start -->", f"<!-- {args.marker}:end -->"
+    marker = args.marker or {"": "monitors", "noul": "monitors-jev", "score": "monitors-jev-score"}[question]
+    path, start, end = Path(args.out), f"<!-- {marker}:start -->", f"<!-- {marker}:end -->"
     page = path.read_text(encoding="utf-8")
     if start not in page or end not in page:
         sys.exit(f"{path} has no {start} ... {end} markers")

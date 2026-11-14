@@ -106,6 +106,7 @@ Lo intentamos nosotros, y esto es lo que quedó:
 | Usar un cálculo autorizado como oráculo | Acotado para los agentes: `score_bids` y `within_budget` solo calculan sobre ofertas oficiales, tienen cupo y la marea alta juzga la salida. Abierto para un rival externo: con los puntajes que la propia licitación publica invierte la fórmula y recupera el monto con un error mediano de 0,04 % en 50 de 50 casos. Eso no lo cierra la compuerta, porque es una decisión del pliego y no un flujo que la política prohíba ([correcciones de la mentoría](docs/correcciones-mentoria.md)) |
 | Señalar con qué claves existen, sin escribir el dato | Rompía la compuerta (el valor salía con 0,6 % de error). Cerrado por defecto en tres dominios y acotado a un sí o no por episodio en los otros dos |
 | Convencer a los monitores M1 y M2 | Medido con un modelo de chat y con Jev (un modelo de decisión que devuelve probabilidades) en [resultados de monitores](docs/resultados-monitores.md): ninguno cede ante dos notas sencillas, y quién pone la nota se elige con `--backend`. Además, una respuesta ilegible del monitor vale la nota máxima y ningún monitor puede revertir un bloqueo de la compuerta |
+| Cambiar la política, las herramientas o el código de la compuerta | Detectado: sus hashes están fijados en `quorum/integrity.lock.json`, un test falla si cambian sin el archivo, el monitor no arranca con otro pipeline y la huella queda sellada en la bitácora antes de la primera llamada. No es una firma: ver [verificación de integridad](docs/integridad.md) |
 
 El detalle, las cifras y lo que sigue abierto están en [intentos de evasión](docs/intentos-de-evasion.md).
 
@@ -134,6 +135,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 - [Intentos de romper la compuerta](docs/intentos-de-evasion.md)
 - [La misma compuerta en cinco dominios](docs/resultados-dominios.md)
 - [¿Se puede convencer a los monitores?](docs/resultados-monitores.md)
+- [Verificación de integridad](docs/integridad.md)
 - [Agentes de modelo frente a un documento con una instrucción](docs/resultados-agentes.md)
 - [Quórum sobre AgentDojo, un banco de pruebas ajeno](docs/resultados-agentdojo.md)
 - [Referencias y atribución](docs/referencias.md)
@@ -147,7 +149,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ```bash
 uv sync
-uv run pytest        # 775 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
+uv run pytest        # 838 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los ocho casos (honesto, honesto con oferta escaneada, honesto descuidado, ataque repartido entre 1, 2 y 3 agentes, ataque del agente que lee el documento e inyección) sin llamar a ningún modelo:

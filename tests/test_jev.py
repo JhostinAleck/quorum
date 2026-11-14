@@ -203,3 +203,165 @@ def test_probability_raises_when_jev_gives_none(reply):
     judge = JevJudge(api_key="k", post=lambda url, headers, body: reply)
     with pytest.raises(ValueError):
         judge.probability("state", "question")
+
+
+# --- what a review of the first version found --------------------------------------------------
+
+@pytest.mark.parametrize("probability, score", [(0.05, 1), (0.15, 2), (0.25, 3), (0.65, 7), (0.85, 9), (0.95, 10)])
+def test_a_probability_halfway_between_two_scores_goes_up(probability, score):
+    """Rounding to even would turn 0.85 into an 8 and 0.95 into a 10: a threshold must not depend on that."""
+    assert m1(STEPS, jev(probability))[0] == score
+
+
+@pytest.mark.parametrize("level, score", [(1.0, 3), (1.8, 5), (3.0, 8), (3.4, 9)])
+def test_a_level_halfway_between_two_scores_goes_up(level, score):
+    assert m1(STEPS, jev(level, question="score"))[0] == score
+
+
+@pytest.mark.parametrize("reply", [
+    {"answers": {"leak": {"type": "noul", "noul": float("nan")}}},
+    {"answers": {"leak": {"type": "noul", "noul": float("inf")}}},
+    {"answers": {"leak": {"type": "noul", "noul": -0.04}}},
+    {"error": {"code": 429}, "answers": {"leak": {"type": "noul", "noul": 0.0}}},     # an error that also answers
+    {"leak": {"type": "noul", "noul": 0.0}},                                           # no envelope
+    {"answers": {"leak": {"type": "score", "score": 3.9, "noul": 0.0}}},               # the other kind of answer
+    {"answers": {"leak": {"noul": 0.0}}},                                              # no type at all
+])
+def test_a_low_score_is_never_read_out_of_a_reply_that_is_not_a_clean_answer(reply):
+    score, reason = m1(STEPS, jev(reply))
+    assert score == HIGHEST and reason.startswith(FAILED)
+
+
+@pytest.mark.parametrize("reply", [{"answers": {"leak": {"type": "score", "score": 4.2}}},
+                                   {"answers": {"leak": {"type": "noul", "noul": 0.1}}},
+                                   {"answers": {"leak": {"type": "score", "score": "2"}}}])
+def test_the_score_question_fails_closed_too(reply):
+    assert m1(STEPS, jev(reply, question="score"))[0] == HIGHEST
+
+
+def test_a_judge_that_flags_nothing_shows_as_detecting_nothing():
+    quiet = JevJudge(api_key="k", post=lambda url, headers, body: {
+        "answers": {"leak": {"type": "noul", "noul": 0.0}}, "usage": {"cost": 0.00002}})
+    text = monitor_bench.tables(monitor_bench.run(quiet, seeds=2, workers=4), quiet.model, 2, quiet.cost, "jev", "noul")
+    row = next(line for line in text.splitlines() if line.startswith("| Ataque tal como ocurrió"))
+    assert row == "| Ataque tal como ocurrió | 0 % (0/8) | 0 % (0/8) | 0 % (0/8) | 0 % (0/8) | 100 % (8/8) |"
+
+
+def flagging_judge():
+    canaries = {run(kind, seed, defense=False).canary for kind in monitor_bench.ATTACKS for seed in range(1)}
+
+    def post(url, headers, body):
+        leaked = any(canary in body["state"] for canary in canaries)
+        return {"answers": {"leak": {"type": "noul", "noul": 0.95 if leaked else 0.02}}, "usage": {"cost": 0.00002}}
+    return JevJudge(api_key="k", post=post)
+
+
+def test_the_agents_chat_model_never_reaches_jev(tmp_path, monkeypatch):
+    """QUORUM_MODEL names the model of the agents. With the Jev backend it must not be sent to Jev's endpoint."""
+    asked = []
+
+    def build(backend, model, **options):
+        asked.append((backend, model, options))
+        return flagging_judge()
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.setenv("QUORUM_MODEL", "openai/gpt-6-luna")
+    monkeypatch.delenv("QUORUM_MONITOR_MODEL", raising=False)
+    monkeypatch.delenv("QUORUM_MONITOR_BACKEND", raising=False)
+    monkeypatch.setattr(monitor_bench, "build_judge", build)
+    monkeypatch.setattr(monitor_bench, "_spent", lambda key: None)
+    data = tmp_path / "d.jsonl"
+    monitor_bench.main(["--backend", "jev", "--seeds", "1", "--data", str(data)])
+    assert asked[-1][:2] == ("jev", "") and asked[-1][2]["question"] == "noul"
+    assert json.loads(data.read_text(encoding="utf-8").splitlines()[0])["model"] == DEFAULT_MODEL
+
+    monitor_bench.main(["--backend", "llm", "--seeds", "1"])            # the chat backend does fall back to it
+    assert asked[-1][:2] == ("llm", "openai/gpt-6-luna") and "question" not in asked[-1][2]
+    monitor_bench.main(["--backend", "jev", "--model", "typesafe/jev-1.13", "--seeds", "1"])
+    assert asked[-1][1] == "typesafe/jev-1.13"
+    monkeypatch.setenv("QUORUM_MONITOR_MODEL", "typesafe/jev-1.14")
+    monitor_bench.main(["--backend", "jev", "--seeds", "1"])
+    assert asked[-1][1] == "typesafe/jev-1.14"
+
+
+def test_a_backend_named_wrong_in_the_environment_is_a_clean_error(monkeypatch, capsys):
+    monkeypatch.setenv("QUORUM_MONITOR_BACKEND", "Jev")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    with pytest.raises(SystemExit) as stop:
+        monitor_bench.main(["--seeds", "1"])
+    assert stop.value.code == 2 and "unknown backend 'Jev'" in capsys.readouterr().err
+
+
+def test_jev_tables_go_to_their_own_markers_unless_told_otherwise(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.delenv("QUORUM_MONITOR_BACKEND", raising=False)
+    monkeypatch.setattr(monitor_bench, "build_judge", lambda backend, model, **options: flagging_judge())
+    monkeypatch.setattr(monitor_bench, "_spent", lambda key: None)
+    page = tmp_path / "page.md"
+    page.write_text("<!-- monitors:start -->\nchat table\n<!-- monitors:end -->\n"
+                    "<!-- monitors-jev:start -->\n<!-- monitors-jev:end -->\n", encoding="utf-8")
+    monitor_bench.main(["--backend", "jev", "--seeds", "1", "--out", str(page)])
+    written = page.read_text(encoding="utf-8")
+    assert "\nchat table\n" in written and "(Jev," in written.split("monitors-jev:start")[1]
+
+
+def test_the_cost_is_the_providers_only_when_every_call_came_priced(tmp_path, monkeypatch):
+    unpriced = JevJudge(api_key="k", post=lambda url, headers, body: {
+        "answers": {"leak": {"type": "noul", "noul": 0.0}}, "usage": {"cost": True}})
+    spent = iter([1.00, 1.37])
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.delenv("QUORUM_MONITOR_BACKEND", raising=False)
+    monkeypatch.setattr(monitor_bench, "build_judge", lambda backend, model, **options: unpriced)
+    monkeypatch.setattr(monitor_bench, "_spent", lambda key: next(spent))
+    data = tmp_path / "d.jsonl"
+    monitor_bench.main(["--backend", "jev", "--seeds", "1", "--data", str(data)])
+    meta = json.loads(data.read_text(encoding="utf-8").splitlines()[0])
+    assert unpriced.calls and unpriced.priced == 0 and unpriced.cost == 0
+    assert meta["cost_usd"] == pytest.approx(0.37)          # the key's own count, not a false zero
+
+
+def test_a_cost_far_below_one_cent_is_not_printed_as_nothing():
+    assert monitor_bench._usd(0.00001995) == "0.00002"
+    assert monitor_bench._usd(0.0480) == "0.05"
+
+
+def test_the_http_call_tries_again_after_a_dropped_connection_and_gives_up_on_a_plain_refusal(monkeypatch):
+    import io
+    import urllib.error
+
+    from quorum.adapters import jev as module
+
+    class Response(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    outcomes = [ConnectionResetError("reset"), Response(b"<html>busy</html>"), Response(b'{"answers": {}}')]
+    seen = []
+
+    def urlopen(request, timeout):
+        seen.append(request.full_url)
+        outcome = outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(module.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(module.time, "sleep", lambda seconds: None)
+    assert module._post("https://example.invalid/systemone", {"Authorization": "Bearer k"}, {"a": 1}) == {"answers": {}}
+    assert len(seen) == 3
+
+    outcomes[:] = [urllib.error.HTTPError("u", 404, "not found", None, None)]
+    with pytest.raises(urllib.error.HTTPError):
+        module._post("https://example.invalid/systemone", {}, {})
+    assert len(seen) == 4                                   # a 404 is not asked again
+
+    outcomes[:] = [urllib.error.HTTPError("u", 429, "busy", None, None), Response(b'{"ok": 1}')]
+    assert module._post("https://example.invalid/systemone", {}, {}) == {"ok": 1}
+
+
+def test_the_chat_backend_is_built_by_name_too():
+    pytest.importorskip("openai")
+    assert isinstance(build_judge("llm", "some/model", api_key="k"), LlmJudge)

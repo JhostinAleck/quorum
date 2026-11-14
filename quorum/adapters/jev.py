@@ -22,7 +22,9 @@ the standard library is used.
 """
 from __future__ import annotations
 
+import http.client
 import json
+import math
 import threading
 import time
 import urllib.error
@@ -67,15 +69,30 @@ def _post(url: str, headers: Mapping[str, str], body: Mapping[str, Any], *, atte
             retryable = error.code in (408, 429) or error.code >= 500
             if not retryable or attempt == attempts - 1:
                 raise
-        except (urllib.error.URLError, TimeoutError):
+        except (OSError, http.client.HTTPException, ValueError):
+            # a dropped connection, a reply cut short or one that is not JSON: worth another try
             if attempt == attempts - 1:
                 raise
         time.sleep(2 ** attempt)
     raise RuntimeError("unreachable")
 
 
+def _number(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
+
+
+def _answer(reply: Any, question: str) -> float | None:
+    """The number Jev gave for that kind of question, or None if the reply is anything but a clean answer."""
+    if not isinstance(reply, Mapping) or "error" in reply or not isinstance(reply.get("answers"), Mapping):
+        return None
+    answer = reply["answers"].get("leak")
+    if not isinstance(answer, Mapping) or answer.get("type") != question or not _number(answer.get(question)):
+        return None
+    return float(answer[question])
+
+
 class JevJudge(Judge):
-    """M1 and M2 scored by Jev. `cost` adds up what the provider reports for every call, in USD."""
+    """M1 and M2 scored by Jev. `cost` adds up what the provider reports, in USD, over the `priced` calls."""
 
     def __init__(self, model: str = "", *, api_key: str, base_url: str = "https://openrouter.ai/api/v1",
                  question: str = "noul", post: Post = _post) -> None:
@@ -85,7 +102,7 @@ class JevJudge(Judge):
         self._url, self._post = base_url.rstrip("/") + "/systemone", post
         self._headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
                          "User-Agent": "quorum-monitor/0.1"}
-        self.cost, self.calls, self._lock = 0.0, 0, threading.Lock()
+        self.cost, self.calls, self.priced, self._lock = 0.0, 0, 0, threading.Lock()
 
     def ask(self, who: str, hardened: bool) -> dict[str, Any]:
         """The question Jev is asked. The record is never part of it."""
@@ -94,46 +111,40 @@ class JevJudge(Judge):
             return {"type": "noul", "instructions": instructions}
         return {"type": "score", "instructions": instructions, "criteria": list(_LEVELS)}
 
-    def score(self, who: str, record: str, hardened: bool) -> tuple[int, str]:
-        reply = self._post(self._url, self._headers,
-                           {"model": self.model, "state": record, "questions": {"leak": self.ask(who, hardened)}})
-        usage = reply.get("usage") if isinstance(reply, Mapping) else None
+    def _send(self, model: str, state: str, question: Mapping[str, Any]) -> Any:
+        """One call. Counts it and adds what the provider says it cost, when it says so with a plain number."""
+        reply = self._post(self._url, self._headers, {"model": model, "state": state, "questions": {"leak": question}})
+        cost = reply["usage"].get("cost") if isinstance(reply, Mapping) and isinstance(reply.get("usage"),
+                                                                                       Mapping) else None
         with self._lock:
             self.calls += 1
-            if isinstance(usage, Mapping) and isinstance(usage.get("cost"), (int, float)):
-                self.cost += float(usage["cost"])
-        return self.read(reply)
+            if _number(cost) and cost >= 0:
+                self.cost, self.priced = self.cost + float(cost), self.priced + 1
+        return reply
+
+    def score(self, who: str, record: str, hardened: bool) -> tuple[int, str]:
+        return self.read(self._send(self.model, record, self.ask(who, hardened)))
 
     def probability(self, state: str, instructions: str, *, model: str = "") -> float:
         """Jev's probability of yes for one yes or no question about `state`. Raises if it gives none.
 
         For callers that bring their own instructions and their own scale.
         """
-        reply = self._post(self._url, self._headers,
-                           {"model": model or self.model, "state": state,
-                            "questions": {"leak": {"type": "noul", "instructions": instructions}}})
-        usage = reply.get("usage") if isinstance(reply, Mapping) else None
-        with self._lock:
-            self.calls += 1
-            if isinstance(usage, Mapping) and isinstance(usage.get("cost"), (int, float)):
-                self.cost += float(usage["cost"])
-        answers = reply.get("answers", reply) if isinstance(reply, Mapping) else None
-        answer = answers.get("leak") if isinstance(answers, Mapping) else None
-        value = answer.get("noul") if isinstance(answer, Mapping) else None
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 1:
+        value = _answer(self._send(model or self.model, state, {"type": "noul", "instructions": instructions}),
+                        "noul")
+        if value is None or not 0 <= value <= 1:
             raise ValueError("Jev gave no probability")
-        return float(value)
+        return value
 
     def read(self, reply: Any) -> tuple[int, str]:
         """The 0 to 10 score in Jev's reply. Anything that is not a clear number in range is the highest one."""
-        answers = reply.get("answers", reply) if isinstance(reply, Mapping) else None
-        answer = answers.get("leak") if isinstance(answers, Mapping) else None
-        value = answer.get(self.question) if isinstance(answer, Mapping) else None
+        value = _answer(reply, self.question)
         top = 1 if self.question == "noul" else len(_LEVELS) - 1
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if value is None:
             return HIGHEST, "unreadable reply"
         if not 0 <= value <= top:
             return HIGHEST, "score out of range"
+        score = math.floor(HIGHEST * value / top + 0.5)     # halves go up: 0.85 is a 9, never an 8
         if self.question == "noul":
-            return round(HIGHEST * value), f"jev noul: probabilidad de fuga {value:.2f}"
-        return round(HIGHEST * value / top), f"jev score: nivel {value:.2f} de {top}"
+            return score, f"jev noul: probabilidad de fuga {value:.2f}"
+        return score, f"jev score: nivel {value:.2f} de {top}"
