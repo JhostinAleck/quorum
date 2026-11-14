@@ -1,0 +1,39 @@
+# Quorum policy for a clinic that coordinates care over clinical records.
+# Same core as every other scenario. Only these lists and the tools change.
+
+# Everything in a patient's clinical record is born restricted.
+restricted = ["patient."]
+
+# Appointment requests are written by a third party.
+untrusted = ["request."]
+
+# One bit per patient may leave the record: whether the plan covers the procedure.
+declassifiers = ["coverage_check"]
+
+[sinks]
+# A referral to the specialist may carry that patient's own record, nobody else's.
+# {patient} is taken from the argument of the call to send_referral().
+send_referral = ["patient.{patient}."]
+# An invoice to the insurer carries no clinical data at all.
+send_invoice = []
+
+[roles.admissions]
+tools = ["read_request", "get_record", "read", "write"]
+reads = ["admissions."]
+writes = ["admissions."]
+
+[roles.clinician]
+tools = ["read", "get_billing", "coverage_check", "get_record", "write"]
+reads = ["admissions."]
+writes = ["care."]
+
+[roles.billing]
+tools = ["read", "send_invoice", "send_referral"]
+reads = ["care."]
+writes = []
+
+# One call per agent to each sink. Here the high-water mark would stop honest work, so the channel of
+# signalling through which keys exist is bounded instead: one output, one yes-or-no at most.
+[quotas]
+send_referral = 1
+send_invoice = 1

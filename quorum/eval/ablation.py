@@ -21,11 +21,13 @@ from dataclasses import replace
 
 from ..domain import Policy
 from ..domain.tools import Kind, Tool
-from ..scenarios.tender import KINDS, POLICY, TOOLS
+from ..scenarios.tender import POLICY, TOOLS
 from ..scenarios.tender.scripted import evaluator_steps, publisher_steps, registrar_steps
 from .baseline import prepare_injected
 
 SEEDS = range(20261114, 20261134)
+# Its own tuple, not the scenario's KINDS: episode() only knows how to run these five (no injection, no reader).
+KINDS = ("honest", "honest_scanned", "attack_k1", "attack_k2", "attack_k3")
 
 
 def _without_declassifiers(names: set[str]) -> tuple[Policy, tuple[Tool, ...]]:

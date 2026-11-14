@@ -11,6 +11,9 @@
 | Hammond et al., *Multi-Agent Risks from Advanced AI*, 2025. arXiv:2502.14143 | Marco de riesgos que solo aparecen en el conjunto |
 | Urcuqui, *AgentBreak* (github.com/urcuqui/AgentBreak) | Controles deterministas fuera del modelo, ataques convertidos en tests de regresión |
 | UK AI Security Institute, *Inspect AI* (inspect.aisi.org.uk) | Framework de evaluación |
+| Guo et al., *Just Ask Jev: Reinforcement Learning for Calibrated Decisions as a Zero-Shot Detector of AI Alignment Failures*, 2026. arXiv:2609.29429 | Jev como juez alternativo de los monitores M1 y M2 |
+| OpenRouter, *Jev Documentation* (openrouter.ai/docs/guides/community/jev) y TypeSafe, *Quick start* (docs.typesafe.ai) | Formato de la llamada a Jev (`state`, `questions`, respuesta con probabilidad) |
+| Datadog Security Labs, *Jev as a judge: how counterfeit policy steers Jev* | Motivo para medir a Jev con una política falsa dentro del registro. No tomamos sus cifras |
 
 ## Trabajo relacionado más cercano
 
@@ -36,6 +39,7 @@ Antes de la entrega, cada cita que aparezca en la ficha técnica se verifica abr
 | pytest, hypothesis | Tests de la compuerta |
 | numpy, matplotlib | Bootstrap y figura |
 | @mermaid-js/mermaid-cli | Diagramas |
+| agentdojo 0.1.35 (opcional, solo para `quorum/agentdojo_bench.py`) | Tareas, herramientas y ataques del banco de pruebas AgentDojo, repetidos sin modelo |
 | openai (cliente de Python) | Llamadas a un proveedor compatible con OpenAI (OpenRouter) desde el bucle de agente. Opcional |
 | Docker y Docker Compose | Despliegue del monitor y de cada agente en contenedores. Imagen base `python:3.12-slim` |
 
@@ -50,6 +54,10 @@ Todos se usaron el 14 de noviembre de 2026. El identificador es el que queda reg
 | Los mismos monitores, segunda familia | `claude-haiku-5-5` | Anthropic | `datos/monitor_*_haiku55*` |
 | Línea base de buen prompt con otros agentes | `openai/gpt-4o-mini`, `meta-llama/llama-3.1-8b-instruct`, `meta/muse-ember` (solo prueba corta) | OpenRouter | `datos/baseline_*` |
 | Línea base de buen prompt con otros agentes | `openai/gpt-6-luna`, `xiaomi/mimo-v2.6-flash` | OrcaRouter | `datos/baseline_gpt6luna.jsonl`, `baseline_mimoflash.jsonl` |
+| Monitores M1 y M2 del experimento de persuasión (`quorum/monitor_bench.py`) | `openai/gpt-6-luna` | OpenRouter | `datos/monitores-persuasion.jsonl` |
+| Monitores M1 y M2 del experimento de persuasión, con Jev como juez (`quorum/monitor_bench.py --backend jev`) | `typesafe/jev-1.14` | OpenRouter (TypeSafe) | `datos/monitores-persuasion-jev.jsonl`, `monitores-persuasion-jev-score.jsonl` |
+| Los cuatro monitores del experimento principal, con Jev como juez (`quorum/eval/monitors.py --backend jev`) | `typesafe/jev-1.14` | OpenRouter (TypeSafe) | `datos/monitor_orca_v4_jev.jsonl`, `monitor_honest_extra_jev.jsonl` |
+| Agentes con prompts honestos y carta inyectada (`quorum/llm_bench.py`) | `openai/gpt-6-luna` | OpenRouter | `datos/agentes-inyeccion.jsonl` |
 | Agentes de la interfaz web (por defecto) | `openai/gpt-6-luna` | OpenRouter | `quorum/ui/agents.py` |
 | Prueba de modelos para la demo (un episodio por caso, no se reporta como cifra) | `deepseek/deepseek-v4-flash`, `qwen/qwen3.7-flash`, `mistralai/mistral-small-3.2-24b-instruct`, `z-ai/glm-5.3-flash` | OpenRouter | descripción del PR del Frente 3 |
 | Trazas externas de AgentDojo (no las generamos: se reproducen) | `gpt-4o-2024-05-13` y las demás configuraciones del benchmark | ETH Zürich (ethz-spylab/agentdojo, commit `089ed468`) | `quorum/eval/agentdojo/RESULTADOS.md` |
@@ -61,7 +69,6 @@ Todos se usaron el 14 de noviembre de 2026. El identificador es el que queda reg
 |---|---|
 | Claude Code (Anthropic) | Documentos técnicos, diagramas, núcleo (etiquetas, política, compuerta, monitor), escenarios guionados, adaptadores, protocolo HTTP, despliegue en contenedores, prompts base y tests |
 | Grok (xAI) | Búsqueda de literatura y contexto previo al diseño |
-
 | Claude Code (Anthropic, Claude Opus 5.5) | Frente 3: ataques, monitores, piloto, `metrics.yaml`, análisis con intervalos de confianza, reproducción de AgentDojo, línea base, ablación, intentos de romper la compuerta, conexión de los ataques a la interfaz, notas de la mentoría y tests |
 | OpenCode | Frente 3: ficha técnica, `metrics.yaml` (enmiendas), `datos/README.md` y revisión de cifras |
 

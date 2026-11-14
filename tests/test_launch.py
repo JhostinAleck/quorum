@@ -114,3 +114,38 @@ def test_the_monitor_refuses_to_start_without_tokens():
 def test_an_unknown_episode_kind_is_a_clean_error(deploy):
     done = deploy().agent("registrar", "bogus")
     assert done.returncode != 0 and "bogus" in done.stderr and "Traceback" not in done.stderr
+
+
+def test_the_report_says_which_pipeline_decided_and_that_it_was_sealed_before_any_call(deploy):
+    from quorum import integrity
+
+    deployment = deploy()
+    report = deployment.episode("attack_k3")
+    pinned = json.loads(integrity.LOCK.read_text(encoding="utf-8"))["scenarios"]["tender"]
+    assert report["integrity"] == {**pinned, "pinned": True}
+    assert report["integrity_sealed"] and report["audit_log_valid"] and report["quorum_blocks"]
+    assert report["integrity_approved"] and report["enforce_sealed"] is True
+
+
+def test_the_report_shows_that_a_monitor_in_audit_mode_sealed_that_it_does_not_block(deploy):
+    report = deploy("--audit").episode("attack_k3")
+    assert report["enforce_sealed"] is False and report["enforce"] is False and report["leak"]
+
+
+def test_the_report_fails_when_the_sealed_pipeline_is_not_the_one_the_operator_approved(deploy):
+    deployment = deploy()
+    env = {k: v for k, v in os.environ.items() if not k.startswith("QUORUM_")}
+    env.update(QUORUM_ADMIN_TOKEN=deployment.admin, QUORUM_EXPECT_PIPELINE="f" * 64)
+    done = subprocess.run([*LAUNCH, "report", "--url", deployment.url], env=env, text=True, capture_output=True,
+                          timeout=60)
+    assert done.returncode == 1 and json.loads(done.stdout)["integrity_approved"] is False
+    done = subprocess.run([*LAUNCH, "report", "--url", deployment.url, "--unpinned"], env=env, text=True,
+                          capture_output=True, timeout=60)
+    assert done.returncode == 0 and json.loads(done.stdout)["integrity_approved"] is False
+
+
+def test_the_monitor_refuses_to_start_when_the_operator_expected_another_pipeline():
+    env = {**os.environ, "QUORUM_ADMIN_TOKEN": "a" * 32, "QUORUM_EXPECT_PIPELINE": "f" * 64,
+           **{f"QUORUM_TOKEN_{role.upper()}": f"{role}-{'t' * 24}" for role in ROLES}}
+    done = subprocess.run([*LAUNCH, "monitor", "--port", "0"], env=env, text=True, capture_output=True, timeout=60)
+    assert done.returncode != 0 and "was expected" in done.stderr and "Traceback" not in done.stderr
