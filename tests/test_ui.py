@@ -337,35 +337,34 @@ def test_the_page_asks_for_the_key_when_there_is_one(monkeypatch):
         srv.shutdown()
 
 
-def test_beyond_loopback_the_server_refuses_to_start_without_a_key():
+def test_the_key_is_optional_and_asked_only_when_there_is_one(capsys):
     key = os.urandom(12).hex()
-    for host in ("127.0.0.1", "localhost", "::1"):
-        assert server.access_key(host, {}) is None
+    for host in ("127.0.0.1", "localhost", "::1", "0.0.0.0", "::", "192.168.1.20", "lab", ""):
         assert server.access_key(host, {"QUORUM_UI_PASSWORD": key}) == key
-    for host in ("0.0.0.0", "::", "192.168.1.20", "lab", ""):
-        assert server.access_key(host, {"QUORUM_UI_PASSWORD": key}) == key
-        # where Compose publishes the port does not make the container private: the agents reach it
-        for environ in ({}, {"QUORUM_UI_PASSWORD": ""}, {"QUORUM_UI_PASSWORD": "  "}, {"QUORUM_UI_BIND": "127.0.0.1"}):
-            with pytest.raises(SystemExit, match="QUORUM_UI_PASSWORD"):
-                server.access_key(host, environ)
+        for environ in ({}, {"QUORUM_UI_PASSWORD": ""}, {"QUORUM_UI_PASSWORD": "  "}):
+            assert server.access_key(host, environ) is None
+    # beyond loopback without a key it starts, and says who can reach it (the agents share its network)
+    assert "QUORUM_UI_PASSWORD" in capsys.readouterr().err
+    server.access_key("127.0.0.1", {})
+    assert capsys.readouterr().err == ""
 
 
-def test_main_does_not_open_a_socket_without_a_key(monkeypatch):
+def test_without_a_key_the_server_starts_and_the_page_opens(monkeypatch):
     opened = []
-    monkeypatch.setattr(server, "ThreadingHTTPServer", lambda *a, **k: opened.append(a))
+    monkeypatch.setattr(server, "ThreadingHTTPServer", lambda *a, **k: opened.append(a) or type(
+        "S", (), {"serve_forever": lambda self: None})())
+    monkeypatch.setattr(server, "warm_up", lambda: None, raising=False)
     monkeypatch.setattr(sys, "argv", ["server"])
     monkeypatch.setenv("QUORUM_UI_HOST", "0.0.0.0")
-    monkeypatch.setenv("QUORUM_UI_BIND", "127.0.0.1")
     monkeypatch.delenv("QUORUM_UI_PASSWORD", raising=False)
-    with pytest.raises(SystemExit):
-        server.main()
-    assert not opened
+    server.main()
+    assert opened and server.PASSWORD is None
 
 
-def test_compose_requires_the_key_of_the_page():
+def test_compose_does_not_require_the_key_of_the_page():
     compose = (REPO / "docker-compose.ui.yml").read_text(encoding="utf-8")
-    assert "QUORUM_UI_PASSWORD: ${QUORUM_UI_PASSWORD:?" in compose
-    assert "QUORUM_UI_PASSWORD:-" not in compose
+    assert "QUORUM_UI_PASSWORD: ${QUORUM_UI_PASSWORD:-}" in compose
+    assert "QUORUM_UI_PASSWORD:?" not in compose
 
 
 def browser(url):

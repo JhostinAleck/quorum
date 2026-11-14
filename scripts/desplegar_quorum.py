@@ -121,9 +121,7 @@ def check(need_llm: bool = False, need_ui: bool = True) -> dict[str, str]:
     if need_llm and not cfg.get("QUORUM_MODEL"):
         fail("falta QUORUM_MODEL en .env (obligatoria en el modo con modelo)")
     if need_ui and not cfg.get("QUORUM_UI_PASSWORD"):
-        # docker-compose.ui.yml requires it and the page refuses to start without it: say so before building anything
-        fail("falta QUORUM_UI_PASSWORD en .env: la interfaz web no arranca sin clave de acceso "
-             "(se genera igual que un token, ver .env.example)")
+        warn("sin QUORUM_UI_PASSWORD en .env: la página abre sin usuario ni clave")
     leftovers = [k for k in ("QUORUM_KIND", "QUORUM_MONITOR_FLAGS", "QUORUM_SEED") if k in os.environ]
     if leftovers:
         warn(f"tu shell tiene {', '.join(leftovers)}; este script los fija en las pruebas, pero pesan sobre .env")
@@ -226,7 +224,10 @@ def ui(cfg: dict[str, str]) -> None:
         ip = lan_ip()
         if ip:
             ok(f"desde otros equipos: http://{ip}:{port}/")
-    ok("usuario: quorum; la clave es la de QUORUM_UI_PASSWORD en .env (no se imprime)")
+    if cfg.get("QUORUM_UI_PASSWORD"):
+        ok("usuario: quorum; la clave es la de QUORUM_UI_PASSWORD en .env (no se imprime)")
+    else:
+        ok("abre sin usuario ni clave")
     print("\nPara apagar todo:  python scripts/desplegar_quorum.py down", flush=True)
 
 
