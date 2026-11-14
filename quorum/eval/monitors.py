@@ -36,7 +36,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from ..core import Kind
+from ..domain import Kind
 from ..llm import llamar
 
 ROOT = Path(__file__).resolve().parents[2]
