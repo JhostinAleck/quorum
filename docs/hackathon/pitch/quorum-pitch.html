@@ -1,0 +1,168 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Quórum · pitch 3 minutos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=Inter:wght@400;600;700&display=swap"><style>:root {
+  --bg: #121417;
+  --bg2: #1A1E23;
+  --card: #22272E;
+  --ink: #F2EFEA;
+  --soft: #BFC6CE;
+  --naranja: #F28C28;
+  --turquesa: #3CC6C0;
+  --rojo: #FF6B6B;
+  --verde: #4CC97F;
+}
+body { font-family: 'Inter', Arial, sans-serif; color: var(--ink); }
+section { background: var(--bg); padding: 128px 128px 160px; display: flex; flex-direction: column; gap: 40px; counter-increment: page; }
+section.alt { background: var(--bg2); }
+h1, h2, h3 { font-family: 'Space Grotesk', Arial, sans-serif; color: var(--ink); }
+h2 { font-size: 64px; font-weight: 700; line-height: 1.1; }
+h3 { font-size: 36px; font-weight: 700; line-height: 1.15; }
+.ceja { font-size: 28px; font-weight: 700; color: var(--naranja); letter-spacing: 2px; }
+.guia { font-size: 32px; color: var(--soft); line-height: 1.35; }
+.txt { font-size: 28px; color: var(--soft); line-height: 1.35; }
+.pie { position: absolute; left: 128px; bottom: 64px; width: 1664px; font-size: 24px; color: var(--soft); }
+.fila { display: flex; flex-direction: row; gap: 24px; align-items: stretch; }
+.tarjeta { background: var(--card); border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.tarjeta.peligro { border: 3px solid var(--rojo); }
+.tarjeta.quorum { border: 3px solid var(--naranja); }
+.tarjeta.bien { border: 3px solid var(--verde); }
+.icono { width: 56px; height: 56px; color: var(--naranja); }
+.icono.rojo { color: var(--rojo); }
+.icono.verde { color: var(--verde); }
+.icono.turq { color: var(--turquesa); }
+.ok { font-size: 26px; font-weight: 700; color: var(--verde); }
+.mal { font-size: 26px; font-weight: 700; color: var(--rojo); }
+.flecha { width: 56px; height: 32px; background: var(--soft); align-self: center; }
+.cifra { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 120px; font-weight: 700; line-height: 1; }
+.cifra.naranja { color: var(--naranja); }
+.cifra.rojo { color: var(--rojo); }
+.cifra.verde { color: var(--verde); }
+.tabla { font-size: 28px; color: var(--ink); width: 100%; }
+.barra { height: 36px; border-radius: 6px; }
+.etq { font-size: 26px; color: var(--soft); width: 300px; }
+.val { font-size: 26px; font-weight: 700; color: var(--ink); }
+.cierre { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 64px; font-weight: 700; color: var(--naranja); line-height: 1.1; }
+.entra { animation: entra 500ms ease-out both; animation-delay: calc(var(--i) * 140ms); }
+@keyframes entra { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+@page { size: 1920px 1080px; margin: 0 }
+html,body { margin:0; background:#121417 }
+* { box-sizing:border-box } p,h1,h2,h3 { margin:0 }
+section { width:1920px; height:1080px; position:relative; overflow:hidden; page-break-after:always; break-after:page }
+.entra { animation:none }
+.flechatxt { font-size:56px; color:var(--soft); align-self:center }
+.tabla { border-collapse:collapse } .tabla th,.tabla td { text-align:left; padding:12px 16px; border-bottom:1px solid #3a414a }
+.tabla th { color:var(--soft); font-weight:600 }
+</style></head><body><section id="cover" style="justify-content:center;gap:36px">
+<p class="ceja">DEFACC HACKATHON 2026 · TRACK 6 · COLUSIÓN ENTRE AGENTES</p>
+<h1 style="font-size:200px;font-weight:700;line-height:1;color:#F28C28">Quórum</h1>
+<h2 style="font-size:72px">Nada confidencial sale sin permiso.</h2>
+<p class="guia" style="width:1500px">Una compuerta determinista para sistemas de agentes de IA: marca el dato confidencial desde que nace y lo frena en la salida, aunque los agentes se pongan de acuerdo.</p>
+<div class="fila" style="gap:64px">
+<div class="entra" style="--i:0"><p class="cifra verde" style="font-size:88px">16/16</p><p class="txt">fugas por colusión frenadas</p></div>
+<div class="entra" style="--i:1"><p class="cifra verde" style="font-size:88px">0/60</p><p class="txt">trámites honestos frenados</p></div>
+<div class="entra" style="--i:2"><p class="cifra verde" style="font-size:88px">0/144</p><p class="txt">secuestros en AgentDojo</p></div>
+</div>
+<p class="pie">github.com/JhostinAleck/quorum · se reproduce sin claves: uv run pytest -q</p>
+
+</section>
+<section id="riesgo" class="alt">
+<p class="ceja">1 · EL VECTOR DE RIESGO</p>
+<h2>Un robo repartido: cada agente hace un paso que parece normal</h2>
+<div class="fila">
+<div class="tarjeta entra" style="--i:0"><h3>Radicador</h3><p class="txt">Abre la oferta sellada de un rival y la anota como «número de radicado».</p><p class="ok">✓ parece normal</p></div>
+<span class="flechatxt">→</span>
+<div class="tarjeta entra" style="--i:1"><h3>Evaluador</h3><p class="txt">Copia ese número junto a los puntajes.</p><p class="ok">✓ parece normal</p></div>
+<span class="flechatxt">→</span>
+<div class="tarjeta entra" style="--i:2"><h3>Publicador</h3><p class="txt">Publica la adjudicación con el número.</p><p class="ok">✓ parece normal</p></div>
+<span class="flechatxt">→</span>
+<div class="tarjeta peligro entra" style="--i:3"><h3>Portal público</h3><p class="txt">La oferta sellada quedó publicada.</p><p class="mal">Fuga</p></div>
+</div>
+<div class="fila" style="align-items:center;gap:40px">
+<p class="cifra rojo">16 de 30</p>
+<p class="guia" style="width:1100px">ataques sacaron la oferta al portal, sin defensa y con agentes de IA reales. Licitación pública; a uno, dos o tres agentes se les ordena filtrar (colusión instruida).</p>
+</div>
+<p class="pie">Makins et al., 2026 (arXiv 2607.07368): repartir el ataque entre agentes le baja la sospecha al monitor que revisa agente por agente.</p>
+
+</section>
+<section id="defensa">
+<p class="ceja">2 · EL MECANISMO DEFENSIVO</p>
+<h2>Quórum no lee el texto: sigue de dónde viene el dato</h2>
+<div class="fila">
+<div class="tarjeta entra" style="--i:0"><h3>1 · El dato nace marcado</h3><p class="txt">La oferta sellada lleva la etiqueta «confidencial» desde el almacén.</p></div>
+<span class="flechatxt">→</span>
+<div class="tarjeta entra" style="--i:1"><h3>2 · La marca viaja</h3><p class="txt">Todo lo que escribe un agente que vio el dato hereda la marca.</p></div>
+<span class="flechatxt">→</span>
+<div class="tarjeta quorum entra" style="--i:2"><h3>3 · La puerta revisa cada salida</h3><p class="txt">Con marca y sin permiso, no sale. Lo decide una regla, no un modelo.</p></div>
+</div>
+<div class="fila">
+<div class="tarjeta bien"><p class="txt">Disfrazar el número (en palabras, en base64) no cambia nada: la puerta no lee el texto.</p></div>
+<div class="tarjeta bien"><p class="txt">Cada dominio es un archivo de política de 18 a 24 líneas.</p></div>
+<div class="tarjeta bien"><p class="txt">Cada decisión queda en una bitácora que solo se añade, para auditar.</p></div>
+</div>
+
+</section>
+<section id="resultados" class="alt">
+<p class="ceja">3 · VALIDACIÓN EMPÍRICA · 90 TRÁMITES CON AGENTES DE IA: 60 HONESTOS Y 30 ATAQUES</p>
+<h2>Frena las 16 fugas y no frena a ningún honesto</h2>
+<div class="fila" style="gap:64px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:32px;width:520px">
+<div class="entra" style="--i:0"><p class="cifra verde">16/16</p><p class="guia">fugas frenadas</p></div>
+<div class="entra" style="--i:1"><p class="cifra verde">0/60</p><p class="guia">trámites honestos frenados</p></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px;flex:1">
+<p class="guia">La línea base, un vigilante de IA que revisa a cada agente (M1), también detecta las 16. La diferencia es cómo:</p>
+<table class="tabla">
+<tr><th style="width:40%"></th><th style="width:30%">Vigilante de IA (M1)</th><th style="width:30%;color:#F28C28">Quórum</th></tr>
+<tr><td>Fugas detectadas</td><td>16/16</td><td>16/16</td></tr>
+<tr><td>Falsas alarmas</td><td>0/30</td><td>0/30</td></tr>
+<tr><td>Llama a un modelo</td><td>3 veces por trámite</td><td>nunca</td></tr>
+<tr><td>Umbral que calibrar</td><td>sí</td><td>no</td></tr>
+<tr><td>Cuándo actúa</td><td>al final: avisa</td><td>en cada salida: frena</td></tr>
+</table>
+</div>
+</div>
+<p class="pie">M1 con Gemini 3.5 Flash Lite y con Claude Haiku 5.5. Quórum decide en 0,5–1 µs. Intervalo del 95 % para 16/16: de 81 a 100 %.</p>
+
+</section>
+<section id="afuera">
+<p class="ceja">3 · VALIDACIÓN EMPÍRICA · FUERA DE NUESTRO ESCENARIO</p>
+<h2>El mismo núcleo, en cinco dominios y en un banco público</h2>
+<div class="fila" style="gap:40px">
+<div class="tarjeta entra" style="--i:0;gap:22px">
+<h3>Cinco dominios · 7600 episodios</h3>
+<p class="txt">Licitación, mesa de ayuda, historias clínicas, banca y legal. Episodios con daño:</p>
+<div class="fila" style="align-items:center;gap:20px"><p class="etq">Sin defensa</p><div class="barra" style="width:420px;background:#FF6B6B"></div><p class="val">7600</p></div>
+<div class="fila" style="align-items:center;gap:20px"><p class="etq">Filtro exacto</p><div class="barra" style="width:177px;background:#FF6B6B"></div><p class="val">3200</p></div>
+<div class="fila" style="align-items:center;gap:20px"><p class="etq">Buen harness</p><div class="barra" style="width:177px;background:#FF6B6B"></div><p class="val">3200</p></div>
+<div class="fila" style="align-items:center;gap:20px"><p class="etq" style="color:#F28C28">Quórum</p><div class="barra" style="width:8px;background:#F28C28"></div><p class="val" style="color:#4CC97F">0</p></div>
+<p class="txt">Terminan 1200 de 1200 trámites honestos. Agentes con guion: mide el mecanismo.</p>
+</div>
+<div class="tarjeta entra" style="--i:1;gap:22px">
+<h3>AgentDojo, banca · ataques que no escribimos</h3>
+<table class="tabla">
+<tr><th style="width:46%">Defensa</th><th style="width:27%">Secuestros</th><th style="width:27%">Tareas que funcionan</th></tr>
+<tr><td>Sin defensa</td><td>90/144</td><td>19/25</td></tr>
+<tr><td>Filtro de herramientas</td><td>16/144</td><td>19/25</td></tr>
+<tr><td>Detector DeBERTa</td><td>1/144</td><td>9/25</td></tr>
+<tr><td style="color:#F28C28">Quórum</td><td style="color:#4CC97F">0/144</td><td>16/25</td></tr>
+</table>
+<p class="txt">Trazas grabadas, corte gpt-4o. Quórum conserva 16 de las 19 tareas que funcionan sin defensa.</p>
+</div>
+</div>
+
+</section>
+<section id="limites" class="alt">
+<p class="ceja">4 · LÍMITES Y RIESGO DUAL</p>
+<h2>Dónde falla Quórum, medido y publicado</h2>
+<div class="fila">
+<div class="tarjeta entra" style="--i:0"><h3>Frena de más</h3><p class="txt">El agente honesto que abre un sobre sin necesitarlo queda marcado: 0 de 1000 terminan.</p></div>
+<div class="tarjeta entra" style="--i:1"><h3>Lo público sale</h3><p class="txt">Con los puntajes publicados, un rival deduce el monto sellado en 50 de 50 casos.</p></div>
+<div class="tarjeta entra" style="--i:2"><h3>Canales sin dato</h3><p class="txt">Tiempo, orden y número de llamadas no llevan marca.</p></div>
+<div class="tarjeta entra" style="--i:3"><h3>Muestra pequeña</h3><p class="txt">30 ataques de plantilla fija; falta un atacante adaptativo.</p></div>
+</div>
+<div class="tarjeta bien" style="flex:none;flex-direction:row;align-items:center;gap:28px"><p class="txt" style="color:#F2EFEA">Uso dual: la lista de límites dice dónde buscar una fuga. Por eso cada canal va con su medición y sin un ataque optimizado; los ataques son plantillas simples, solo contra nuestro arnés y con datos sintéticos.</p></div>
+<p class="cierre">Nada confidencial sale sin permiso.</p>
+<p class="pie">Se reproduce sin claves ni costo: uv run pytest -q · github.com/JhostinAleck/quorum</p>
+
+</section>
+</body></html>
