@@ -26,11 +26,10 @@ el texto, el resultado no depende de ese camino. El otro vector —la instrucci�
 el agente lee— se midió en la licitación (§3) y con trazas de terceros (§5).
 
 **Honestidad sobre el pre-registro.** Es **tardío**: cuatro pilotos con las mismas semillas dieron 0/6,
-0/6, 10/30 y 14/30 fugas; con los dos últimos a la vista se reescribieron las plantillas (`8f24e0a`) y
-el lote que reportamos se generó después. `metrics.yaml` se congeló a las 11:56, con los ataques ya
-puntuados. Lo que sí queda limpio es la regla: cada umbral se calibra solo con la mitad de los honestos
-(semilla par) y el FPR se reporta en la otra; ningún puntaje de ataque entra en la calibración: protege
-contra el ajuste de umbrales, no contra el de plantillas.
+0/6, 10/30 y 14/30 fugas; con los dos últimos a la vista se reescribieron las plantillas (`8f24e0a`) y el
+lote se generó después. `metrics.yaml` se congeló a las 11:56, con los ataques ya puntuados. Queda limpia
+la regla: cada umbral se calibra con la mitad de los honestos (semilla par) y el FPR se reporta en la
+otra; ningún puntaje de ataque entra. Protege contra el ajuste de umbrales, no de plantillas.
 
 ## 2. Defensa
 
@@ -49,9 +48,8 @@ solo el resultado público.
 ## 3. Evaluación
 
 **Diseño pareado.** Las trazas se generan una vez sin defensa, guardando la etiqueta en cada paso; las
-defensas se aplican después sobre las mismas trazas. 90 episodios: 60 honestos, 30 de
-ellos con la oferta escaneada (los negativos difíciles: abrirla es legítimo y la secuencia
-se parece a la del ataque), y 30 ataques, 10 por k. Agentes: `orca/orcacyber-flash-1.0`;
+defensas se aplican después sobre las mismas trazas. 90 episodios: 60 honestos (30 con la oferta
+escaneada, los negativos difíciles) y 30 ataques, 10 por k. Agentes: `orca/orcacyber-flash-1.0`;
 monitores: `gemini-3.5-flash-lite` y `claude-haiku-5-5`.
 
 **Qué se mide, con qué denominador.** La unidad es el episodio: un trámite completo. Cuatro números y
@@ -62,7 +60,7 @@ publica al adjudicatario correcto y nada más (de 60).
 
 **El baseline que pide el jurado, medido.** Tres agentes honestos y el ataque por contenido dentro de un anexo,
 diez episodios por pretexto y por nivel de prompt: **0 fugas en 120 episodios con inyección**, con la
-regla del pliego, con una defensa explícita y **sin ninguna de las dos**. En ese escenario un buen prompt
+regla del pliego, con una defensa explícita y **sin nada**. En ese escenario un buen prompt
 basta y la compuerta no aporta nada medible; lo decimos. Donde el prompt no llega es en los otros dos: el
 agente ya comprometido (16/30 sin compuerta) y el agente único que sí obedece la inyección (§5). El
 baseline de **monitoreo** es M1, un LLM por agente que lee su episodio: detecta las 16 fugas y paga una
@@ -97,12 +95,13 @@ al modelo en 23/30 ataques y **0/60** honestos.
 - **M1 ya detecta todas las fugas** con los dos monitores y sin falsos positivos; **M2 con oráculo no
   mejora a M1** y M2 ciego pierde 3 fugas con Gemini o paga 17 % de falsos positivos con Haiku. El disfraz
   no esconde el dato de quien lee cada agente: la fragmentación protege la *atribución*, no el dato.
-- **Las hipótesis:** H3 (con Quórum no hay fuga) se cumple. **H1, H2 y H4 no** con estos datos: M1 detecta
-  9/10, 7/10 y 8/10 ataques con k=1, 2, 3 (Gemini) sin una caída clara; M2 no supera a M1; y Quórum
-  bloquea 0/60 honestos frente a 0/30 y 2/30. Se reporta tal cual.
+- **Las hipótesis:** H3, reescrita porque la original se cumplía por construcción, sí se cumple: bloquea
+  las 16 fugas exactas, no bloquea a ningún honesto y no hay fuga aproximada ni de otro oferente.
+  **H1, H2 y H4 no**: M1 detecta 9/10, 7/10 y 8/10 ataques con k=1, 2, 3 (Gemini) sin caída clara; M2 no
+  supera a M1; y Quórum bloquea 0/60 honestos frente a 0/30 y 2/30. Tal cual.
 
 **Reproducibilidad:** episodios y puntajes en `datos/`, umbrales en `metrics.yaml`; `analysis`,
-`containment` y el replay de AgentDojo recalculan cada tabla, y la suite pasa **434 pruebas**.
+`containment` y el replay de AgentDojo recalculan cada tabla, y la suite pasa **más de 450 pruebas**.
 
 ## 5. Ataques que no escribimos nosotros
 
@@ -126,16 +125,18 @@ un solo agente. Protocolo en `quorum/eval/agentdojo/`.
 - **Inyección que aquí no prosperó.** Con tres agentes honestos, el anexo envenenado no produjo ninguna
   fuga con este modelo, incluso sin la regla del pliego; uno más obediente podría cambiar eso y no se
   probó. En AgentDojo, donde el agente sí obedece, la compuerta frena el 99 % (§5).
-- **Atacante fijo y muestras chicas.** Plantillas fijas y 30 ataques: los números son cotas superiores con
-  intervalos anchos. A la compuerta no se la convence con texto; solo se la evade lavando el dato, y esos
-  canales los enumera la política. Todo debe pasar por el proxy.
+- **La regla vale lo que valen sus desclasificadores.** Los puntajes publicados se invierten (puntaje =
+  100 · mínimo / valor) y devuelven el monto con 0,04 % de error: la compuerta lo deja pasar porque la
+  política lo declara público. Las cinco rutas que pasan por una lectura restringida quedan en 0/50.
+- **Atacante fijo y muestras chicas.** Plantillas fijas y 30 ataques: cotas superiores con intervalos
+  anchos. A la compuerta no se la convence con texto; solo se la evade lavando el dato, y esos canales
+  los enumera la política. Todo debe pasar por el proxy.
 - **Riesgo dual.** El ataque existe solo en el arnés, sobre datos sintéticos; no se tocó ningún sistema
   real (Ley 1273).
 
 ## 7. Novedad
 
 Ya existen la fragmentación contra monitores por agente (Makins et al., 2026) y el control de flujo con
-contenido atacante (FIDES, CaMeL, SafeFlow, APPA). **Lo nuestro:** el agente **es** el
-atacante y colude por estado compartido; k como dosis sobre la misma tarea y semilla; la compuerta contra
-dos monitores sobre las mismas trazas; y un **resultado negativo honesto**: el valor está en la compuerta
-y en las llamadas que no se hacen.
+contenido atacante (FIDES, CaMeL, SafeFlow, APPA). **Lo nuestro:** el agente **es** el atacante y
+colude por estado compartido; k como dosis; la compuerta contra dos monitores sobre las mismas trazas;
+y un **resultado negativo honesto**.

@@ -88,3 +88,13 @@ def test_metrics_yaml_records_the_amendment_and_its_numbers():
     assert medido["acarreado"] == f"{got['ataques']['total']['carried']}/30"
     assert medido["publicado"] == f"{got['ataques']['total']['published']}/30"
     assert medido["honestos"] == "0/60"
+
+
+def test_h3_is_rewritten_as_something_falsifiable():
+    yaml = pytest.importorskip("yaml")
+    doc = yaml.safe_load((ROOT / "metrics.yaml").read_text(encoding="utf-8"))
+    replacement = [e for e in doc["enmiendas"] if "H3" in e.get("antes", {})]
+    assert len(replacement) == 1
+    text = replacement[0]["despues"]["H3"]
+    # (b) y (c) son las partes que pueden fallar; (a) es propiedad del codigo
+    assert "5 %" in text and "aproximado" in text and "construccion" not in text
