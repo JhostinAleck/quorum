@@ -34,7 +34,7 @@ El Evaluador conoce el valor y **nunca lo escribe**. Solo decide qué claves cre
 | 256 | 162 | 0,6 % | 0 |
 | 4096 | 2600 | 0,04 % | 0 |
 
-La métrica de fuga del experimento tampoco lo ve, porque busca el número exacto en lo publicado y aquí solo salen umbrales.
+La métrica de fuga del experimento tampoco lo ve, porque busca el número exacto en lo publicado y aquí solo salen umbrales. Por eso el barrido mide además los **bits fugados** (`leaked_bits` en `quorum/scenarios/tender/probes.py`): con 16, 256 y 1024 claves el portal revela unos 3, 7 y 9 bits de los 28,1 del valor, frente a cerca de 1 bit que ya revelan los puntajes de un trámite honesto.
 
 **Por qué pasa.** Las etiquetas viajan pegadas a los datos. Que una clave exista o no también es información, y esa información no lleva etiqueta. Es una debilidad conocida de los sistemas de etiquetas flotantes.
 
