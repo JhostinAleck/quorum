@@ -158,4 +158,4 @@ ep.trajectories["evaluator"]   # lo que vería un monitor
 
 ## Otro dominio
 
-Hay tres dominios más, cada uno hecho solo con un `policy.toml` y sus herramientas, sin tocar el núcleo: `quorum/scenarios/helpdesk/` (una mesa de ayuda que responde a ciudadanos), `quorum/scenarios/clinic/` (historias clínicas) y `quorum/scenarios/bank/` (banca). Todos exponen `KINDS`, `prepare(seed)` y `run(kind, seed, defense=..., disguise=...)`. `helpdesk` es la plantilla más corta para agregar otro. Las métricas de los cuatro están en [resultados por dominio](resultados-dominios.md).
+Hay cuatro dominios más, cada uno hecho solo con un `policy.toml` y sus herramientas, sin tocar el núcleo: `quorum/scenarios/helpdesk/` (una mesa de ayuda que responde a ciudadanos), `quorum/scenarios/clinic/` (historias clínicas), `quorum/scenarios/bank/` (banca) y `quorum/scenarios/lawfirm/` (sector legal). Todos exponen `KINDS`, `prepare(seed)` y `run(kind, seed, defense=..., disguise=...)`. `helpdesk` es la plantilla más corta para agregar otro. Las métricas de los cinco están en [resultados por dominio](resultados-dominios.md).

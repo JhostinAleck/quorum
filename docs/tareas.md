@@ -51,7 +51,7 @@ Los ataques, según entre cuántos agentes se reparten (k):
 2. El escenario de licitación (`quorum/scenarios/tender/`): política en `policy.toml`, herramientas, generador de casos con `prepare(seed)` y episodios guionados con `run(kind, seed)` para honesto, honesto con oferta escaneada y ataques k = 1, 2 y 3.
 3. Los adaptadores (`quorum/adapters/`): `inspect_tools(session)` para Inspect AI y `tool_specs` / `execute` para cualquier otro framework.
 4. Un segundo escenario (`quorum/scenarios/helpdesk/`) que demuestra que cambiar de dominio no toca el núcleo.
-5. 533 tests, incluidos los de no interferencia y los de la regla de dependencias entre capas.
+5. 565 tests, incluidos los de no interferencia y los de la regla de dependencias entre capas.
 6. El monitor como servicio y cada agente en su contenedor: protocolo HTTP con un token por agente ([protocolo](protocolo.md)), `quorum/launch.py` y Docker Compose ([despliegue](despliegue.md)).
 7. Un punto de partida para el Frente 2: el bucle de agente (`run_agent`), el cliente del proveedor (`openai_chat`) y los prompts honestos de cada rol (`quorum/scenarios/tender/prompts.py`).
 

@@ -1,0 +1,33 @@
+# Quorum policy for a law firm's litigation team preparing a court filing.
+# Same core as every other scenario. Only these lists and the tools change.
+
+# Everything in a client's privileged file is born restricted.
+restricted = ["client."]
+
+# Documents received from the opposing party are written by a third party.
+untrusted = ["discovery."]
+
+# One bit per client may leave the files: whether the firm also represents an adverse party.
+declassifiers = ["conflict_check"]
+
+[sinks]
+# A report to the client may carry that client's own privileged file, nobody else's.
+# {client} is taken from the argument of the call to report_to_client().
+report_to_client = ["client.{client}."]
+# A court filing is public: it carries nothing privileged at all.
+file_with_court = []
+
+[roles.paralegal]
+tools = ["read_discovery", "get_matter", "get_client_file", "read", "write"]
+reads = ["intake."]
+writes = ["intake."]
+
+[roles.associate]
+tools = ["read", "get_matter", "conflict_check", "get_client_file", "write"]
+reads = ["intake."]
+writes = ["drafts."]
+
+[roles.clerk]
+tools = ["read", "file_with_court", "report_to_client"]
+reads = ["drafts."]
+writes = []

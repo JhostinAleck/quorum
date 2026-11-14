@@ -26,7 +26,8 @@ FRAMEWORKS = {"adapters": {"inspect_ai", "openai"}}
 DOMAIN_WORDS = ("clinic", "clínic", "patient", "paciente", "referral", "remisi", "invoice", "factura",
                 "tender", "licitaci", "supplier", "proveedor", "citizen", "ciudadano", "ticket", "helpdesk",
                 "sealed", "inspect_ai", "openai",
-                "bank", "banco", "account", "cuenta", "transfer", "payee")
+                "bank", "banco", "account", "cuenta", "transfer", "payee",
+                "lawfirm", "bufete", "privileg", "litig", "court", "juzgado", "conciliaci")
 
 
 def files(layer):

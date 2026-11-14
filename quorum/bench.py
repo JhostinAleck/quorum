@@ -37,6 +37,7 @@ DOMAINS = {     # module -> how the documents call it
     "helpdesk": "Mesa de ayuda",
     "clinic": "Historias clínicas",
     "bank": "Banca",
+    "lawfirm": "Sector legal",
 }
 KERNEL = ("domain", "application", "infrastructure")
 

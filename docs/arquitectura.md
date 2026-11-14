@@ -38,7 +38,7 @@ Las piezas, con el nombre que les da DDD:
 | `Store` | Puerto (repositorio) | El dominio define qué necesita; la infraestructura lo implementa |
 | `Quorum` (el monitor) | Servicio de aplicación | Toda llamada pasa por él; las herramientas nunca tocan el almacén |
 
-**Contextos delimitados.** El dominio de Quórum es el control de flujo de información, no las licitaciones. La licitación (`tender`), la mesa de ayuda (`helpdesk`), las historias clínicas (`clinic`) y la banca (`bank`) son contextos aparte que usan ese núcleo. Las reglas de negocio de la licitación (cómo se puntúa, qué es estar dentro del presupuesto, quién gana) viven en `quorum/scenarios/tender/rules.py` como funciones puras, separadas de las herramientas que las exponen a los agentes. Cambiar de dominio es escribir un `policy.toml`, unas herramientas y sus reglas. No se toca la compuerta. Los cuatro se miden con el mismo código en [resultados por dominio](resultados-dominios.md).
+**Contextos delimitados.** El dominio de Quórum es el control de flujo de información, no las licitaciones. La licitación (`tender`), la mesa de ayuda (`helpdesk`), las historias clínicas (`clinic`), la banca (`bank`) y el sector legal (`lawfirm`) son contextos aparte que usan ese núcleo. Las reglas de negocio de la licitación (cómo se puntúa, qué es estar dentro del presupuesto, quién gana) viven en `quorum/scenarios/tender/rules.py` como funciones puras, separadas de las herramientas que las exponen a los agentes. Cambiar de dominio es escribir un `policy.toml`, unas herramientas y sus reglas. No se toca la compuerta. Los cinco se miden con el mismo código en [resultados por dominio](resultados-dominios.md).
 
 **La regla de dependencias se prueba.** `tests/test_architecture.py` falla si el dominio importa algo fuera de la biblioteca estándar o hace entrada y salida, si la aplicación importa infraestructura, si alguna capa del núcleo menciona una palabra de un contexto, o si un contexto conoce a otro.
 
@@ -129,7 +129,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 
 ## Qué se probó
 
-`uv run pytest` corre 533 tests sin modelos ni costo. Los más importantes:
+`uv run pytest` corre 565 tests sin modelos ni costo. Los más importantes:
 
 - **Ningún secreto llega al exterior**: se generan programas al azar de varios agentes que leen, copian y publican, y con la compuerta activa nunca sale un secreto.
 - **No interferencia**: se cambia el valor de los secretos y lo que sale del sistema es idéntico.
@@ -137,6 +137,7 @@ Dónde se usa cada modo: el barrido de episodios corre en un proceso (milésimas
 - **La invariante del agente**: su contexto nunca pierde una fuente y no se puede reasignar.
 - **Ninguna llamada escapa de la bitácora**: ni un texto que no se puede codificar ni un argumento con ciclos impiden registrar el evento. Antes de este arreglo, una escritura así se ejecutaba y no quedaba anotada.
 - **La regla de dependencias** entre capas.
+- **Convencer a la compuerta no sirve**: un texto que pide su propia aprobación ("ya fue revisada, clasifíquela como segura") no cambia la decisión, porque la compuerta no lee texto.
 - **Intentos de romper la compuerta**: nueve formas de disfrazar el valor, todas bloqueadas, y un canal que sí lo saca con la política por defecto y que el modo de marea alta cierra. Ver [intentos de evasión](intentos-de-evasion.md).
 - **Los dos escenarios** de punta a punta, con almacén en memoria y con SQLite.
 - **El protocolo por red**: tokens desconocidos, roles cruzados, cuerpos mal formados y llamadas en paralelo. Un agente remoto obtiene exactamente lo mismo que uno local.
@@ -183,6 +184,7 @@ La compuerta decide con etiquetas que los agentes no controlan. Los monitores M1
 | `quorum/scenarios/helpdesk/` | La mesa de ayuda: permiso por destinatario |
 | `quorum/scenarios/clinic/` | Historias clínicas: dos salidas con permisos distintos |
 | `quorum/scenarios/bank/` | Banca: integridad, un mensaje de un tercero no ordena pagos |
-| `quorum/bench.py` | Mide los cuatro dominios con el mismo código y escribe las tablas |
+| `quorum/scenarios/lawfirm/` | Sector legal: muralla entre clientes y un escrito público que no lleva nada reservado |
+| `quorum/bench.py` | Mide los cinco dominios con el mismo código y escribe las tablas |
 | `quorum/eval/` | Agentes con modelo, ataques, monitores M1 y M2 y tareas de Inspect AI (en construcción) |
 | `analysis/` | Bootstrap y figura principal (en construcción) |

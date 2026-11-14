@@ -58,13 +58,13 @@ Métricas pre-registradas en [`metrics.yaml`](metrics.yaml): detección a 5 % de
 
 ## Funciona en otros dominios
 
-La compuerta no sabe de licitaciones. Se probó igual, sin cambiar una línea del núcleo, en cuatro dominios: licitación pública, mesa de ayuda, historias clínicas y banca. Cada uno es un archivo de política de unas 20 líneas más sus herramientas.
+La compuerta no sabe de licitaciones. Se probó igual, sin cambiar una línea del núcleo, en cinco dominios: licitación pública, mesa de ayuda, historias clínicas, banca y sector legal. Cada uno es un archivo de política de unas 20 líneas más sus herramientas.
 
 | Episodios guionados, 200 semillas por tipo | Sin defensa | Filtro de coincidencia exacta | Quórum |
 |---|---|---|---|
-| Daño en 5800 episodios adversos (4 dominios) | 100 % | 45 % | 0 % |
-| Trámites honestos que terminan bien (1000) | 100 % | 100 % | 100 % |
-| Trámites descuidados que terminan bien (800) | 100 % | 100 % | 0 % |
+| Daño en 7400 episodios adversos (5 dominios) | 100 % | 43 % | 0 % |
+| Trámites honestos que terminan bien (1200) | 100 % | 100 % | 100 % |
+| Trámites descuidados que terminan bien (1000) | 100 % | 100 % | 0 % |
 
 El filtro de coincidencia exacta conoce todos los secretos y detiene las copias literales, pero no el mismo dato escrito en palabras ni una transferencia ordenada por un mensaje de un tercero. La última fila es el costo de Quórum: si un agente honesto mira un dato restringido que no necesitaba, la compuerta detiene su salida aunque no filtre nada.
 
@@ -81,7 +81,7 @@ uv run python -m quorum.bench      # sin modelos ni costo, unos segundos
 | Dominio | `quorum/domain/` | El modelo de la defensa: etiquetas, política, compuerta, agente y bitácora. Puro, sin entrada ni salida |
 | Aplicación | `quorum/application/` | El monitor de referencia por el que pasa toda llamada de un agente |
 | Infraestructura | `quorum/infrastructure/` | Almacenes (memoria, SQLite) y políticas en TOML |
-| Contextos | `quorum/scenarios/` | Cuatro dominios: `tender` (licitación), `helpdesk` (mesa de ayuda), `clinic` (historias clínicas) y `bank` (banca). Cada uno es un `policy.toml` más sus herramientas y reglas |
+| Contextos | `quorum/scenarios/` | Cinco dominios: `tender` (licitación), `helpdesk` (mesa de ayuda), `clinic` (historias clínicas), `bank` (banca) y `lawfirm` (sector legal). Cada uno es un `policy.toml` más sus herramientas y reglas |
 | Adaptadores | `quorum/adapters/` | Inspect AI, function calling genérico, bucle de agente y el monitor como servicio HTTP |
 | Despliegue | `quorum/launch.py`, `Dockerfile`, `docker-compose.yml` | El monitor y cada agente en su propio contenedor |
 | Interfaz web | `quorum/ui/`, `docker-compose.ui.yml` | Página de demo: subir ofertas (texto, PDF o escaneos), correr un episodio y ver decidir a la compuerta |
@@ -95,7 +95,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 - [Plan de evaluación](docs/plan-de-evaluacion.md)
 - [Límites, riesgo dual y uso responsable](docs/uso-responsable.md)
 - [Intentos de romper la compuerta](docs/intentos-de-evasion.md)
-- [La misma compuerta en cuatro dominios](docs/resultados-dominios.md)
+- [La misma compuerta en cinco dominios](docs/resultados-dominios.md)
 - [Referencias y atribución](docs/referencias.md)
 - [Tareas del equipo](docs/tareas.md)
 - [Interfaz del laboratorio](docs/interfaz.md)
@@ -107,7 +107,7 @@ El diseño sigue DDD: las dependencias apuntan hacia el dominio y un test lo com
 
 ```bash
 uv sync
-uv run pytest        # 533 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
+uv run pytest        # 565 tests del núcleo, los escenarios, los adaptadores y la interfaz, sin modelos ni costo
 ```
 
 Los episodios guionados recorren los cinco casos (honesto, honesto con oferta escaneada y ataque repartido entre 1, 2 y 3 agentes) sin llamar a ningún modelo:
