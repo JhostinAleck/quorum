@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Despliega Quórum: revisa requisitos, prueba los episodios guionados y levanta la interfaz web.
+"""Deploy Quorum: check the requirements, run the scripted episodes and bring the web interface up.
 
-Ejecútalo desde la raíz del repo (donde está docker-compose.yml):
+Run it from the root of the repository (where docker-compose.yml is):
 
-  python desplegar_quorum.py                 # check + pruebas guionadas + interfaz web
-  python desplegar_quorum.py up --pull       # además hace git pull origin main antes
-  python desplegar_quorum.py up --llm        # además prueba un episodio con modelo (tiene costo)
-  python desplegar_quorum.py up --skip-smoke # solo levanta la interfaz
-  python desplegar_quorum.py check | smoke | llm | ui | status | logs | down
+  python scripts/desplegar_quorum.py                 # check + scripted episodes + web interface
+  python scripts/desplegar_quorum.py up --pull       # git pull origin main first
+  python scripts/desplegar_quorum.py up --llm        # also one episode with a model (it costs money)
+  python scripts/desplegar_quorum.py up --skip-smoke # only the web interface
+  python scripts/desplegar_quorum.py check | smoke | llm | ui | status | logs | down
+
+Every scripted episode starts from nothing: it removes the quorum-data volume before and after.
+The messages to the operator are in Spanish.
 """
 from __future__ import annotations
 
@@ -28,7 +31,7 @@ BASE = ["docker", "compose"]
 LLM = BASE + ["-f", "docker-compose.yml", "-f", "docker-compose.llm.yml"]
 UI = BASE + ["-f", "docker-compose.ui.yml"]
 FIELDS = ["published", "leak", "useful", "quorum_blocks"]
-# (QUORUM_KIND, QUORUM_MONITOR_FLAGS) -> resultado esperado (docs/despliegue.md)
+# (QUORUM_KIND, QUORUM_MONITOR_FLAGS) -> expected result (docs/despliegue.md)
 EXPECTED = {
     ("honest", ""): dict(published=True, leak=False, useful=True, quorum_blocks=False),
     ("attack_k3", ""): dict(published=False, leak=False, useful=False, quorum_blocks=True),
@@ -95,8 +98,9 @@ def check(need_llm: bool = False, need_ui: bool = True) -> dict[str, str]:
     if v.returncode != 0:
         fail("falta 'docker compose' (Compose v2)")
     version = v.stdout.strip().lstrip("v")
-    if not version or int(version.split(".")[0]) < 2:
-        fail(f"hace falta Compose v2 o posterior, tienes {version}")
+    major = version.split(".")[0]
+    if not major.isdigit() or int(major) < 2:
+        fail(f"hace falta Compose v2 o posterior, tienes {version or 'una versión que no se pudo leer'}")
     ok(f"docker compose {version}")
     if run(["docker", "info"], check=False, quiet=True).returncode != 0:
         fail("el daemon de Docker no responde (¿Docker Desktop está abierto?)")
@@ -116,8 +120,10 @@ def check(need_llm: bool = False, need_ui: bool = True) -> dict[str, str]:
         fail("falta OPENROUTER_API_KEY en .env (la interfaz y el modo con modelo la piden)")
     if need_llm and not cfg.get("QUORUM_MODEL"):
         fail("falta QUORUM_MODEL en .env (obligatoria en el modo con modelo)")
-    if cfg.get("QUORUM_UI_BIND", "127.0.0.1") not in ("127.0.0.1", "localhost") and not cfg.get("QUORUM_UI_PASSWORD"):
-        warn("la interfaz queda abierta a la red sin QUORUM_UI_PASSWORD: se generará una clave y saldrá en los logs de lab")
+    if need_ui and not cfg.get("QUORUM_UI_PASSWORD"):
+        # docker-compose.ui.yml requires it and the page refuses to start without it: say so before building anything
+        fail("falta QUORUM_UI_PASSWORD en .env: la interfaz web no arranca sin clave de acceso "
+             "(se genera igual que un token, ver .env.example)")
     leftovers = [k for k in ("QUORUM_KIND", "QUORUM_MONITOR_FLAGS", "QUORUM_SEED") if k in os.environ]
     if leftovers:
         warn(f"tu shell tiene {', '.join(leftovers)}; este script los fija en las pruebas, pero pesan sobre .env")
@@ -125,7 +131,7 @@ def check(need_llm: bool = False, need_ui: bool = True) -> dict[str, str]:
     return cfg
 
 
-# ---------------------------------------------------------------- episodios guionados
+# ---------------------------------------------------------------- scripted episodes
 def episode(compose: list[str], kind: str, flags: str) -> dict:
     env = os.environ.copy()
     env["QUORUM_KIND"], env["QUORUM_MONITOR_FLAGS"] = kind, flags
@@ -147,7 +153,7 @@ def episode(compose: list[str], kind: str, flags: str) -> dict:
 def smoke() -> None:
     step("Construyendo la imagen guionada")
     run(BASE + ["build"])
-    step("Probando los episodios guionados (sin modelo, sin internet)")
+    step("Probando los episodios guionados (sin modelo, sin internet; cada uno borra el volumen quorum-data)")
     bad = 0
     for (kind, flags), want in EXPECTED.items():
         got = episode(BASE, kind, flags)
@@ -178,7 +184,7 @@ def llm() -> None:
         ok("trámite útil y sin fuga")
 
 
-# ---------------------------------------------------------------- interfaz web
+# ---------------------------------------------------------------- web interface
 def lan_ip() -> str | None:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -192,15 +198,23 @@ def ui(cfg: dict[str, str]) -> None:
     step("Levantando la interfaz web (lab + registrar + evaluator + publisher)")
     run(UI + ["up", "--build", "-d"])
     port = cfg.get("QUORUM_UI_PORT", "8765")
-    url = f"http://127.0.0.1:{port}/"
+    bind = cfg.get("QUORUM_UI_BIND", "127.0.0.1")
+    # published on one address only: that is the one that answers. 0.0.0.0 also answers on loopback
+    host = bind if bind not in ("0.0.0.0", "localhost", "") else "127.0.0.1"
+    url = f"http://{host}:{port}/"
     print(f"  esperando a {url} ...", flush=True)
     deadline = time.time() + 120
     while True:
         try:
             urllib.request.urlopen(url, timeout=3).read(1)
             break
-        except urllib.error.HTTPError:      # 401 = está arriba y pide clave
-            break
+        except urllib.error.HTTPError as error:
+            if error.code < 500:            # 401: it is up and asks for the password
+                break
+            if time.time() > deadline:
+                run(UI + ["logs", "--no-color", "--tail", "60", "lab"], check=False)
+                fail(f"la página responde con error {error.code}")
+            time.sleep(2)
         except (urllib.error.URLError, OSError):
             if time.time() > deadline:
                 run(UI + ["logs", "--no-color", "--tail", "60", "lab"], check=False)
@@ -208,21 +222,27 @@ def ui(cfg: dict[str, str]) -> None:
             time.sleep(2)
     run(UI + ["ps"], check=False)
     ok(f"interfaz arriba en {url}")
-    bind = cfg.get("QUORUM_UI_BIND", "127.0.0.1")
     if bind not in ("127.0.0.1", "localhost"):
         ip = lan_ip()
         if ip:
-            ok(f"desde otros equipos: http://{ip}:{port}/  (usuario: quorum)")
-        if not cfg.get("QUORUM_UI_PASSWORD"):
-            warn("no pusiste QUORUM_UI_PASSWORD; la clave generada está en estas líneas:")
-            run(UI + ["logs", "--no-color", "--tail", "30", "lab"], check=False)
-    print("\nPara apagar todo:  python " + Path(sys.argv[0]).name + " down", flush=True)
+            ok(f"desde otros equipos: http://{ip}:{port}/")
+    ok("usuario: quorum; la clave es la de QUORUM_UI_PASSWORD en .env (no se imprime)")
+    print("\nPara apagar todo:  python scripts/desplegar_quorum.py down", flush=True)
 
 
 def down() -> None:
     step("Apagando todo")
-    run(UI + ["down", "--remove-orphans"], check=False)
-    run(LLM + ["down", "-v", "--remove-orphans"], check=False)
+    # Compose refuses to read a file whose required variables are missing, and then it stops nothing:
+    # give it placeholders so that `down` works even with an incomplete .env
+    env = os.environ.copy()
+    cfg = read_env(Path(".env")) if Path(".env").is_file() else {}
+    for name in [*TOKENS, "QUORUM_UI_PASSWORD", "QUORUM_MODEL", "OPENROUTER_API_KEY"]:
+        if not cfg.get(name) and not env.get(name):
+            env[name] = "unset"
+    stopped = [run(UI + ["down", "--remove-orphans"], env=env, check=False).returncode,
+               run(LLM + ["down", "-v", "--remove-orphans"], env=env, check=False).returncode]
+    if any(stopped):
+        fail("docker compose down falló: puede quedar algo arriba. Revisa con `docker ps`")
     ok("interfaz, episodios y volumen quorum-data borrados")
 
 
@@ -245,10 +265,11 @@ def main() -> None:
         run(UI + ["logs", "--no-color", "--tail", "100"], check=False)
         return
 
-    cfg = check(need_llm=a.llm or a.action == "llm", need_ui=a.action in ("up", "ui"))
-    if a.pull:
+    if a.pull:                              # first, so that what is checked is what will be deployed
         step("Actualizando el código")
-        run(["git", "pull", "origin", "main"])
+        run(["git", "pull", "--ff-only", "origin", "main"])
+        ok("commit " + run(["git", "rev-parse", "--short", "HEAD"], capture=True, quiet=True).stdout.strip())
+    cfg = check(need_llm=a.llm or a.action == "llm", need_ui=a.action in ("up", "ui"))
     if a.action == "check":
         return
     if a.action == "smoke":
@@ -271,5 +292,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nInterrumpido. Si quedó algo arriba: python desplegar_quorum.py down", file=sys.stderr)
+        print("\nInterrumpido. Si quedó algo arriba: python scripts/desplegar_quorum.py down", file=sys.stderr)
         sys.exit(130)
